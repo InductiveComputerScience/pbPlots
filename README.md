@@ -9,9 +9,10 @@ The library has been developed with using [progsbase](https://www.progsbase.com)
 
 ## Download
 
- * [Java - Java 5+](Java/pbPlots/pbPlots.java)
- * [C - C99+ (C89 also exists)](C/pbPlots.c)
-
+ * [Java - Java 5+](Java/pbPlots/)
+ * [C - C99+ (C89 also exists)](C/)
+ * [C++ - C++98](Cpp/)
+ * [JavaScript - 5+](JavaScript/)
 
 ## General User Guide
 
