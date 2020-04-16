@@ -1,10 +1,6 @@
 
 // Downloaded from https://repo.progsbase.com - Code Developed Using progsbase.
 
-declare interface Math {
-    log10(x: number): number;
-}
-
 class Rectangle{
 	x1 : number;
 	x2 : number;
@@ -195,11 +191,11 @@ export function GetDefaultScatterPlotSeriesSettings() : ScatterPlotSeries{
 
 		series.linearInterpolation = true;
 		series.pointType = "pixels".split('');
-		series.lineType = "dashed".split('');
-		series.lineThickness = 2;
+		series.lineType = "solid".split('');
+		series.lineThickness = 1;
 		series.xs = new Array<number>(0);
 		series.ys = new Array<number>(0);
-		series.color = GetGray(0.5);
+		series.color = GetBlack();
 
 		return series;
 	}
@@ -344,7 +340,7 @@ export function DrawScatterPlotFromSettings(settings : ScatterPlotSettings) : vo
 		if(yMin < 0 && yMax > 0){
 			DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack());
 		}
-		DrawTextUpwards(settings.yLabel, 10, yOriginPixels - GetTextWidth(settings.yLabel)/2, canvas);
+		DrawTextUpwards(settings.xLabel, 10, yOriginPixels - GetTextWidth(settings.xLabel)/2, canvas);
 
 		if(xMin < 0 && xMax > 0){
 			xOrigin = 0;
@@ -355,7 +351,7 @@ export function DrawScatterPlotFromSettings(settings : ScatterPlotSettings) : vo
 		if(xMin < 0 && xMax > 0){
 			DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack());
 		}
-		DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel)/2, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack());
+		DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
 
 		/* X-grid-markers*/
 		if(yMin < 0 && yMax > 0){
@@ -1740,7 +1736,7 @@ export function DrawLineBresenhamsAlgorithmThickPatterned(canvas : RGBABitmapIma
 
 			offset.numberValue = (offset.numberValue + 1)%(pattern.length*thickness);
 
-			if(pattern[offset.numberValue/(thickness)]){
+			if(pattern[Math.floor(offset.numberValue/thickness)]){
 				if(thickness >= 3){
 					r = thickness/2;
 					DrawCircle(canvas, x, y, r, color);

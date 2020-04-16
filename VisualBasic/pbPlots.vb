@@ -379,7 +379,7 @@ Module Plots
 		If yMin < 0 And yMax > 0
 			Call DrawLine1px(canvas, Roundx(xPixelMin), Roundx(yOriginPixels), Roundx(xPixelMax), Roundx(yOriginPixels), GetBlack())
 		End If
-		Call DrawTextUpwards(settings.yLabel, 10, yOriginPixels - GetTextWidth(settings.yLabel)/2, canvas)
+		Call DrawTextUpwards(settings.xLabel, 10, yOriginPixels - GetTextWidth(settings.xLabel)/2, canvas)
 
 		If xMin < 0 And xMax > 0
 			xOrigin = 0
@@ -390,7 +390,7 @@ Module Plots
 		If xMin < 0 And xMax > 0
 			Call DrawLine1px(canvas, Roundx(xOriginPixels), Roundx(yPixelMin), Roundx(xOriginPixels), Roundx(yPixelMax), GetBlack())
 		End If
-		Call DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel)/2, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
+		Call DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
 
 		' X-grid-markers
 		If yMin < 0 And yMax > 0
@@ -1862,7 +1862,7 @@ Module Plots
 
 			offset.numberValue = (offset.numberValue + 1) Mod (pattern.Length*thickness)
 
-			If pattern(Floor(offset.numberValue/(thickness)))
+			If pattern(Floor(offset.numberValue/thickness))
 				If thickness >= 3
 					r = thickness/2
 					Call DrawCircle(canvas, x, y, r, color)

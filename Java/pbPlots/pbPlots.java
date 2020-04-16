@@ -34,6 +34,8 @@ static public class ScatterPlotSettings{
 	public char [] yLabel;
 	public char [] xLabel;
 	public char [] title;
+	public boolean showGrid;
+	public RGBA gridColor;
 }
 	public static boolean RectanglesOverlap(Rectangle r1, Rectangle r2){
 		boolean overlap;
@@ -76,6 +78,8 @@ static public class ScatterPlotSettings{
 		settings.yLabel = "".toCharArray();
 		settings.xLabel = "".toCharArray();
 		settings.scatterPlotSeries = new ScatterPlotSeries [0];
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.2);
 
 		return settings;
 	}
@@ -118,7 +122,7 @@ static public class ScatterPlotSettings{
 		double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
 		NumberReference nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset;
 		boolean prevSet, success;
-		RGBA gridColor, gridLabelColor;
+		RGBA gridLabelColor;
 		RGBABitmapImage canvas;
 		double [] xs, ys;
 		boolean linearInterpolation;
@@ -127,6 +131,7 @@ static public class ScatterPlotSettings{
 		StringArrayReference xLabels, yLabels;
 		NumberArrayReference xLabelPriorities, yLabelPriorities;
 		Rectangle [] occupied;
+		boolean [] linePattern;
 
 		canvas = settings.canvas;
 		patternOffset = CreateNumberReference(0d);
@@ -174,14 +179,13 @@ static public class ScatterPlotSettings{
 		DrawText(canvas, ImageWidth(canvas)/2d - GetTextWidth(settings.title)/2d, yPadding/3d, settings.title, GetBlack());
 
 		/* Draw grid*/
-		gridColor = GetGray(0.2);
 		xPixelMin = xPadding;
 		yPixelMin = yPadding;
 		xPixelMax = ImageWidth(canvas) - xPadding;
 		yPixelMax = ImageHeight(canvas) - yPadding;
 		xLengthPixels = xPixelMax - xPixelMin;
 		yLengthPixels = yPixelMax - yPixelMin;
-		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, gridColor);
+		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
 
 		gridLabelColor = GetGray(0.5);
 
@@ -192,18 +196,20 @@ static public class ScatterPlotSettings{
 		xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities);
 		yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
 
-		/* X-grid*/
-		for(i = 0d; i < xGridPositions.length; i = i + 1d){
-			x = xGridPositions[(int)(i)];
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-			DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, gridColor);
-		}
+		if(settings.showGrid){
+			/* X-grid*/
+			for(i = 0d; i < xGridPositions.length; i = i + 1d){
+				x = xGridPositions[(int)(i)];
+				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+				DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor);
+			}
 
-		/* Y-grid*/
-		for(i = 0d; i < yGridPositions.length; i = i + 1d){
-			y = yGridPositions[(int)(i)];
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-			DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, gridColor);
+			/* Y-grid*/
+			for(i = 0d; i < yGridPositions.length; i = i + 1d){
+				y = yGridPositions[(int)(i)];
+				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+			}
 		}
 
 		/* Labels*/
@@ -232,7 +238,7 @@ static public class ScatterPlotSettings{
 		if(yMin < 0d && yMax > 0d){
 			DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack());
 		}
-		DrawTextUpwards(settings.yLabel, 10d, yOriginPixels - GetTextWidth(settings.yLabel)/2d, canvas);
+		DrawTextUpwards(settings.xLabel, 10d, yOriginPixels - GetTextWidth(settings.xLabel)/2d, canvas);
 
 		if(xMin < 0d && xMax > 0d){
 			xOrigin = 0d;
@@ -243,10 +249,10 @@ static public class ScatterPlotSettings{
 		if(xMin < 0d && xMax > 0d){
 			DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack());
 		}
-		DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel)/2d, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack());
+		DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2d, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
 
 		/* X-grid-markers*/
-		if(xMin < 0d && xMax > 0d){
+		if(yMin < 0d && yMax > 0d){
 		}else{
 			yOrigin = yMax;
 			yOriginPixels = MapXCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
@@ -322,15 +328,20 @@ static public class ScatterPlotSettings{
 							}else if(aStringsEqual(sp.lineType, "solid".toCharArray())){
 								DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color);
 							}else if(aStringsEqual(sp.lineType, "dashed".toCharArray())){
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, GetLinePattern1(), patternOffset, sp.color);
+								linePattern = GetLinePattern1();
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
 							}else if(aStringsEqual(sp.lineType, "dotted".toCharArray())){
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, GetLinePattern2(), patternOffset, sp.color);
+								linePattern = GetLinePattern2();
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
 							}else if(aStringsEqual(sp.lineType, "dotdash".toCharArray())){
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, GetLinePattern3(), patternOffset, sp.color);
+								linePattern = GetLinePattern3();
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
 							}else if(aStringsEqual(sp.lineType, "longdash".toCharArray())){
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, GetLinePattern4(), patternOffset, sp.color);
+								linePattern = GetLinePattern4();
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
 							}else if(aStringsEqual(sp.lineType, "twodash".toCharArray())){
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, GetLinePattern5(), patternOffset, sp.color);
+								linePattern = GetLinePattern5();
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
 							}
 						}
 					}
@@ -913,17 +924,17 @@ static public class ScatterPlotSettings{
 		return image.x.length;
 	}
 
-    public static double ImageHeight(RGBABitmapImage image){
-        double height;
+	public static double ImageHeight(RGBABitmapImage image){
+		double height;
 
-        if(ImageWidth(image) == 0d){
-            height = 0d;
-        }else{
-            height = image.x[0].y.length;
-        }
+		if(ImageWidth(image) == 0d){
+			height = 0d;
+		}else{
+			height = image.x[0].y.length;
+		}
 
-        return height;
-    }
+		return height;
+	}
 
 	public static void SetPixel(RGBABitmapImage image, double x, double y, RGBA color){
 		if(x >= 0d && x < ImageWidth(image) && y >= 0d && y < ImageHeight(image)){
@@ -1306,16 +1317,16 @@ static public class ScatterPlotSettings{
 		xCenter = floor(xCenter) + 0.5;
 		yCenter = floor(yCenter) + 0.5;
 
-		pixels = 2d*Math.PI*radius;
+		pixels = 2d*PI*radius;
 
 		/* Below a radius of 10 pixels, over-compensate to get a smoother circle.*/
 		if(radius < 10d){
 			pixels = pixels*10d;
 		}
 
-		da = 2d*Math.PI/pixels;
+		da = 2d*PI/pixels;
 
-		for(a = 0d; a < 2d*Math.PI; a = a + da){
+		for(a = 0d; a < 2d*PI; a = a + da){
 			dx = cos(a)*radius;
 			dy = sin(a)*radius;
 
@@ -1357,17 +1368,17 @@ static public class ScatterPlotSettings{
 		xCenter = floor(xCenter) + 0.5;
 		yCenter = floor(yCenter) + 0.5;
 
-		pixels = 2d*Math.PI*radius;
+		pixels = 2d*PI*radius;
 
 		/* Below a radius of 10 pixels, over-compensate to get a smoother circle.*/
 		if(radius < 10d){
 			pixels = pixels*10d;
 		}
 
-		da = 2d*Math.PI/pixels;
+		da = 2d*PI/pixels;
 
 		/* Draw lines for a half-circle to fill an entire circle.*/
-		for(a = 0d; a < Math.PI; a = a + da){
+		for(a = 0d; a < PI; a = a + da){
 			dx = cos(a)*radius;
 			dy = sin(a)*radius;
 
@@ -1381,9 +1392,9 @@ static public class ScatterPlotSettings{
 
 		x1 = floor(xCenter + 0.5);
 		y1 = floor(floor(yCenter + 0.5) - height);
-		x2 = x1 - 2d*height*tan(Math.PI/6d);
+		x2 = x1 - 2d*height*tan(PI/6d);
 		y2 = floor(y1 + 2d*height);
-		x3 = x1 + 2d*height*tan(Math.PI/6d);
+		x3 = x1 + 2d*height*tan(PI/6d);
 		y3 = floor(y1 + 2d*height);
 
 		DrawLine1px(canvas, x1, y1, x2, y2, color);
@@ -1398,7 +1409,7 @@ static public class ScatterPlotSettings{
 		y1 = floor(floor(yCenter + 0.5) - height);
 
 		for(i = 0d; i <= 2d*height; i = i + 1d){
-			offset = floor(i*tan(Math.PI/6d));
+			offset = floor(i*tan(PI/6d));
 			DrawHorizontalLine1px(canvas, x1 - offset, y1 + i, 2d*offset, color);
 		}
 	}
@@ -1413,8 +1424,8 @@ static public class ScatterPlotSettings{
 		dx = x2 - x1;
 		dy = y2 - y1;
 
-		incX = signum(dx);
-		incY = signum(dy);
+		incX = Sign(dx);
+		incY = Sign(dy);
 
 		dx = abs(dx);
 		dy = abs(dy);
@@ -1472,8 +1483,8 @@ static public class ScatterPlotSettings{
 		dx = x2 - x1;
 		dy = y2 - y1;
 
-		incX = signum(dx);
-		incY = signum(dy);
+		incX = Sign(dx);
+		incY = Sign(dy);
 
 		dx = abs(dx);
 		dy = abs(dy);
@@ -1516,8 +1527,8 @@ static public class ScatterPlotSettings{
 		dx = x2 - x1;
 		dy = y2 - y1;
 
-		incX = signum(dx);
-		incY = signum(dy);
+		incX = Sign(dx);
+		incY = Sign(dy);
 
 		dx = abs(dx);
 		dy = abs(dy);
@@ -1564,7 +1575,7 @@ static public class ScatterPlotSettings{
 
 			offset.numberValue = (offset.numberValue + 1d)%(pattern.length*thickness);
 
-			if(pattern[(int)(offset.numberValue/(thickness))]){
+			if(pattern[(int)(floor(offset.numberValue/thickness))]){
 				if(thickness >= 3d){
 					r = thickness/2d;
 					DrawCircle(canvas, x, y, r, color);

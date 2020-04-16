@@ -51,13 +51,13 @@ function GetDefaultScatterPlotSeriesSettings(){
 
   series.linearInterpolation = true;
   series.pointType = "pixels".split('');
-  series.lineType = "dashed".split('');
-  series.lineThickness = 2;
+  series.lineType = "solid".split('');
+  series.lineThickness = 1;
   series.xs = [];
   series.xs.length = 0;
   series.ys = [];
   series.ys.length = 0;
-  series.color = GetGray(0.5);
+  series.color = GetBlack();
 
   return series;
 }
@@ -200,7 +200,7 @@ function DrawScatterPlotFromSettings(settings){
   if(yMin < 0 && yMax > 0){
     DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack());
   }
-  DrawTextUpwards(settings.yLabel, 10, yOriginPixels - GetTextWidth(settings.yLabel)/2, canvas);
+  DrawTextUpwards(settings.xLabel, 10, yOriginPixels - GetTextWidth(settings.xLabel)/2, canvas);
 
   if(xMin < 0 && xMax > 0){
     xOrigin = 0;
@@ -211,7 +211,7 @@ function DrawScatterPlotFromSettings(settings){
   if(xMin < 0 && xMax > 0){
     DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack());
   }
-  DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel)/2, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack());
+  DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
 
   /* X-grid-markers */
   if(yMin < 0 && yMax > 0){
@@ -1483,7 +1483,7 @@ function DrawLineBresenhamsAlgorithmThickPatterned(canvas, x1, y1, x2, y2, thick
 
     offset.numberValue = (offset.numberValue + 1)%(pattern.length*thickness);
 
-    if(pattern[offset.numberValue/(thickness)]){
+    if(pattern[Math.floor(offset.numberValue/thickness)]){
       if(thickness >= 3){
         r = thickness/2;
         DrawCircle(canvas, x, y, r, color);

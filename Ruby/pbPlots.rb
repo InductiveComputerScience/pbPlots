@@ -332,7 +332,7 @@ def DrawScatterPlotFromSettings(settings)
 	if yMin < 0.0 && yMax > 0.0
 		DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack())
 	end
-	DrawTextUpwards(settings.yLabel, 10.0, yOriginPixels - GetTextWidth(settings.yLabel) / 2.0, canvas)
+	DrawTextUpwards(settings.xLabel, 10.0, yOriginPixels - GetTextWidth(settings.xLabel) / 2.0, canvas)
 
 	if xMin < 0.0 && xMax > 0.0
 		xOrigin = 0.0
@@ -343,7 +343,7 @@ def DrawScatterPlotFromSettings(settings)
 	if xMin < 0.0 && xMax > 0.0
 		DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack())
 	end
-	DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel) / 2.0, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
+	DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel) / 2.0, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
 
 	# X-grid-markers
 	if yMin < 0.0 && yMax > 0.0
@@ -1747,7 +1747,7 @@ def DrawLineBresenhamsAlgorithmThickPatterned(canvas, x1, y1, x2, y2, thickness,
 
 		offset.numberValue = (offset.numberValue + 1.0)%(pattern.length*thickness)
 
-		if pattern[offset.numberValue / (thickness)]
+		if pattern[(offset.numberValue / thickness).floor]
 			if thickness >= 3.0
 				r = thickness / 2.0
 				DrawCircle(canvas, x, y, r, color)

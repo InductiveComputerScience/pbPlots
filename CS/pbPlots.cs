@@ -193,11 +193,11 @@ public class pbPlots{
 
 		series.linearInterpolation = true;
 		series.pointType = "pixels".ToCharArray();
-		series.lineType = "dashed".ToCharArray();
-		series.lineThickness = 2d;
+		series.lineType = "solid".ToCharArray();
+		series.lineThickness = 1d;
 		series.xs = new double [0];
 		series.ys = new double [0];
-		series.color = GetGray(0.5);
+		series.color = GetBlack();
 
 		return series;
 	}
@@ -342,7 +342,7 @@ public class pbPlots{
 		if(yMin < 0d && yMax > 0d){
 			DrawLine1px(canvas, Roundx(xPixelMin), Roundx(yOriginPixels), Roundx(xPixelMax), Roundx(yOriginPixels), GetBlack());
 		}
-		DrawTextUpwards(settings.yLabel, 10d, yOriginPixels - GetTextWidth(settings.yLabel)/2d, canvas);
+		DrawTextUpwards(settings.xLabel, 10d, yOriginPixels - GetTextWidth(settings.xLabel)/2d, canvas);
 
 		if(xMin < 0d && xMax > 0d){
 			xOrigin = 0d;
@@ -353,7 +353,7 @@ public class pbPlots{
 		if(xMin < 0d && xMax > 0d){
 			DrawLine1px(canvas, Roundx(xOriginPixels), Roundx(yPixelMin), Roundx(xOriginPixels), Roundx(yPixelMax), GetBlack());
 		}
-		DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel)/2d, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack());
+		DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2d, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
 
 		/* X-grid-markers*/
 		if(yMin < 0d && yMax > 0d){
@@ -1738,7 +1738,7 @@ public class pbPlots{
 
 			offset.numberValue = (offset.numberValue + 1d)%(pattern.Length*thickness);
 
-			if(pattern[(int)(offset.numberValue/(thickness))]){
+			if(pattern[(int)(Floor(offset.numberValue/thickness))]){
 				if(thickness >= 3d){
 					r = thickness/2d;
 					DrawCircle(canvas, x, y, r, color);

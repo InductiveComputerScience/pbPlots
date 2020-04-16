@@ -79,11 +79,11 @@ def GetDefaultScatterPlotSeriesSettings():
 
   series.linearInterpolation = True
   series.pointType = "pixels"
-  series.lineType = "dashed"
-  series.lineThickness = 2.0
+  series.lineType = "solid"
+  series.lineThickness = 1.0
   series.xs =  [None]*int(0.0)
   series.ys =  [None]*int(0.0)
-  series.color = GetGray(0.5)
+  series.color = GetBlack()
 
   return series
 
@@ -214,7 +214,7 @@ def DrawScatterPlotFromSettings(settings):
   yOriginPixels = MapYCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels)
   if yMin < 0.0 and yMax > 0.0:
     DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack())
-  DrawTextUpwards(settings.yLabel, 10.0, yOriginPixels - GetTextWidth(settings.yLabel)/2.0, canvas)
+  DrawTextUpwards(settings.xLabel, 10.0, yOriginPixels - GetTextWidth(settings.xLabel)/2.0, canvas)
 
   if xMin < 0.0 and xMax > 0.0:
     xOrigin = 0.0
@@ -223,7 +223,7 @@ def DrawScatterPlotFromSettings(settings):
   xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels)
   if xMin < 0.0 and xMax > 0.0:
     DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack())
-  DrawText(canvas, xOriginPixels - GetTextWidth(settings.xLabel)/2.0, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
+  DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2.0, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
 
   # X-grid-markers
   if yMin < 0.0 and yMax > 0.0:
@@ -1447,7 +1447,7 @@ def DrawLineBresenhamsAlgorithmThickPatterned(canvas, x1, y1, x2, y2, thickness,
 
     offset.numberValue = (offset.numberValue + 1.0) % (len(pattern)*thickness)
 
-    if pattern[int(offset.numberValue/(thickness))]:
+    if pattern[int(floor(offset.numberValue/thickness))]:
       if thickness >= 3.0:
         r = thickness/2.0
         DrawCircle(canvas, x, y, r, color)

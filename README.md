@@ -7,6 +7,8 @@ A plotting library available in many programming languages. Goals of this librar
 
 The library is developed using [progsbase](https://www.progsbase.com), a technology for coding timeless code in many programming languages at once.
 
+![atan](atan.png "Arc Tangens")
+
 ## Download
 
  * [Java - Java 5+](Java/pbPlots/)

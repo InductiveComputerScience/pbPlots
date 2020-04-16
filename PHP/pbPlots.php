@@ -55,11 +55,11 @@ function GetDefaultScatterPlotSeriesSettings(){
 
   $series->linearInterpolation = true;
   $series->pointType = str_split("pixels");
-  $series->lineType = str_split("dashed");
-  $series->lineThickness = 2.0;
+  $series->lineType = str_split("solid");
+  $series->lineThickness = 1.0;
   $series->xs = array_fill(0, 0.0, 0);
   $series->ys = array_fill(0, 0.0, 0);
-  $series->color = GetGray(0.5);
+  $series->color = GetBlack();
 
   return $series;
 }
@@ -184,7 +184,7 @@ function DrawScatterPlotFromSettings($settings){
   if($yMin < 0.0 && $yMax > 0.0){
     DrawLine1px($canvas, Roundx($xPixelMin), Roundx($yOriginPixels), Roundx($xPixelMax), Roundx($yOriginPixels), GetBlack());
   }
-  DrawTextUpwards($settings->yLabel, 10.0, $yOriginPixels - GetTextWidth($settings->yLabel)/2.0, $canvas);
+  DrawTextUpwards($settings->xLabel, 10.0, $yOriginPixels - GetTextWidth($settings->xLabel)/2.0, $canvas);
 
   if($xMin < 0.0 && $xMax > 0.0){
     $xOrigin = 0.0;
@@ -195,7 +195,7 @@ function DrawScatterPlotFromSettings($settings){
   if($xMin < 0.0 && $xMax > 0.0){
     DrawLine1px($canvas, Roundx($xOriginPixels), Roundx($yPixelMin), Roundx($xOriginPixels), Roundx($yPixelMax), GetBlack());
   }
-  DrawText($canvas, $xOriginPixels - GetTextWidth($settings->xLabel)/2.0, $yPixelMax + $axisLabelPadding, $settings->xLabel, GetBlack());
+  DrawText($canvas, $xOriginPixels - GetTextWidth($settings->yLabel)/2.0, $yPixelMax + $axisLabelPadding, $settings->yLabel, GetBlack());
 
   /* X-grid-markers */
   if($yMin < 0.0 && $yMax > 0.0){
@@ -1397,7 +1397,7 @@ function DrawLineBresenhamsAlgorithmThickPatterned($canvas, $x1, $y1, $x2, $y2, 
 
     $offset->numberValue = ($offset->numberValue + 1.0)%(count($pattern)*$thickness);
 
-    if($pattern[$offset->numberValue/($thickness)]){
+    if($pattern[floor($offset->numberValue/$thickness)]){
       if($thickness >= 3.0){
         $r = $thickness/2.0;
         DrawCircle($canvas, $x, $y, $r, $color);
