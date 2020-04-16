@@ -5,7 +5,7 @@ A plotting library available in many programming languages. Goals of this librar
 2) Is easy to build in any programming language and to include in any project.
 3) Is easy to use.
 
-The library has been developed with using [progsbase](https://www.progsbase.com), a technology for coding timeless code in many programming languages at once.
+The library is developed using [progsbase](https://www.progsbase.com), a technology for coding timeless code in many programming languages at once.
 
 ## Download
 
@@ -17,14 +17,10 @@ The library has been developed with using [progsbase](https://www.progsbase.com)
  * [PHP - 5+](PHP/)
  * [C# - 6+](CS/)
  * [Python - 2+](Python/)
+ * [Visual Basic - 9+](VisualBasic/)
 
 ## General User Guide
-
-## User Guide for each Language
-
-
-## Java
-
+The library has the same interface in all supported languages. The example below is in Java. You can find the same code in each language by following the language links above.
 
 #### Basic Usage
 
