@@ -23,6 +23,5 @@ Module SupportLib
 
 		bytes = DoubleArrayToByteArray(data)
 		File.WriteAllBytes(filename, bytes)
-
 	End Sub
 End Module

@@ -18,6 +18,7 @@ The library is developed using [progsbase](https://www.progsbase.com), a technol
  * [C# - 6+](CS/)
  * [Python - 2+](Python/)
  * [Visual Basic - 9+](VisualBasic/)
+ * [Ruby - 2+](Ruby/)
 
 ## General User Guide
 The library has the same interface in all supported languages. The example below is in Java. You can find the same code in each language by following the language links above.
