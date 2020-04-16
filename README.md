@@ -11,8 +11,9 @@ The library has been developed with using [progsbase](https://www.progsbase.com)
 
  * [Java - Java 5+](Java/pbPlots/)
  * [C - C99+ (C89 also exists)](C/)
- * [C++ - C++98](Cpp/)
+ * [C++ - C++98+](Cpp/)
  * [JavaScript - 5+](JavaScript/)
+ * [TypeScript](TypeScript/)
 
 ## General User Guide
 
