@@ -14,6 +14,8 @@ The library has been developed with using [progsbase](https://www.progsbase.com)
  * [C++ - C++98+](Cpp/)
  * [JavaScript - 5+](JavaScript/)
  * [TypeScript](TypeScript/)
+ * [PHP - 5+](PHP/)
+ * [C# - 6+](CS/)
 
 ## General User Guide
 
