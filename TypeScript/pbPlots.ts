@@ -1,6 +1,9 @@
 
 // Downloaded from https://repo.progsbase.com - Code Developed Using progsbase.
 
+class RGBABitmapImageReference{
+	image : RGBABitmapImage;
+}
 class Rectangle{
 	x1 : number;
 	x2 : number;
@@ -17,7 +20,6 @@ class ScatterPlotSeries{
 	color : RGBA;
 }
 class ScatterPlotSettings{
-	canvas : RGBABitmapImage;
 	scatterPlotSeries : ScatterPlotSeries [];
 	autoBoundaries : boolean;
 	xMax : number;
@@ -32,6 +34,41 @@ class ScatterPlotSettings{
 	title : string [];
 	showGrid : boolean;
 	gridColor : RGBA;
+	xAxisAuto : boolean;
+	xAxisTop : boolean;
+	xAxisBottom : boolean;
+	yAxisAuto : boolean;
+	yAxisLeft : boolean;
+	yAxisRight : boolean;
+	width : number;
+	height : number;
+}
+class BarPlotSeries{
+	ys : number [];
+	color : RGBA;
+}
+class BarPlotSettings{
+	width : number;
+	height : number;
+	autoBoundaries : boolean;
+	yMax : number;
+	yMin : number;
+	autoPadding : boolean;
+	xPadding : number;
+	yPadding : number;
+	title : string [];
+	showGrid : boolean;
+	gridColor : RGBA;
+	barPlotSeries : BarPlotSeries [];
+	yLabel : string [];
+	autoColor : boolean;
+	grayscaleAutoColor : boolean;
+	autoSpacing : boolean;
+	groupSeparation : number;
+	barSeparation : number;
+	autoLabels : boolean;
+	xLabels : StringReference [];
+	barBorder : boolean;
 }
 class RGBA{
 	r : number;
@@ -133,363 +170,6 @@ class DynamicArrayNumbers{
 	array : number [];
 	length : number;
 }
-export function RectanglesOverlap(r1 : Rectangle, r2 : Rectangle) : boolean{
-		var overlap : boolean;
-
-		overlap = false;
-
-		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
-		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
-		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
-		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
-
-		return overlap;
-	}
-
-
-export function CreateRectangle(x1 : number, y1 : number, x2 : number, y2 : number) : Rectangle{
-		var r : Rectangle;
-		r = new Rectangle();
-		r.x1 = x1;
-		r.y1 = y1;
-		r.x2 = x2;
-		r.y2 = y2;
-		return r;
-	}
-
-
-export function CopyRectangleValues(rd : Rectangle, rs : Rectangle) : void{
-		rd.x1 = rs.x1;
-		rd.y1 = rs.y1;
-		rd.x2 = rs.x2;
-		rd.y2 = rs.y2;
-	}
-
-
-export function GetDefaultScatterPlotSettings() : ScatterPlotSettings{
-		var settings : ScatterPlotSettings;
-
-		settings = new ScatterPlotSettings();
-
-		settings.autoBoundaries = true;
-		settings.autoPadding = true;
-		settings.title = "".split('');
-		settings.yLabel = "".split('');
-		settings.xLabel = "".split('');
-		settings.scatterPlotSeries = new Array<ScatterPlotSeries>(0);
-		settings.showGrid = true;
-		settings.gridColor = GetGray(0.2);
-
-		return settings;
-	}
-
-
-export function GetDefaultScatterPlotSeriesSettings() : ScatterPlotSeries{
-		var series : ScatterPlotSeries;
-
-		series = new ScatterPlotSeries();
-
-		series.linearInterpolation = true;
-		series.pointType = "pixels".split('');
-		series.lineType = "solid".split('');
-		series.lineThickness = 1;
-		series.xs = new Array<number>(0);
-		series.ys = new Array<number>(0);
-		series.color = GetBlack();
-
-		return series;
-	}
-
-
-export function DrawScatterPlot(canvas : RGBABitmapImage, xs : number [], ys : number []) : void{
-		var settings : ScatterPlotSettings;
-
-		settings = GetDefaultScatterPlotSettings();
-
-		settings.canvas = canvas;
-		settings.scatterPlotSeries = new Array<ScatterPlotSeries>(1);
-		settings.scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
-		delete settings.scatterPlotSeries[0].xs;
-		settings.scatterPlotSeries[0].xs = xs;
-		delete settings.scatterPlotSeries[0].ys;
-		settings.scatterPlotSeries[0].ys = ys;
-
-		DrawScatterPlotFromSettings(settings);
-	}
-
-
-export function DrawScatterPlotFromSettings(settings : ScatterPlotSettings) : void{
-		var xMin : number, xMax : number, yMin : number, yMax : number, xLength : number, yLength : number, i : number, x : number, y : number, xPrev : number, yPrev : number, px : number, py : number, pxPrev : number, pyPrev : number, xOrigin : number, yOrigin : number, p : number, l : number, plot : number;
-		var xPadding : number, yPadding : number, xOriginPixels : number, yOriginPixels : number;
-		var xPixelMin : number, yPixelMin : number, xPixelMax : number, yPixelMax : number, xLengthPixels : number, yLengthPixels : number, axisLabelPadding : number;
-		var nextRectangle : NumberReference, x1Ref : NumberReference, y1Ref : NumberReference, x2Ref : NumberReference, y2Ref : NumberReference, patternOffset : NumberReference;
-		var prevSet : boolean, success : boolean;
-		var gridLabelColor : RGBA;
-		var canvas : RGBABitmapImage;
-		var xs : number [], ys : number [];
-		var linearInterpolation : boolean;
-		var sp : ScatterPlotSeries;
-		var xGridPositions : number [], yGridPositions : number [];
-		var xLabels : StringArrayReference, yLabels : StringArrayReference;
-		var xLabelPriorities : NumberArrayReference, yLabelPriorities : NumberArrayReference;
-		var occupied : Rectangle [];
-		var linePattern : boolean [];
-
-		canvas = settings.canvas;
-		patternOffset = CreateNumberReference(0);
-
-		if(settings.scatterPlotSeries.length >= 1){
-			xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
-			xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
-			yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
-			yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
-		}else{
-			xMin = -10;
-			xMax = 10;
-			yMin = -10;
-			yMax = 10;
-		}
-
-		if(!settings.autoBoundaries){
-			xMin = settings.xMin;
-			xMax = settings.xMax;
-			yMin = settings.yMin;
-			yMax = settings.yMax;
-		}else{
-			for(plot = 1; plot < settings.scatterPlotSeries.length; plot = plot + 1){
-				sp = settings.scatterPlotSeries[plot];
-
-				xMin = Math.min(xMin, GetMinimum(sp.xs));
-				xMax = Math.max(xMax, GetMaximum(sp.xs));
-				yMin = Math.min(yMin, GetMinimum(sp.ys));
-				yMax = Math.max(yMax, GetMaximum(sp.ys));
-			}
-		}
-
-		xLength = xMax - xMin;
-		yLength = yMax - yMin;
-
-		if(settings.autoPadding){
-			xPadding = 0.10*ImageWidth(canvas);
-			yPadding = 0.10*ImageHeight(canvas);
-		}else{
-			xPadding = settings.xPadding;
-			yPadding = settings.yPadding;
-		}
-
-		/* Draw title*/
-		DrawText(canvas, ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2, yPadding/3, settings.title, GetBlack());
-
-		/* Draw grid*/
-		xPixelMin = xPadding;
-		yPixelMin = yPadding;
-		xPixelMax = ImageWidth(canvas) - xPadding;
-		yPixelMax = ImageHeight(canvas) - yPadding;
-		xLengthPixels = xPixelMax - xPixelMin;
-		yLengthPixels = yPixelMax - yPixelMin;
-		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
-
-		gridLabelColor = GetGray(0.5);
-
-		xLabels = new StringArrayReference();
-		xLabelPriorities = new NumberArrayReference();
-		yLabels = new StringArrayReference();
-		yLabelPriorities = new NumberArrayReference();
-		xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities);
-		yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
-
-		if(settings.showGrid){
-			/* X-grid*/
-			for(i = 0; i < xGridPositions.length; i = i + 1){
-				x = xGridPositions[i];
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-				DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor);
-			}
-
-			/* Y-grid*/
-			for(i = 0; i < yGridPositions.length; i = i + 1){
-				y = yGridPositions[i];
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
-			}
-		}
-
-		/* Labels*/
-		occupied = new Array<Rectangle>(xLabels.stringArray.length + yLabels.stringArray.length);
-		for(i = 0; i < occupied.length; i = i + 1){
-			occupied[i] = CreateRectangle(0, 0, 0, 0);
-		}
-		nextRectangle = CreateNumberReference(0);
-
-		for(i = 1; i <= 5; i = i + 1){
-			DrawXLabelsForPriority(i, xMin, yMin, yMax, yLength, yLengthPixels, xLength, xPixelMin, yPixelMin, xLengthPixels, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied);
-		}
-
-		for(i = 1; i <= 5; i = i + 1){
-			DrawYLabelsForPriority(i, yMin, xMin, xMax, xLength, xLengthPixels, yLength, xPixelMin, yPixelMin, yLengthPixels, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied);
-		}
-
-		/* Draw origin and axis titles.*/
-		axisLabelPadding = 20;
-		if(yMin < 0 && yMax > 0){
-			yOrigin = 0;
-		}else{
-			yOrigin = yMin + (yMax - yMin)/2;
-		}
-		yOriginPixels = MapYCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
-		if(yMin < 0 && yMax > 0){
-			DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack());
-		}
-		DrawTextUpwards(settings.xLabel, 10, yOriginPixels - GetTextWidth(settings.xLabel)/2, canvas);
-
-		if(xMin < 0 && xMax > 0){
-			xOrigin = 0;
-		}else{
-			xOrigin = xMin + (xMax - xMin)/2;
-		}
-		xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels);
-		if(xMin < 0 && xMax > 0){
-			DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack());
-		}
-		DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
-
-		/* X-grid-markers*/
-		if(yMin < 0 && yMax > 0){
-		}else{
-			yOrigin = yMax;
-			yOriginPixels = MapXCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
-		}
-		for(i = 0; i < xGridPositions.length; i = i + 1){
-			x = xGridPositions[i];
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-			p = xLabelPriorities.numberArray[i];
-			l = 1;
-			if(p == 1){
-				l = 8;
-			}else if(p == 2){
-				l = 3;
-			}
-			DrawLine1px(canvas, px, yOriginPixels, px, yOriginPixels - l, GetBlack());
-		}
-
-		/* Y-grid-markers*/
-		if(xMin < 0 && xMax > 0){
-		}else{
-			xOrigin = xMin;
-			xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels);
-		}
-		for(i = 0; i < yGridPositions.length; i = i + 1){
-			y = yGridPositions[i];
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-			p = yLabelPriorities.numberArray[i];
-			l = 1;
-			if(p == 1){
-				l = 8;
-			}else if(p == 2){
-				l = 3;
-			}
-			DrawLine1px(canvas, xOriginPixels, py, xOriginPixels + l, py, GetBlack());
-		}
-
-		/* Draw points*/
-		for(plot = 0; plot < settings.scatterPlotSeries.length; plot = plot + 1){
-			sp = settings.scatterPlotSeries[plot];
-
-			xs = sp.xs;
-			ys = sp.ys;
-			linearInterpolation = sp.linearInterpolation;
-
-			x1Ref = new NumberReference();
-			y1Ref = new NumberReference();
-			x2Ref = new NumberReference();
-			y2Ref = new NumberReference();
-			if(linearInterpolation){
-				prevSet = false;
-				xPrev = 0;
-				yPrev = 0;
-				for(i = 0; i < xs.length; i = i + 1){
-					x = xs[i];
-					y = ys[i];
-
-					if(prevSet){
-						x1Ref.numberValue = xPrev;
-						y1Ref.numberValue = yPrev;
-						x2Ref.numberValue = x;
-						y2Ref.numberValue = y;
-
-						success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax);
-
-						if(success){
-							pxPrev = MapXCoordinates(x1Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels);
-							pyPrev = MapYCoordinates(y1Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels);
-							px = MapXCoordinates(x2Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels);
-							py = MapYCoordinates(y2Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels);
-
-							if(aStringsEqual(sp.lineType, "solid".split('')) && sp.lineThickness == 1){
-								DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color);
-							}else if(aStringsEqual(sp.lineType, "solid".split(''))){
-								DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color);
-							}else if(aStringsEqual(sp.lineType, "dashed".split(''))){
-								linePattern = GetLinePattern1();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "dotted".split(''))){
-								linePattern = GetLinePattern2();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "dotdash".split(''))){
-								linePattern = GetLinePattern3();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "longdash".split(''))){
-								linePattern = GetLinePattern4();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "twodash".split(''))){
-								linePattern = GetLinePattern5();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}
-						}
-					}
-
-					prevSet = true;
-					xPrev = x;
-					yPrev = y;
-				}
-			}else{
-				for(i = 0; i < xs.length; i = i + 1){
-					x = xs[i];
-					y = ys[i];
-
-					if(x > xMin && x < xMax && y > yMin && y < yMax){
-
-						x = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-						y = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-
-						if(aStringsEqual(sp.pointType, "crosses".split(''))){
-							DrawPixel(canvas, x, y, sp.color);
-							DrawPixel(canvas, x + 1, y, sp.color);
-							DrawPixel(canvas, x + 2, y, sp.color);
-							DrawPixel(canvas, x - 1, y, sp.color);
-							DrawPixel(canvas, x - 2, y, sp.color);
-							DrawPixel(canvas, x, y + 1, sp.color);
-							DrawPixel(canvas, x, y + 2, sp.color);
-							DrawPixel(canvas, x, y - 1, sp.color);
-							DrawPixel(canvas, x, y - 2, sp.color);
-						}else if(aStringsEqual(sp.pointType, "circles".split(''))){
-							DrawCircle(canvas, x, y, 3, sp.color);
-						}else if(aStringsEqual(sp.pointType, "dots".split(''))){
-							DrawFilledCircle(canvas, x, y, 3, sp.color);
-						}else if(aStringsEqual(sp.pointType, "triangles".split(''))){
-							DrawTriangle(canvas, x, y, 3, sp.color);
-						}else if(aStringsEqual(sp.pointType, "filled triangles".split(''))){
-							DrawFilledTriangle(canvas, x, y, 3, sp.color);
-						}else if(aStringsEqual(sp.pointType, "pixels".split(''))){
-							DrawPixel(canvas, x, y, sp.color);
-						}
-					}
-				}
-			}
-		}
-	}
-
-
 export function CropLineWithinBoundary(x1Ref : NumberReference, y1Ref : NumberReference, x2Ref : NumberReference, y2Ref : NumberReference, xMin : number, xMax : number, yMin : number, yMax : number) : boolean{
 		var x1 : number, y1 : number, x2 : number, y2 : number;
 		var success : boolean, p1In : boolean, p2In : boolean;
@@ -609,48 +289,135 @@ export function InterceptFromCoordinates(x1 : number, y1 : number, x2 : number, 
 	}
 
 
-export function DrawXLabelsForPriority(p : number, xMin : number, yMin : number, yMax : number, yLength : number, yLengthPixels : number, xLength : number, xPixelMin : number, yPixelMin : number, xLengthPixels : number, nextRectangle : NumberReference, gridLabelColor : RGBA, canvas : RGBABitmapImage, xGridPositions : number [], xLabels : StringArrayReference, xLabelPriorities : NumberArrayReference, occupied : Rectangle []) : void{
+export function Get8HighContrastColors() : RGBA []{
+		var colors : RGBA [];
+		colors = new Array<RGBA>(8);
+		colors[0] = CreateRGBColor(3/256, 146/256, 206/256);
+		colors[1] = CreateRGBColor(253/256, 83/256, 8/256);
+		colors[2] = CreateRGBColor(102/256, 176/256, 50/256);
+		colors[3] = CreateRGBColor(208/256, 234/256, 43/256);
+		colors[4] = CreateRGBColor(167/256, 25/256, 75/256);
+		colors[5] = CreateRGBColor(254/256, 254/256, 51/256);
+		colors[6] = CreateRGBColor(134/256, 1/256, 175/256);
+		colors[7] = CreateRGBColor(251/256, 153/256, 2/256);
+		return colors;
+	}
+
+
+export function DrawFilledRectangleWithBorder(image : RGBABitmapImage, x : number, y : number, w : number, h : number, borderColor : RGBA, fillColor : RGBA) : void{
+		if(h > 0 && w > 0){
+			DrawFilledRectangle(image, x, y, w, h, fillColor);
+			DrawRectangle1px(image, x, y, w, h, borderColor);
+		}
+	}
+
+
+export function CreateRGBABitmapImageReference() : RGBABitmapImageReference{
+		var reference : RGBABitmapImageReference;
+
+		reference = new RGBABitmapImageReference();
+		reference.image = new RGBABitmapImage();
+		reference.image.x = new Array<RGBABitmap>(0);
+
+		return reference;
+	}
+
+
+export function RectanglesOverlap(r1 : Rectangle, r2 : Rectangle) : boolean{
 		var overlap : boolean;
-		var i : number, j : number, x : number, px : number, oy : number;
+
+		overlap = false;
+
+		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
+		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
+		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
+		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
+
+		return overlap;
+	}
+
+
+export function CreateRectangle(x1 : number, y1 : number, x2 : number, y2 : number) : Rectangle{
+		var r : Rectangle;
+		r = new Rectangle();
+		r.x1 = x1;
+		r.y1 = y1;
+		r.x2 = x2;
+		r.y2 = y2;
+		return r;
+	}
+
+
+export function CopyRectangleValues(rd : Rectangle, rs : Rectangle) : void{
+		rd.x1 = rs.x1;
+		rd.y1 = rs.y1;
+		rd.x2 = rs.x2;
+		rd.y2 = rs.y2;
+	}
+
+
+export function DrawXLabelsForPriority(p : number, xMin : number, oy : number, xMax : number, xPixelMin : number, xPixelMax : number, nextRectangle : NumberReference, gridLabelColor : RGBA, canvas : RGBABitmapImage, xGridPositions : number [], xLabels : StringArrayReference, xLabelPriorities : NumberArrayReference, occupied : Rectangle [], textOnBottom : boolean) : void{
+		var overlap : boolean, currentOverlaps : boolean;
+		var i : number, j : number, x : number, px : number, padding : number;
 		var text : string [];
 		var r : Rectangle;
 
 		r = new Rectangle();
-
-		if(yMin < 0 && yMax > 0){
-			oy = MapYCoordinates(0, yMin, yLength, yPixelMin, yLengthPixels);
-		}else{
-			oy = MapYCoordinates(yMin, yMin, yLength, yPixelMin, yLengthPixels);
-		}
+		padding = 10;
 
 		overlap = false;
 		for(i = 0; i < xLabels.stringArray.length; i = i + 1){
 			if(xLabelPriorities.numberArray[i] == p){
 
 				x = xGridPositions[i];
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
 				text = xLabels.stringArray[i].stringx;
 
-				r.x1 = px - GetTextWidth(text)/2;
-				r.y1 = oy + 5;
+				r.x1 = Math.floor(px - GetTextWidth(text)/2);
+				if(textOnBottom){
+					r.y1 = Math.floor(oy + 5);
+				}else{
+					r.y1 = Math.floor(oy - 20);
+				}
 				r.x2 = r.x1 + GetTextWidth(text);
 				r.y2 = r.y1 + GetTextHeight(text);
 
+				/* Add padding*/
+				r.x1 = r.x1 - padding;
+				r.y1 = r.y1 - padding;
+				r.x2 = r.x2 + padding;
+				r.y2 = r.y2 + padding;
+
+				currentOverlaps = false;
+
 				for(j = 0; j < nextRectangle.numberValue; j = j + 1){
-					overlap = overlap || RectanglesOverlap(r, occupied[j]);
+					currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[j]);
 				}
+
+				if(!currentOverlaps && p == 1){
+					DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor);
+
+					CopyRectangleValues(occupied[nextRectangle.numberValue], r);
+					nextRectangle.numberValue = nextRectangle.numberValue + 1;
+				}
+
+				overlap = overlap || currentOverlaps;
 			}
 		}
-		if(!overlap){
+		if(!overlap && p != 1){
 			for(i = 0; i < xGridPositions.length; i = i + 1){
 				x = xGridPositions[i];
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
 
 				if(xLabelPriorities.numberArray[i] == p){
 					text = xLabels.stringArray[i].stringx;
 
-					r.x1 = px - GetTextWidth(text)/2;
-					r.y1 = oy + 5;
+					r.x1 = Math.floor(px - GetTextWidth(text)/2);
+					if(textOnBottom){
+						r.y1 = Math.floor(oy + 5);
+					}else{
+						r.y1 = Math.floor(oy - 20);
+					}
 					r.x2 = r.x1 + GetTextWidth(text);
 					r.y2 = r.y1 + GetTextHeight(text);
 
@@ -664,48 +431,69 @@ export function DrawXLabelsForPriority(p : number, xMin : number, yMin : number,
 	}
 
 
-export function DrawYLabelsForPriority(p : number, yMin : number, xMin : number, xMax : number, xLength : number, xLengthPixels : number, yLength : number, xPixelMin : number, yPixelMin : number, yLengthPixels : number, nextRectangle : NumberReference, gridLabelColor : RGBA, canvas : RGBABitmapImage, yGridPositions : number [], yLabels : StringArrayReference, yLabelPriorities : NumberArrayReference, occupied : Rectangle []) : void{
-		var overlap : boolean;
-		var i : number, j : number, y : number, py : number, ox : number;
+export function DrawYLabelsForPriority(p : number, yMin : number, ox : number, yMax : number, yPixelMin : number, yPixelMax : number, nextRectangle : NumberReference, gridLabelColor : RGBA, canvas : RGBABitmapImage, yGridPositions : number [], yLabels : StringArrayReference, yLabelPriorities : NumberArrayReference, occupied : Rectangle [], textOnLeft : boolean) : void{
+		var overlap : boolean, currentOverlaps : boolean;
+		var i : number, j : number, y : number, py : number, padding : number;
 		var text : string [];
 		var r : Rectangle;
 
 		r = new Rectangle();
-
-		if(xMin < 0 && xMax > 0){
-			ox = MapXCoordinates(0, xMin, xLength, xPixelMin, xLengthPixels);
-		}else{
-			ox = MapXCoordinates(xMin, xMin, xLength, xPixelMin, xLengthPixels);
-		}
+		padding = 10;
 
 		overlap = false;
 		for(i = 0; i < yLabels.stringArray.length; i = i + 1){
 			if(yLabelPriorities.numberArray[i] == p){
 
 				y = yGridPositions[i];
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 				text = yLabels.stringArray[i].stringx;
 
-				r.x1 = ox - GetTextWidth(text) - 10;
-				r.y1 = py - 6;
+				if(textOnLeft){
+					r.x1 = Math.floor(ox - GetTextWidth(text) - 10);
+				}else{
+					r.x1 = Math.floor(ox + 10);
+				}
+				r.y1 = Math.floor(py - 6);
 				r.x2 = r.x1 + GetTextWidth(text);
 				r.y2 = r.y1 + GetTextHeight(text);
 
+				/* Add padding*/
+				r.x1 = r.x1 - padding;
+				r.y1 = r.y1 - padding;
+				r.x2 = r.x2 + padding;
+				r.y2 = r.y2 + padding;
+
+				currentOverlaps = false;
+
 				for(j = 0; j < nextRectangle.numberValue; j = j + 1){
-					overlap = overlap || RectanglesOverlap(r, occupied[j]);
+					currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[j]);
 				}
+
+				/* Draw labels with priority 1 if they do not overlap anything else.*/
+				if(!currentOverlaps && p == 1){
+					DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor);
+
+					CopyRectangleValues(occupied[nextRectangle.numberValue], r);
+					nextRectangle.numberValue = nextRectangle.numberValue + 1;
+				}
+
+				overlap = overlap || currentOverlaps;
 			}
 		}
-		if(!overlap){
+		if(!overlap && p != 1){
 			for(i = 0; i < yGridPositions.length; i = i + 1){
 				y = yGridPositions[i];
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 
 				if(yLabelPriorities.numberArray[i] == p){
 					text = yLabels.stringArray[i].stringx;
 
-					r.x1 = ox - GetTextWidth(text) - 10;
-					r.y1 = py - 6;
+					if(textOnLeft){
+						r.x1 = Math.floor(ox - GetTextWidth(text) - 10);
+					}else{
+						r.x1 = Math.floor(ox + 10);
+					}
+					r.y1 = Math.floor(py - 6);
 					r.x2 = r.x1 + GetTextWidth(text);
 					r.y2 = r.y1 + GetTextHeight(text);
 
@@ -716,23 +504,6 @@ export function DrawYLabelsForPriority(p : number, yMin : number, xMin : number,
 				}
 			}
 		}
-	}
-
-
-export function DrawTextUpwards(text : string [], x : number, y : number, canvas : RGBABitmapImage) : void{
-		var buffer : RGBABitmapImage;
-		var rotated : RGBABitmapImage;
-		buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent());
-		DrawText(buffer, 0, 0, text, GetBlack());
-		rotated = RotateAntiClockwise90Degrees(buffer);
-		DrawImageOnImage(canvas, rotated, x, y);
-		DeleteImage(buffer);
-		DeleteImage(rotated);
-	}
-
-
-export function RoundToDigits(element : number, digitsAfterPoint : number) : number{
-		return Round(element*10**digitsAfterPoint)/10**digitsAfterPoint;
 	}
 
 
@@ -815,7 +586,7 @@ export function ComputeGridLinePositions(cMin : number, cMax : number, labels : 
 
 			/* 0 has lowest priority.*/
 			if(EpsilonCompare(num, 0, 10**(p - 5))){
-				priority = 10;
+				priority = 3;
 			}
 
 			priorities.numberArray[i] = priority;
@@ -836,6 +607,48 @@ export function ComputeGridLinePositions(cMin : number, cMax : number, labels : 
 	}
 
 
+export function MapYCoordinate(y : number, yMin : number, yMax : number, yPixelMin : number, yPixelMax : number) : number{
+		var yLength : number, yPixelLength : number;
+
+		yLength = yMax - yMin;
+		yPixelLength = yPixelMax - yPixelMin;
+
+		y = y - yMin;
+		y = y*yPixelLength/yLength;
+		y = yPixelLength - y;
+		y = y + yPixelMin;
+		return y;
+	}
+
+
+export function MapXCoordinate(x : number, xMin : number, xMax : number, xPixelMin : number, xPixelMax : number) : number{
+		var xLength : number, xPixelLength : number;
+
+		xLength = xMax - xMin;
+		xPixelLength = xPixelMax - xPixelMin;
+
+		x = x - xMin;
+		x = x*xPixelLength/xLength;
+		x = x + xPixelMin;
+		return x;
+	}
+
+
+export function MapXCoordinateAutoSettings(x : number, image : RGBABitmapImage, xs : number []) : number{
+		return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1 - GetDefaultPaddingPercentage())*ImageWidth(image));
+	}
+
+
+export function MapYCoordinateAutoSettings(y : number, image : RGBABitmapImage, ys : number []) : number{
+		return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1 - GetDefaultPaddingPercentage())*ImageHeight(image));
+	}
+
+
+export function GetDefaultPaddingPercentage() : number{
+		return 0.10;
+	}
+
+
 export function DrawText(canvas : RGBABitmapImage, x : number, y : number, text : string [], color : RGBA) : void{
 		var i : number, charWidth : number, spacing : number;
 
@@ -848,20 +661,881 @@ export function DrawText(canvas : RGBABitmapImage, x : number, y : number, text 
 	}
 
 
-export function MapYCoordinates(y : number, ymin : number, yLength : number, yPixelMin : number, yPixelLength : number) : number{
-		y = y - ymin;
-		y = y*yPixelLength/yLength;
-		y = yPixelLength - y;
-		y = y + yPixelMin;
-		return y;
+export function DrawTextUpwards(canvas : RGBABitmapImage, x : number, y : number, text : string [], color : RGBA) : void{
+		var buffer : RGBABitmapImage, rotated : RGBABitmapImage;
+
+		buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent());
+		DrawText(buffer, 0, 0, text, color);
+		rotated = RotateAntiClockwise90Degrees(buffer);
+		DrawImageOnImage(canvas, rotated, x, y);
+		DeleteImage(buffer);
+		DeleteImage(rotated);
 	}
 
 
-export function MapXCoordinates(x : number, xmin : number, xLength : number, xPixelMin : number, xPixelLength : number) : number{
-		x = x - xmin;
-		x = x*xPixelLength/xLength;
-		x = x + xPixelMin;
-		return x;
+export function GetDefaultScatterPlotSettings() : ScatterPlotSettings{
+		var settings : ScatterPlotSettings;
+
+		settings = new ScatterPlotSettings();
+
+		settings.autoBoundaries = true;
+		settings.xMax = 0;
+		settings.xMin = 0;
+		settings.yMax = 0;
+		settings.yMin = 0;
+		settings.autoPadding = true;
+		settings.xPadding = 0;
+		settings.yPadding = 0;
+		settings.title = "".split('');
+		settings.yLabel = "".split('');
+		settings.xLabel = "".split('');
+		settings.scatterPlotSeries = new Array<ScatterPlotSeries>(0);
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.1);
+		settings.xAxisAuto = true;
+		settings.xAxisTop = false;
+		settings.xAxisBottom = false;
+		settings.yAxisAuto = true;
+		settings.yAxisLeft = false;
+		settings.yAxisRight = false;
+
+		return settings;
+	}
+
+
+export function GetDefaultScatterPlotSeriesSettings() : ScatterPlotSeries{
+		var series : ScatterPlotSeries;
+
+		series = new ScatterPlotSeries();
+
+		series.linearInterpolation = true;
+		series.pointType = "pixels".split('');
+		series.lineType = "solid".split('');
+		series.lineThickness = 1;
+		series.xs = new Array<number>(0);
+		series.ys = new Array<number>(0);
+		series.color = GetBlack();
+
+		return series;
+	}
+
+
+export function DrawScatterPlot(canvasReference : RGBABitmapImageReference, width : number, height : number, xs : number [], ys : number []) : void{
+		var settings : ScatterPlotSettings;
+
+		settings = GetDefaultScatterPlotSettings();
+
+		settings.width = width;
+		settings.height = height;
+		settings.scatterPlotSeries = new Array<ScatterPlotSeries>(1);
+		settings.scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
+		delete settings.scatterPlotSeries[0].xs;
+		settings.scatterPlotSeries[0].xs = xs;
+		delete settings.scatterPlotSeries[0].ys;
+		settings.scatterPlotSeries[0].ys = ys;
+
+		DrawScatterPlotFromSettings(canvasReference, settings);
+	}
+
+
+export function DrawScatterPlotFromSettings(canvasReference : RGBABitmapImageReference, settings : ScatterPlotSettings) : boolean{
+		var xMin : number, xMax : number, yMin : number, yMax : number, xLength : number, yLength : number, i : number, x : number, y : number, xPrev : number, yPrev : number, px : number, py : number, pxPrev : number, pyPrev : number, originX : number, originY : number, p : number, l : number, plot : number;
+		var xPadding : number, yPadding : number, originXPixels : number, originYPixels : number;
+		var xPixelMin : number, yPixelMin : number, xPixelMax : number, yPixelMax : number, xLengthPixels : number, yLengthPixels : number, axisLabelPadding : number;
+		var nextRectangle : NumberReference, x1Ref : NumberReference, y1Ref : NumberReference, x2Ref : NumberReference, y2Ref : NumberReference, patternOffset : NumberReference;
+		var prevSet : boolean, success : boolean;
+		var gridLabelColor : RGBA;
+		var canvas : RGBABitmapImage;
+		var xs : number [], ys : number [];
+		var linearInterpolation : boolean;
+		var sp : ScatterPlotSeries;
+		var xGridPositions : number [], yGridPositions : number [];
+		var xLabels : StringArrayReference, yLabels : StringArrayReference;
+		var xLabelPriorities : NumberArrayReference, yLabelPriorities : NumberArrayReference;
+		var occupied : Rectangle [];
+		var linePattern : boolean [];
+		var originXInside : boolean, originYInside : boolean, textOnLeft : boolean, textOnBottom : boolean;
+		var originTextX : number, originTextY : number, originTextXPixels : number, originTextYPixels : number, side : number;
+
+		canvas = CreateImage(settings.width, settings.height, GetWhite());
+		patternOffset = CreateNumberReference(0);
+
+		success = ScatterPlotFromSettingsValid(settings);
+
+		if(success){
+
+			if(settings.scatterPlotSeries.length >= 1){
+				xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
+				xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
+				yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
+				yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
+			}else{
+				xMin = -10;
+				xMax = 10;
+				yMin = -10;
+				yMax = 10;
+			}
+
+			if(!settings.autoBoundaries){
+				xMin = settings.xMin;
+				xMax = settings.xMax;
+				yMin = settings.yMin;
+				yMax = settings.yMax;
+			}else{
+				for(plot = 1; plot < settings.scatterPlotSeries.length; plot = plot + 1){
+					sp = settings.scatterPlotSeries[plot];
+
+					xMin = Math.min(xMin, GetMinimum(sp.xs));
+					xMax = Math.max(xMax, GetMaximum(sp.xs));
+					yMin = Math.min(yMin, GetMinimum(sp.ys));
+					yMax = Math.max(yMax, GetMaximum(sp.ys));
+				}
+			}
+
+			xLength = xMax - xMin;
+			yLength = yMax - yMin;
+
+			if(settings.autoPadding){
+				xPadding = Math.floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
+				yPadding = Math.floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+			}else{
+				xPadding = settings.xPadding;
+				yPadding = settings.yPadding;
+			}
+
+			/* Draw title*/
+			DrawText(canvas, Math.floor(ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2), Math.floor(yPadding/3), settings.title, GetBlack());
+
+			/* Draw grid*/
+			xPixelMin = xPadding;
+			yPixelMin = yPadding;
+			xPixelMax = ImageWidth(canvas) - xPadding;
+			yPixelMax = ImageHeight(canvas) - yPadding;
+			xLengthPixels = xPixelMax - xPixelMin;
+			yLengthPixels = yPixelMax - yPixelMin;
+			DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
+
+			gridLabelColor = GetGray(0.5);
+
+			xLabels = new StringArrayReference();
+			xLabelPriorities = new NumberArrayReference();
+			yLabels = new StringArrayReference();
+			yLabelPriorities = new NumberArrayReference();
+			xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities);
+			yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
+
+			if(settings.showGrid){
+				/* X-grid*/
+				for(i = 0; i < xGridPositions.length; i = i + 1){
+					x = xGridPositions[i];
+					px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+					DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor);
+				}
+
+				/* Y-grid*/
+				for(i = 0; i < yGridPositions.length; i = i + 1){
+					y = yGridPositions[i];
+					py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+					DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+				}
+			}
+
+			/* Compute origin information.*/
+			originYInside = yMin < 0 && yMax > 0;
+			originY = 0;
+			if(settings.xAxisAuto){
+				if(originYInside){
+					originY = 0;
+				}else{
+					originY = yMin;
+				}
+			}else{
+if(settings.xAxisTop){
+					originY = yMax;
+				}
+				if(settings.xAxisBottom){
+					originY = yMin;
+				}
+			}
+			originYPixels = MapYCoordinate(originY, yMin, yMax, yPixelMin, yPixelMax);
+
+			originXInside = xMin < 0 && xMax > 0;
+			originX = 0;
+			if(settings.yAxisAuto){
+				if(originXInside){
+					originX = 0;
+				}else{
+					originX = xMin;
+				}
+			}else{
+if(settings.yAxisLeft){
+					originX = xMin;
+				}
+				if(settings.yAxisRight){
+					originX = xMax;
+				}
+			}
+			originXPixels = MapXCoordinate(originX, xMin, xMax, xPixelMin, xPixelMax);
+
+			if(originYInside){
+				originTextY = 0;
+			}else{
+				originTextY = yMin + yLength/2;
+			}
+			originTextYPixels = MapYCoordinate(originTextY, yMin, yMax, yPixelMin, yPixelMax);
+
+			if(originXInside){
+				originTextX = 0;
+			}else{
+				originTextX = xMin + xLength/2;
+			}
+			originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax);
+
+			/* Labels*/
+			occupied = new Array<Rectangle>(xLabels.stringArray.length + yLabels.stringArray.length);
+			for(i = 0; i < occupied.length; i = i + 1){
+				occupied[i] = CreateRectangle(0, 0, 0, 0);
+			}
+			nextRectangle = CreateNumberReference(0);
+
+			/* x labels*/
+			for(i = 1; i <= 5; i = i + 1){
+				textOnBottom = true;
+				if(!settings.xAxisAuto && settings.xAxisTop){
+					textOnBottom = false;
+				}
+				DrawXLabelsForPriority(i, xMin, originYPixels, xMax, xPixelMin, xPixelMax, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied, textOnBottom);
+			}
+
+			/* y labels*/
+			for(i = 1; i <= 5; i = i + 1){
+				textOnLeft = true;
+				if(!settings.yAxisAuto && settings.yAxisRight){
+					textOnLeft = false;
+				}
+				DrawYLabelsForPriority(i, yMin, originXPixels, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, textOnLeft);
+			}
+
+			/* Draw origin line axis titles.*/
+			axisLabelPadding = 20;
+
+			/* x origin line*/
+			if(originYInside){
+				DrawLine1px(canvas, Round(xPixelMin), Round(originYPixels), Round(xPixelMax), Round(originYPixels), GetBlack());
+			}
+
+			/* y origin line*/
+			if(originXInside){
+				DrawLine1px(canvas, Round(originXPixels), Round(yPixelMin), Round(originXPixels), Round(yPixelMax), GetBlack());
+			}
+
+			/* Draw origin axis titles.*/
+			DrawTextUpwards(canvas, 10, Math.floor(originTextYPixels - GetTextWidth(settings.xLabel)/2), settings.xLabel, GetBlack());
+			DrawText(canvas, Math.floor(originTextXPixels - GetTextWidth(settings.yLabel)/2), yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
+
+			/* X-grid-markers*/
+			for(i = 0; i < xGridPositions.length; i = i + 1){
+				x = xGridPositions[i];
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+				p = xLabelPriorities.numberArray[i];
+				l = 1;
+				if(p == 1){
+					l = 8;
+				}else if(p == 2){
+					l = 3;
+				}
+				side = -1;
+				if(!settings.xAxisAuto && settings.xAxisTop){
+					side = 1;
+				}
+				DrawLine1px(canvas, px, originYPixels, px, originYPixels + side*l, GetBlack());
+			}
+
+			/* Y-grid-markers*/
+			for(i = 0; i < yGridPositions.length; i = i + 1){
+				y = yGridPositions[i];
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+				p = yLabelPriorities.numberArray[i];
+				l = 1;
+				if(p == 1){
+					l = 8;
+				}else if(p == 2){
+					l = 3;
+				}
+				side = 1;
+				if(!settings.yAxisAuto && settings.yAxisRight){
+					side = -1;
+				}
+				DrawLine1px(canvas, originXPixels, py, originXPixels + side*l, py, GetBlack());
+			}
+
+			/* Draw points*/
+			for(plot = 0; plot < settings.scatterPlotSeries.length; plot = plot + 1){
+				sp = settings.scatterPlotSeries[plot];
+
+				xs = sp.xs;
+				ys = sp.ys;
+				linearInterpolation = sp.linearInterpolation;
+
+				x1Ref = new NumberReference();
+				y1Ref = new NumberReference();
+				x2Ref = new NumberReference();
+				y2Ref = new NumberReference();
+				if(linearInterpolation){
+					prevSet = false;
+					xPrev = 0;
+					yPrev = 0;
+					for(i = 0; i < xs.length; i = i + 1){
+						x = xs[i];
+						y = ys[i];
+
+						if(prevSet){
+							x1Ref.numberValue = xPrev;
+							y1Ref.numberValue = yPrev;
+							x2Ref.numberValue = x;
+							y2Ref.numberValue = y;
+
+							success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax);
+
+							if(success){
+								pxPrev = Math.floor(MapXCoordinate(x1Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax));
+								pyPrev = Math.floor(MapYCoordinate(y1Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax));
+								px = Math.floor(MapXCoordinate(x2Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax));
+								py = Math.floor(MapYCoordinate(y2Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax));
+
+								if(aStringsEqual(sp.lineType, "solid".split('')) && sp.lineThickness == 1){
+									DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color);
+								}else if(aStringsEqual(sp.lineType, "solid".split(''))){
+									DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color);
+								}else if(aStringsEqual(sp.lineType, "dashed".split(''))){
+									linePattern = GetLinePattern1();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "dotted".split(''))){
+									linePattern = GetLinePattern2();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "dotdash".split(''))){
+									linePattern = GetLinePattern3();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "longdash".split(''))){
+									linePattern = GetLinePattern4();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "twodash".split(''))){
+									linePattern = GetLinePattern5();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}
+							}
+						}
+
+						prevSet = true;
+						xPrev = x;
+						yPrev = y;
+					}
+				}else{
+					for(i = 0; i < xs.length; i = i + 1){
+						x = xs[i];
+						y = ys[i];
+
+						if(x > xMin && x < xMax && y > yMin && y < yMax){
+
+							x = Math.floor(MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax));
+							y = Math.floor(MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax));
+
+							if(aStringsEqual(sp.pointType, "crosses".split(''))){
+								DrawPixel(canvas, x, y, sp.color);
+								DrawPixel(canvas, x + 1, y, sp.color);
+								DrawPixel(canvas, x + 2, y, sp.color);
+								DrawPixel(canvas, x - 1, y, sp.color);
+								DrawPixel(canvas, x - 2, y, sp.color);
+								DrawPixel(canvas, x, y + 1, sp.color);
+								DrawPixel(canvas, x, y + 2, sp.color);
+								DrawPixel(canvas, x, y - 1, sp.color);
+								DrawPixel(canvas, x, y - 2, sp.color);
+							}else if(aStringsEqual(sp.pointType, "circles".split(''))){
+								DrawCircle(canvas, x, y, 3, sp.color);
+							}else if(aStringsEqual(sp.pointType, "dots".split(''))){
+								DrawFilledCircle(canvas, x, y, 3, sp.color);
+							}else if(aStringsEqual(sp.pointType, "triangles".split(''))){
+								DrawTriangle(canvas, x, y, 3, sp.color);
+							}else if(aStringsEqual(sp.pointType, "filled triangles".split(''))){
+								DrawFilledTriangle(canvas, x, y, 3, sp.color);
+							}else if(aStringsEqual(sp.pointType, "pixels".split(''))){
+								DrawPixel(canvas, x, y, sp.color);
+							}
+						}
+					}
+				}
+			}
+
+			DeleteImage(canvasReference.image);
+			canvasReference.image = canvas;
+		}
+
+		return success;
+	}
+
+
+export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : boolean{
+		var success : boolean, found : boolean;
+		var series : ScatterPlotSeries;
+		var i : number;
+
+		success = true;
+
+		/* Check axis placement.*/
+		if(!settings.xAxisAuto){
+			if(settings.xAxisTop && settings.xAxisBottom){
+				success = false;
+			}
+			if(!settings.xAxisTop && !settings.xAxisBottom){
+				success = false;
+			}
+		}
+
+		if(!settings.yAxisAuto){
+			if(settings.yAxisLeft && settings.yAxisRight){
+				success = false;
+			}
+			if(!settings.yAxisLeft && !settings.yAxisRight){
+				success = false;
+			}
+		}
+
+		/* Check series lengths.*/
+		for(i = 0; i < settings.scatterPlotSeries.length; i = i + 1){
+			series = settings.scatterPlotSeries[i];
+			if(series.xs.length != series.ys.length){
+				success = false;
+			}
+			if(series.xs.length == 0){
+				success = false;
+			}
+			if(series.linearInterpolation && series.xs.length == 1){
+				success = false;
+			}
+		}
+
+		/* Check bounds.*/
+		if(!settings.autoBoundaries){
+			if(settings.xMin >= settings.xMax){
+				success = false;
+			}
+			if(settings.yMin >= settings.yMax){
+				success = false;
+			}
+		}
+
+		/* Check padding.*/
+		if(!settings.autoPadding){
+			if(2*settings.xPadding >= settings.width){
+				success = false;
+			}
+			if(2*settings.yPadding >= settings.height){
+				success = false;
+			}
+		}
+
+		/* Check width and height.*/
+		if(settings.width < 0){
+			success = false;
+		}
+		if(settings.height < 0){
+			success = false;
+		}
+
+		/* Check point types.*/
+		for(i = 0; i < settings.scatterPlotSeries.length; i = i + 1){
+			series = settings.scatterPlotSeries[i];
+
+			if(series.lineThickness < 0){
+				success = false;
+			}
+
+			if(!series.linearInterpolation){
+				/* Point type.*/
+				found = false;
+				if(aStringsEqual(series.pointType, "crosses".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "circles".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "dots".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "triangles".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "filled triangles".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "pixels".split(''))){
+					found = true;
+				}
+				if(!found){
+					success = false;
+				}
+			}else{
+				/* Line type.*/
+				found = false;
+				if(aStringsEqual(series.lineType, "solid".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "dashed".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "dotted".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "dotdash".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "longdash".split(''))){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "twodash".split(''))){
+					found = true;
+				}
+
+				if(!found){
+					success = false;
+				}
+			}
+		}
+
+		return success;
+	}
+
+
+export function GetDefaultBarPlotSettings() : BarPlotSettings{
+		var settings : BarPlotSettings;
+
+		settings = new BarPlotSettings();
+
+		settings.width = 800;
+		settings.height = 600;
+		settings.autoBoundaries = true;
+		settings.yMax = 0;
+		settings.yMin = 0;
+		settings.autoPadding = true;
+		settings.xPadding = 0;
+		settings.yPadding = 0;
+		settings.title = "".split('');
+		settings.yLabel = "".split('');
+		settings.barPlotSeries = new Array<BarPlotSeries>(0);
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.1);
+		settings.autoColor = true;
+		settings.grayscaleAutoColor = false;
+		settings.autoSpacing = true;
+		settings.groupSeparation = 0;
+		settings.barSeparation = 0;
+		settings.autoLabels = true;
+		settings.xLabels = new Array<StringReference>(0);
+		/*settings.autoLabels = false;
+        settings.xLabels = new StringReference [5];
+        settings.xLabels[0] = CreateStringReference("may 20".toCharArray());
+        settings.xLabels[1] = CreateStringReference("jun 20".toCharArray());
+        settings.xLabels[2] = CreateStringReference("jul 20".toCharArray());
+        settings.xLabels[3] = CreateStringReference("aug 20".toCharArray());
+        settings.xLabels[4] = CreateStringReference("sep 20".toCharArray());*/
+		settings.barBorder = false;
+
+		return settings;
+	}
+
+
+export function GetDefaultBarPlotSeriesSettings() : BarPlotSeries{
+		var series : BarPlotSeries;
+
+		series = new BarPlotSeries();
+
+		series.ys = new Array<number>(0);
+		series.color = GetBlack();
+
+		return series;
+	}
+
+
+export function DrawBarPlot(width : number, height : number, ys : number []) : RGBABitmapImage{
+		var settings : BarPlotSettings;
+		var canvasReference : RGBABitmapImageReference;
+
+		settings = GetDefaultBarPlotSettings();
+
+		settings.barPlotSeries = new Array<BarPlotSeries>(1);
+		settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
+		delete settings.barPlotSeries[0].ys;
+		settings.barPlotSeries[0].ys = ys;
+		canvasReference = new RGBABitmapImageReference();
+		settings.width = width;
+		settings.height = height;
+
+		DrawBarPlotFromSettings(canvasReference, settings);
+
+		return canvasReference.image;
+	}
+
+
+export function DrawBarPlotFromSettings(canvasReference : RGBABitmapImageReference, settings : BarPlotSettings) : boolean{
+		var xPadding : number, yPadding : number;
+		var xPixelMin : number, yPixelMin : number, yPixelMax : number, xPixelMax : number;
+		var xLengthPixels : number, yLengthPixels : number;
+		var s : number, n : number, y : number, x : number, w : number, h : number, yMin : number, yMax : number, b : number, i : number, py : number, yValue : number;
+		var colors : RGBA [];
+		var ys : number [], yGridPositions : number [];
+		var yTop : number, yBottom : number, ss : number, bs : number, yLength : number;
+		var groupSeparation : number, barSeparation : number, barWidth : number, textwidth : number;
+		var yLabels : StringArrayReference;
+		var yLabelPriorities : NumberArrayReference;
+		var occupied : Rectangle [];
+		var nextRectangle : NumberReference;
+		var gridLabelColor : RGBA, barColor : RGBA;
+		var label : string [];
+		var success : boolean;
+		var canvas : RGBABitmapImage;
+
+		success = BarPlotSettingsIsValid(settings);
+
+		if(success){
+
+			canvas = CreateImage(settings.width, settings.height, GetWhite());
+
+			ss = settings.barPlotSeries.length;
+			gridLabelColor = GetGray(0.5);
+
+			/* padding*/
+			if(settings.autoPadding){
+				xPadding = Math.floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
+				yPadding = Math.floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+			}else{
+				xPadding = settings.xPadding;
+				yPadding = settings.yPadding;
+			}
+
+			/* Draw title*/
+			DrawText(canvas, Math.floor(ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2), Math.floor(yPadding/3), settings.title, GetBlack());
+			DrawTextUpwards(canvas, 10, Math.floor(ImageHeight(canvas)/2 - GetTextWidth(settings.yLabel)/2), settings.yLabel, GetBlack());
+
+			/* min and max*/
+			if(settings.autoBoundaries){
+				if(ss >= 1){
+					yMax = GetMaximum(settings.barPlotSeries[0].ys);
+					yMin = Math.min(0, GetMinimum(settings.barPlotSeries[0].ys));
+
+					for(s = 0; s < ss; s = s + 1){
+						yMax = Math.max(yMax, GetMaximum(settings.barPlotSeries[s].ys));
+						yMin = Math.min(yMin, GetMinimum(settings.barPlotSeries[s].ys));
+					}
+				}else{
+					yMax = 10;
+					yMin = 0;
+				}
+			}else{
+				yMin = settings.yMin;
+				yMax = settings.yMax;
+			}
+			yLength = yMax - yMin;
+
+			/* boundaries*/
+			xPixelMin = xPadding;
+			yPixelMin = yPadding;
+			xPixelMax = ImageWidth(canvas) - xPadding;
+			yPixelMax = ImageHeight(canvas) - yPadding;
+			xLengthPixels = xPixelMax - xPixelMin;
+			yLengthPixels = yPixelMax - yPixelMin;
+
+			/* Draw boundary.*/
+			DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
+
+			/* Draw grid lines.*/
+			yLabels = new StringArrayReference();
+			yLabelPriorities = new NumberArrayReference();
+			yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
+
+			if(settings.showGrid){
+				/* Y-grid*/
+				for(i = 0; i < yGridPositions.length; i = i + 1){
+					y = yGridPositions[i];
+					py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+					DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+				}
+			}
+
+			/* Draw origin.*/
+			if(yMin < 0 && yMax > 0){
+				py = MapYCoordinate(0, yMin, yMax, yPixelMin, yPixelMax);
+				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+			}
+
+			/* Labels*/
+			occupied = new Array<Rectangle>(yLabels.stringArray.length);
+			for(i = 0; i < occupied.length; i = i + 1){
+				occupied[i] = CreateRectangle(0, 0, 0, 0);
+			}
+			nextRectangle = CreateNumberReference(0);
+
+			for(i = 1; i <= 5; i = i + 1){
+				DrawYLabelsForPriority(i, yMin, xPixelMin, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, true);
+			}
+
+			/* Draw bars.*/
+			if(settings.autoColor){
+				if(!settings.grayscaleAutoColor){
+					colors = Get8HighContrastColors();
+				}else{
+					colors = new Array<RGBA>(ss);
+					if(ss > 1){
+						for(i = 0; i < ss; i = i + 1){
+							colors[i] = GetGray(0.7 - (i/ss)*0.7);
+						}
+					}else{
+						colors[0] = GetGray(0.5);
+					}
+				}
+			}else{
+				colors = new Array<RGBA>(0);
+			}
+
+			/* distances*/
+			bs = settings.barPlotSeries[0].ys.length;
+
+			if(settings.autoSpacing){
+				groupSeparation = ImageWidth(canvas)*0.05;
+				barSeparation = ImageWidth(canvas)*0.005;
+			}else{
+				groupSeparation = settings.groupSeparation;
+				barSeparation = settings.barSeparation;
+			}
+
+			barWidth = (xLengthPixels - groupSeparation*(bs - 1) - barSeparation*(bs*(ss - 1)))/(bs*ss);
+
+			/* Draw bars.*/
+			b = 0;
+			for(n = 0; n < bs; n = n + 1){
+				for(s = 0; s < ss; s = s + 1){
+					ys = settings.barPlotSeries[s].ys;
+
+					yValue = ys[n];
+
+					yBottom = MapYCoordinate(yValue, yMin, yMax, yPixelMin, yPixelMax);
+					yTop = MapYCoordinate(0, yMin, yMax, yPixelMin, yPixelMax);
+
+					x = xPixelMin + n*(groupSeparation + ss*barWidth) + s*(barWidth) + b*barSeparation;
+					w = barWidth;
+
+					if(yValue >= 0){
+						y = yBottom;
+						h = yTop - y;
+					}else{
+						y = yTop;
+						h = yBottom - yTop;
+					}
+
+					/* Cut at boundaries.*/
+					if(y < yPixelMin && y + h > yPixelMax){
+						y = yPixelMin;
+						h = yPixelMax - yPixelMin;
+					}else if(y < yPixelMin){
+						y = yPixelMin;
+						if(yValue >= 0){
+							h = yTop - y;
+						}else{
+							h = yBottom - y;
+						}
+					}else if(y + h > yPixelMax){
+						h = yPixelMax - y;
+					}
+
+					/* Get color*/
+					if(settings.autoColor){
+						barColor = colors[s];
+					}else{
+						barColor = settings.barPlotSeries[s].color;
+					}
+
+					/* Draw*/
+					if(settings.barBorder){
+						DrawFilledRectangleWithBorder(canvas, Round(x), Round(y), Round(w), Round(h), GetBlack(), barColor);
+					}else{
+						DrawFilledRectangle(canvas, Round(x), Round(y), Round(w), Round(h), barColor);
+					}
+
+					b = b + 1;
+				}
+				b = b - 1;
+			}
+
+			/* x-labels*/
+			for(n = 0; n < bs; n = n + 1){
+				if(settings.autoLabels){
+					label = CreateStringDecimalFromNumber(n + 1);
+				}else{
+					label = settings.xLabels[n].stringx;
+				}
+
+				textwidth = GetTextWidth(label);
+
+				x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1)*barSeparation) + n*groupSeparation - textwidth/2;
+
+				DrawText(canvas, Math.floor(x), ImageHeight(canvas) - yPadding + 20, label, gridLabelColor);
+
+				b = b + 1;
+			}
+
+			canvasReference.image = canvas;
+		}
+
+		return success;
+	}
+
+
+export function BarPlotSettingsIsValid(settings : BarPlotSettings) : boolean{
+		var success : boolean, lengthSet : boolean;
+		var series : BarPlotSeries;
+		var i : number, width : number, height : number, length : number;
+
+		success = true;
+
+		/* Check series lengths.*/
+		lengthSet = false;
+		length = 0;
+		for(i = 0; i < settings.barPlotSeries.length; i = i + 1){
+			series = settings.barPlotSeries[i];
+
+			if(!lengthSet){
+				length = series.ys.length;
+				lengthSet = true;
+			}else if(length != series.ys.length){
+				success = false;
+			}
+		}
+
+		/* Check bounds.*/
+		if(!settings.autoBoundaries){
+			if(settings.yMin >= settings.yMax){
+				success = false;
+			}
+		}
+
+		/* Check padding.*/
+		if(!settings.autoPadding){
+			if(2*settings.xPadding >= settings.width){
+				success = false;
+			}
+			if(2*settings.yPadding >= settings.height){
+				success = false;
+			}
+		}
+
+		/* Check width and height.*/
+		if(settings.width < 0){
+			success = false;
+		}
+		if(settings.height < 0){
+			success = false;
+		}
+
+		/* Check spacing*/
+		if(!settings.autoSpacing){
+			if(settings.groupSeparation < 0){
+				success = false;
+			}
+			if(settings.barSeparation < 0){
+				success = false;
+			}
+		}
+
+		return success;
 	}
 
 
@@ -889,6 +1563,11 @@ export function GetMaximum(data : number []) : number{
 	}
 
 
+export function RoundToDigits(element : number, digitsAfterPoint : number) : number{
+		return Round(element*10**digitsAfterPoint)/10**digitsAfterPoint;
+	}
+
+
 export function test() : number{
 		var scatterPlotSettings : ScatterPlotSettings;
 		var z : number;
@@ -896,8 +1575,12 @@ export function test() : number{
 		var failures : NumberReference;
 		var labels : StringArrayReference;
 		var labelPriorities : NumberArrayReference;
+		var imageReference : RGBABitmapImageReference;
+		var xs : number [], ys : number [];
 
 		failures = CreateNumberReference(0);
+
+		imageReference = CreateRGBABitmapImageReference();
 
 		scatterPlotSettings = GetDefaultScatterPlotSettings();
 
@@ -939,6 +1622,22 @@ export function test() : number{
 		z = 2;
 		gridlines = ComputeGridLinePositions(-z/2, z/2, labels, labelPriorities);
 		AssertEquals(gridlines.length, 21, failures);
+
+		xs = new Array<number>(5);
+		xs[0] = -2;
+		xs[1] = -1;
+		xs[2] = 0;
+		xs[3] = 1;
+		xs[4] = 2;
+		ys = new Array<number>(5);
+		ys[0] = 2;
+		ys[1] = -1;
+		ys[2] = -2;
+		ys[3] = -1;
+		ys[4] = 2;
+		DrawScatterPlot(imageReference, 800, 600, xs, ys);
+
+		imageReference.image = DrawBarPlot(800, 600, ys);
 
 		return failures.numberValue;
 	}

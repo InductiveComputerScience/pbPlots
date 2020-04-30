@@ -2,6 +2,10 @@
 
 Imports System.Math
 
+Public Class RGBABitmapImageReference
+	Public image As RGBABitmapImage
+End Class
+
 Public Class Rectangle
 	Public x1 As Double
 	Public x2 As Double
@@ -20,7 +24,6 @@ Public Class ScatterPlotSeries
 End Class
 
 Public Class ScatterPlotSettings
-	Public canvas As RGBABitmapImage
 	Public scatterPlotSeries As ScatterPlotSeries ()
 	Public autoBoundaries As Boolean
 	Public xMax As Double
@@ -35,6 +38,43 @@ Public Class ScatterPlotSettings
 	Public title As Char ()
 	Public showGrid As Boolean
 	Public gridColor As RGBA
+	Public xAxisAuto As Boolean
+	Public xAxisTop As Boolean
+	Public xAxisBottom As Boolean
+	Public yAxisAuto As Boolean
+	Public yAxisLeft As Boolean
+	Public yAxisRight As Boolean
+	Public width As Double
+	Public height As Double
+End Class
+
+Public Class BarPlotSeries
+	Public ys As Double ()
+	Public color As RGBA
+End Class
+
+Public Class BarPlotSettings
+	Public width As Double
+	Public height As Double
+	Public autoBoundaries As Boolean
+	Public yMax As Double
+	Public yMin As Double
+	Public autoPadding As Boolean
+	Public xPadding As Double
+	Public yPadding As Double
+	Public title As Char ()
+	Public showGrid As Boolean
+	Public gridColor As RGBA
+	Public barPlotSeries As BarPlotSeries ()
+	Public yLabel As Char ()
+	Public autoColor As Boolean
+	Public grayscaleAutoColor As Boolean
+	Public autoSpacing As Boolean
+	Public groupSeparation As Double
+	Public barSeparation As Double
+	Public autoLabels As Boolean
+	Public xLabels As StringReference ()
+	Public barBorder As Boolean
 End Class
 
 Public Class RGBA
@@ -160,385 +200,6 @@ Public Class DynamicArrayNumbers
 End Class
 
 Module Plots
-	Public Function RectanglesOverlap(ByRef r1 As Rectangle, ByRef r2 As Rectangle) As Boolean
-		Dim overlap As Boolean
-
-		overlap = false
-
-		overlap = overlap Or (r2.x1 >= r1.x1 And r2.x1 <= r1.x2 And r2.y1 >= r1.y1 And r2.y1 <= r1.y2)
-		overlap = overlap Or (r2.x2 >= r1.x1 And r2.x2 <= r1.x2 And r2.y1 >= r1.y1 And r2.y1 <= r1.y2)
-		overlap = overlap Or (r2.x1 >= r1.x1 And r2.x1 <= r1.x2 And r2.y2 >= r1.y1 And r2.y2 <= r1.y2)
-		overlap = overlap Or (r2.x2 >= r1.x1 And r2.x2 <= r1.x2 And r2.y2 >= r1.y1 And r2.y2 <= r1.y2)
-
-		Return overlap
-	End Function
-
-
-	Public Function CreateRectangle(x1 As Double, y1 As Double, x2 As Double, y2 As Double) As Rectangle
-		Dim r As Rectangle
-		r = New Rectangle()
-		r.x1 = x1
-		r.y1 = y1
-		r.x2 = x2
-		r.y2 = y2
-		Return r
-	End Function
-
-
-	Public Sub CopyRectangleValues(ByRef rd As Rectangle, ByRef rs As Rectangle)
-		rd.x1 = rs.x1
-		rd.y1 = rs.y1
-		rd.x2 = rs.x2
-		rd.y2 = rs.y2
-	End Sub
-
-
-	Public Function GetDefaultScatterPlotSettings() As ScatterPlotSettings
-		Dim settings As ScatterPlotSettings
-
-		settings = New ScatterPlotSettings()
-
-		settings.autoBoundaries = true
-		settings.autoPadding = true
-		settings.title = "".ToCharArray()
-		settings.yLabel = "".ToCharArray()
-		settings.xLabel = "".ToCharArray()
-		settings.scatterPlotSeries = New ScatterPlotSeries (0 - 1){}
-		settings.showGrid = true
-		settings.gridColor = GetGray(0.2)
-
-		Return settings
-	End Function
-
-
-	Public Function GetDefaultScatterPlotSeriesSettings() As ScatterPlotSeries
-		Dim series As ScatterPlotSeries
-
-		series = New ScatterPlotSeries()
-
-		series.linearInterpolation = true
-		series.pointType = "pixels".ToCharArray()
-		series.lineType = "solid".ToCharArray()
-		series.lineThickness = 1
-		series.xs = New Double (0 - 1){}
-		series.ys = New Double (0 - 1){}
-		series.color = GetBlack()
-
-		Return series
-	End Function
-
-
-	Public Sub DrawScatterPlot(ByRef canvas As RGBABitmapImage, ByRef xs As Double (), ByRef ys As Double ())
-		Dim settings As ScatterPlotSettings
-
-		settings = GetDefaultScatterPlotSettings()
-
-		settings.canvas = canvas
-		settings.scatterPlotSeries = New ScatterPlotSeries (1 - 1){}
-		settings.scatterPlotSeries(0) = GetDefaultScatterPlotSeriesSettings()
-		Erase settings.scatterPlotSeries(0).xs 
-		settings.scatterPlotSeries(0).xs = xs
-		Erase settings.scatterPlotSeries(0).ys 
-		settings.scatterPlotSeries(0).ys = ys
-
-		Call DrawScatterPlotFromSettings(settings)
-	End Sub
-
-
-	Public Sub DrawScatterPlotFromSettings(ByRef settings As ScatterPlotSettings)
-		Dim xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, xOrigin, yOrigin, p, l, plot As Double
-		Dim xPadding, yPadding, xOriginPixels, yOriginPixels As Double
-		Dim xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding As Double
-		Dim nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset As NumberReference
-		Dim prevSet, success As Boolean
-		Dim gridLabelColor As RGBA
-		Dim canvas As RGBABitmapImage
-		Dim xs, ys As Double ()
-		Dim linearInterpolation As Boolean
-		Dim sp As ScatterPlotSeries
-		Dim xGridPositions, yGridPositions As Double ()
-		Dim xLabels, yLabels As StringArrayReference
-		Dim xLabelPriorities, yLabelPriorities As NumberArrayReference
-		Dim occupied As Rectangle ()
-		Dim linePattern As Boolean ()
-
-		canvas = settings.canvas
-		patternOffset = CreateNumberReference(0)
-
-		If settings.scatterPlotSeries.Length >= 1
-			xMin = GetMinimum(settings.scatterPlotSeries(0).xs)
-			xMax = GetMaximum(settings.scatterPlotSeries(0).xs)
-			yMin = GetMinimum(settings.scatterPlotSeries(0).ys)
-			yMax = GetMaximum(settings.scatterPlotSeries(0).ys)
-		Else
-			xMin = -10
-			xMax = 10
-			yMin = -10
-			yMax = 10
-		End If
-
-		If Not settings.autoBoundaries
-			xMin = settings.xMin
-			xMax = settings.xMax
-			yMin = settings.yMin
-			yMax = settings.yMax
-		Else
-			plot = 1
-			While plot < settings.scatterPlotSeries.Length
-				sp = settings.scatterPlotSeries(plot)
-
-				xMin = Min(xMin, GetMinimum(sp.xs))
-				xMax = Max(xMax, GetMaximum(sp.xs))
-				yMin = Min(yMin, GetMinimum(sp.ys))
-				yMax = Max(yMax, GetMaximum(sp.ys))
-				plot = plot + 1
-			End While
-		End If
-
-		xLength = xMax - xMin
-		yLength = yMax - yMin
-
-		If settings.autoPadding
-			xPadding = 0.10*ImageWidth(canvas)
-			yPadding = 0.10*ImageHeight(canvas)
-		Else
-			xPadding = settings.xPadding
-			yPadding = settings.yPadding
-		End If
-
-		' Draw title
-		Call DrawText(canvas, ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2, yPadding/3, settings.title, GetBlack())
-
-		' Draw grid
-		xPixelMin = xPadding
-		yPixelMin = yPadding
-		xPixelMax = ImageWidth(canvas) - xPadding
-		yPixelMax = ImageHeight(canvas) - yPadding
-		xLengthPixels = xPixelMax - xPixelMin
-		yLengthPixels = yPixelMax - yPixelMin
-		Call DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
-
-		gridLabelColor = GetGray(0.5)
-
-		xLabels = New StringArrayReference()
-		xLabelPriorities = New NumberArrayReference()
-		yLabels = New StringArrayReference()
-		yLabelPriorities = New NumberArrayReference()
-		xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities)
-		yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities)
-
-		If settings.showGrid
-			' X-grid
-			i = 0
-			While i < xGridPositions.Length
-				x = xGridPositions(i)
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
-				Call DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor)
-				i = i + 1
-			End While
-
-			' Y-grid
-			i = 0
-			While i < yGridPositions.Length
-				y = yGridPositions(i)
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
-				Call DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
-				i = i + 1
-			End While
-		End If
-
-		' Labels
-		occupied = New Rectangle (xLabels.stringArray.Length + yLabels.stringArray.Length - 1){}
-		i = 0
-		While i < occupied.Length
-			occupied(i) = CreateRectangle(0, 0, 0, 0)
-			i = i + 1
-		End While
-		nextRectangle = CreateNumberReference(0)
-
-		i = 1
-		While i <= 5
-			Call DrawXLabelsForPriority(i, xMin, yMin, yMax, yLength, yLengthPixels, xLength, xPixelMin, yPixelMin, xLengthPixels, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied)
-			i = i + 1
-		End While
-
-		i = 1
-		While i <= 5
-			Call DrawYLabelsForPriority(i, yMin, xMin, xMax, xLength, xLengthPixels, yLength, xPixelMin, yPixelMin, yLengthPixels, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied)
-			i = i + 1
-		End While
-
-		' Draw origin and axis titles.
-		axisLabelPadding = 20
-		If yMin < 0 And yMax > 0
-			yOrigin = 0
-		Else
-			yOrigin = yMin + (yMax - yMin)/2
-		End If
-		yOriginPixels = MapYCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels)
-		If yMin < 0 And yMax > 0
-			Call DrawLine1px(canvas, Roundx(xPixelMin), Roundx(yOriginPixels), Roundx(xPixelMax), Roundx(yOriginPixels), GetBlack())
-		End If
-		Call DrawTextUpwards(settings.xLabel, 10, yOriginPixels - GetTextWidth(settings.xLabel)/2, canvas)
-
-		If xMin < 0 And xMax > 0
-			xOrigin = 0
-		Else
-			xOrigin = xMin + (xMax - xMin)/2
-		End If
-		xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels)
-		If xMin < 0 And xMax > 0
-			Call DrawLine1px(canvas, Roundx(xOriginPixels), Roundx(yPixelMin), Roundx(xOriginPixels), Roundx(yPixelMax), GetBlack())
-		End If
-		Call DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
-
-		' X-grid-markers
-		If yMin < 0 And yMax > 0
-		Else
-			yOrigin = yMax
-			yOriginPixels = MapXCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels)
-		End If
-		i = 0
-		While i < xGridPositions.Length
-			x = xGridPositions(i)
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
-			p = xLabelPriorities.numberArray(i)
-			l = 1
-			If p = 1
-				l = 8
-			ElseIf p = 2
-				l = 3
-			End If
-			Call DrawLine1px(canvas, px, yOriginPixels, px, yOriginPixels - l, GetBlack())
-			i = i + 1
-		End While
-
-		' Y-grid-markers
-		If xMin < 0 And xMax > 0
-		Else
-			xOrigin = xMin
-			xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels)
-		End If
-		i = 0
-		While i < yGridPositions.Length
-			y = yGridPositions(i)
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
-			p = yLabelPriorities.numberArray(i)
-			l = 1
-			If p = 1
-				l = 8
-			ElseIf p = 2
-				l = 3
-			End If
-			Call DrawLine1px(canvas, xOriginPixels, py, xOriginPixels + l, py, GetBlack())
-			i = i + 1
-		End While
-
-		' Draw points
-		plot = 0
-		While plot < settings.scatterPlotSeries.Length
-			sp = settings.scatterPlotSeries(plot)
-
-			xs = sp.xs
-			ys = sp.ys
-			linearInterpolation = sp.linearInterpolation
-
-			x1Ref = New NumberReference()
-			y1Ref = New NumberReference()
-			x2Ref = New NumberReference()
-			y2Ref = New NumberReference()
-			If linearInterpolation
-				prevSet = false
-				xPrev = 0
-				yPrev = 0
-				i = 0
-				While i < xs.Length
-					x = xs(i)
-					y = ys(i)
-
-					If prevSet
-						x1Ref.numberValue = xPrev
-						y1Ref.numberValue = yPrev
-						x2Ref.numberValue = x
-						y2Ref.numberValue = y
-
-						success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
-
-						If success
-							pxPrev = MapXCoordinates(x1Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels)
-							pyPrev = MapYCoordinates(y1Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels)
-							px = MapXCoordinates(x2Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels)
-							py = MapYCoordinates(y2Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels)
-
-							If aStringsEqual(sp.lineType, "solid".ToCharArray()) And sp.lineThickness = 1
-								Call DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color)
-							ElseIf aStringsEqual(sp.lineType, "solid".ToCharArray())
-								Call DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color)
-							ElseIf aStringsEqual(sp.lineType, "dashed".ToCharArray())
-								linePattern = GetLinePattern1()
-								Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-							ElseIf aStringsEqual(sp.lineType, "dotted".ToCharArray())
-								linePattern = GetLinePattern2()
-								Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-							ElseIf aStringsEqual(sp.lineType, "dotdash".ToCharArray())
-								linePattern = GetLinePattern3()
-								Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-							ElseIf aStringsEqual(sp.lineType, "longdash".ToCharArray())
-								linePattern = GetLinePattern4()
-								Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-							ElseIf aStringsEqual(sp.lineType, "twodash".ToCharArray())
-								linePattern = GetLinePattern5()
-								Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-							End If
-						End If
-					End If
-
-					prevSet = true
-					xPrev = x
-					yPrev = y
-					i = i + 1
-				End While
-			Else
-				i = 0
-				While i < xs.Length
-					x = xs(i)
-					y = ys(i)
-
-					If x > xMin And x < xMax And y > yMin And y < yMax
-
-						x = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
-						y = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
-
-						If aStringsEqual(sp.pointType, "crosses".ToCharArray())
-							Call DrawPixel(canvas, x, y, sp.color)
-							Call DrawPixel(canvas, x + 1, y, sp.color)
-							Call DrawPixel(canvas, x + 2, y, sp.color)
-							Call DrawPixel(canvas, x - 1, y, sp.color)
-							Call DrawPixel(canvas, x - 2, y, sp.color)
-							Call DrawPixel(canvas, x, y + 1, sp.color)
-							Call DrawPixel(canvas, x, y + 2, sp.color)
-							Call DrawPixel(canvas, x, y - 1, sp.color)
-							Call DrawPixel(canvas, x, y - 2, sp.color)
-						ElseIf aStringsEqual(sp.pointType, "circles".ToCharArray())
-							Call DrawCircle(canvas, x, y, 3, sp.color)
-						ElseIf aStringsEqual(sp.pointType, "dots".ToCharArray())
-							Call DrawFilledCircle(canvas, x, y, 3, sp.color)
-						ElseIf aStringsEqual(sp.pointType, "triangles".ToCharArray())
-							Call DrawTriangle(canvas, x, y, 3, sp.color)
-						ElseIf aStringsEqual(sp.pointType, "filled triangles".ToCharArray())
-							Call DrawFilledTriangle(canvas, x, y, 3, sp.color)
-						ElseIf aStringsEqual(sp.pointType, "pixels".ToCharArray())
-							Call DrawPixel(canvas, x, y, sp.color)
-						End If
-					End If
-					i = i + 1
-				End While
-			End If
-			plot = plot + 1
-		End While
-	End Sub
-
-
 	Public Function CropLineWithinBoundary(ByRef x1Ref As NumberReference, ByRef y1Ref As NumberReference, ByRef x2Ref As NumberReference, ByRef y2Ref As NumberReference, xMin As Double, xMax As Double, yMin As Double, yMax As Double) As Boolean
 		Dim x1, y1, x2, y2 As Double
 		Dim success, p1In, p2In As Boolean
@@ -658,19 +319,81 @@ Module Plots
 	End Function
 
 
-	Public Sub DrawXLabelsForPriority(p As Double, xMin As Double, yMin As Double, yMax As Double, yLength As Double, yLengthPixels As Double, xLength As Double, xPixelMin As Double, yPixelMin As Double, xLengthPixels As Double, ByRef nextRectangle As NumberReference, ByRef gridLabelColor As RGBA, ByRef canvas As RGBABitmapImage, ByRef xGridPositions As Double (), ByRef xLabels As StringArrayReference, ByRef xLabelPriorities As NumberArrayReference, ByRef occupied As Rectangle ())
+	Public Function Get8HighContrastColors() As RGBA ()
+		Dim colors As RGBA ()
+		colors = New RGBA (8 - 1){}
+		colors(0) = CreateRGBColor(3/256, 146/256, 206/256)
+		colors(1) = CreateRGBColor(253/256, 83/256, 8/256)
+		colors(2) = CreateRGBColor(102/256, 176/256, 50/256)
+		colors(3) = CreateRGBColor(208/256, 234/256, 43/256)
+		colors(4) = CreateRGBColor(167/256, 25/256, 75/256)
+		colors(5) = CreateRGBColor(254/256, 254/256, 51/256)
+		colors(6) = CreateRGBColor(134/256, 1/256, 175/256)
+		colors(7) = CreateRGBColor(251/256, 153/256, 2/256)
+		Return colors
+	End Function
+
+
+	Public Sub DrawFilledRectangleWithBorder(ByRef image As RGBABitmapImage, x As Double, y As Double, w As Double, h As Double, ByRef borderColor As RGBA, ByRef fillColor As RGBA)
+		If h > 0 And w > 0
+			Call DrawFilledRectangle(image, x, y, w, h, fillColor)
+			Call DrawRectangle1px(image, x, y, w, h, borderColor)
+		End If
+	End Sub
+
+
+	Public Function CreateRGBABitmapImageReference() As RGBABitmapImageReference
+		Dim reference As RGBABitmapImageReference
+
+		reference = New RGBABitmapImageReference()
+		reference.image = New RGBABitmapImage()
+		reference.image.x = New RGBABitmap (0 - 1){}
+
+		Return reference
+	End Function
+
+
+	Public Function RectanglesOverlap(ByRef r1 As Rectangle, ByRef r2 As Rectangle) As Boolean
 		Dim overlap As Boolean
-		Dim i, j, x, px, oy As Double
+
+		overlap = false
+
+		overlap = overlap Or (r2.x1 >= r1.x1 And r2.x1 <= r1.x2 And r2.y1 >= r1.y1 And r2.y1 <= r1.y2)
+		overlap = overlap Or (r2.x2 >= r1.x1 And r2.x2 <= r1.x2 And r2.y1 >= r1.y1 And r2.y1 <= r1.y2)
+		overlap = overlap Or (r2.x1 >= r1.x1 And r2.x1 <= r1.x2 And r2.y2 >= r1.y1 And r2.y2 <= r1.y2)
+		overlap = overlap Or (r2.x2 >= r1.x1 And r2.x2 <= r1.x2 And r2.y2 >= r1.y1 And r2.y2 <= r1.y2)
+
+		Return overlap
+	End Function
+
+
+	Public Function CreateRectangle(x1 As Double, y1 As Double, x2 As Double, y2 As Double) As Rectangle
+		Dim r As Rectangle
+		r = New Rectangle()
+		r.x1 = x1
+		r.y1 = y1
+		r.x2 = x2
+		r.y2 = y2
+		Return r
+	End Function
+
+
+	Public Sub CopyRectangleValues(ByRef rd As Rectangle, ByRef rs As Rectangle)
+		rd.x1 = rs.x1
+		rd.y1 = rs.y1
+		rd.x2 = rs.x2
+		rd.y2 = rs.y2
+	End Sub
+
+
+	Public Sub DrawXLabelsForPriority(p As Double, xMin As Double, oy As Double, xMax As Double, xPixelMin As Double, xPixelMax As Double, ByRef nextRectangle As NumberReference, ByRef gridLabelColor As RGBA, ByRef canvas As RGBABitmapImage, ByRef xGridPositions As Double (), ByRef xLabels As StringArrayReference, ByRef xLabelPriorities As NumberArrayReference, ByRef occupied As Rectangle (), textOnBottom As Boolean)
+		Dim overlap, currentOverlaps As Boolean
+		Dim i, j, x, px, padding As Double
 		Dim text As Char ()
 		Dim r As Rectangle
 
 		r = New Rectangle()
-
-		If yMin < 0 And yMax > 0
-			oy = MapYCoordinates(0, yMin, yLength, yPixelMin, yLengthPixels)
-		Else
-			oy = MapYCoordinates(yMin, yMin, yLength, yPixelMin, yLengthPixels)
-		End If
+		padding = 10
 
 		overlap = false
 		i = 0
@@ -678,33 +401,58 @@ Module Plots
 			If xLabelPriorities.numberArray(i) = p
 
 				x = xGridPositions(i)
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
 				text = xLabels.stringArray(i).stringx
 
-				r.x1 = px - GetTextWidth(text)/2
-				r.y1 = oy + 5
+				r.x1 = Floor(px - GetTextWidth(text)/2)
+				If textOnBottom
+					r.y1 = Floor(oy + 5)
+				Else
+					r.y1 = Floor(oy - 20)
+				End If
 				r.x2 = r.x1 + GetTextWidth(text)
 				r.y2 = r.y1 + GetTextHeight(text)
 
+				' Add padding
+				r.x1 = r.x1 - padding
+				r.y1 = r.y1 - padding
+				r.x2 = r.x2 + padding
+				r.y2 = r.y2 + padding
+
+				currentOverlaps = false
+
 				j = 0
 				While j < nextRectangle.numberValue
-					overlap = overlap Or RectanglesOverlap(r, occupied(j))
+					currentOverlaps = currentOverlaps Or RectanglesOverlap(r, occupied(j))
 					j = j + 1
 				End While
+
+				If Not currentOverlaps And p = 1
+					Call DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor)
+
+					Call CopyRectangleValues(occupied(nextRectangle.numberValue), r)
+					nextRectangle.numberValue = nextRectangle.numberValue + 1
+				End If
+
+				overlap = overlap Or currentOverlaps
 			End If
 			i = i + 1
 		End While
-		If Not overlap
+		If Not overlap And p <> 1
 			i = 0
 			While i < xGridPositions.Length
 				x = xGridPositions(i)
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
 
 				If xLabelPriorities.numberArray(i) = p
 					text = xLabels.stringArray(i).stringx
 
-					r.x1 = px - GetTextWidth(text)/2
-					r.y1 = oy + 5
+					r.x1 = Floor(px - GetTextWidth(text)/2)
+					If textOnBottom
+						r.y1 = Floor(oy + 5)
+					Else
+						r.y1 = Floor(oy - 20)
+					End If
 					r.x2 = r.x1 + GetTextWidth(text)
 					r.y2 = r.y1 + GetTextHeight(text)
 
@@ -719,19 +467,14 @@ Module Plots
 	End Sub
 
 
-	Public Sub DrawYLabelsForPriority(p As Double, yMin As Double, xMin As Double, xMax As Double, xLength As Double, xLengthPixels As Double, yLength As Double, xPixelMin As Double, yPixelMin As Double, yLengthPixels As Double, ByRef nextRectangle As NumberReference, ByRef gridLabelColor As RGBA, ByRef canvas As RGBABitmapImage, ByRef yGridPositions As Double (), ByRef yLabels As StringArrayReference, ByRef yLabelPriorities As NumberArrayReference, ByRef occupied As Rectangle ())
-		Dim overlap As Boolean
-		Dim i, j, y, py, ox As Double
+	Public Sub DrawYLabelsForPriority(p As Double, yMin As Double, ox As Double, yMax As Double, yPixelMin As Double, yPixelMax As Double, ByRef nextRectangle As NumberReference, ByRef gridLabelColor As RGBA, ByRef canvas As RGBABitmapImage, ByRef yGridPositions As Double (), ByRef yLabels As StringArrayReference, ByRef yLabelPriorities As NumberArrayReference, ByRef occupied As Rectangle (), textOnLeft As Boolean)
+		Dim overlap, currentOverlaps As Boolean
+		Dim i, j, y, py, padding As Double
 		Dim text As Char ()
 		Dim r As Rectangle
 
 		r = New Rectangle()
-
-		If xMin < 0 And xMax > 0
-			ox = MapXCoordinates(0, xMin, xLength, xPixelMin, xLengthPixels)
-		Else
-			ox = MapXCoordinates(xMin, xMin, xLength, xPixelMin, xLengthPixels)
-		End If
+		padding = 10
 
 		overlap = false
 		i = 0
@@ -739,33 +482,59 @@ Module Plots
 			If yLabelPriorities.numberArray(i) = p
 
 				y = yGridPositions(i)
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 				text = yLabels.stringArray(i).stringx
 
-				r.x1 = ox - GetTextWidth(text) - 10
-				r.y1 = py - 6
+				If textOnLeft
+					r.x1 = Floor(ox - GetTextWidth(text) - 10)
+				Else
+					r.x1 = Floor(ox + 10)
+				End If
+				r.y1 = Floor(py - 6)
 				r.x2 = r.x1 + GetTextWidth(text)
 				r.y2 = r.y1 + GetTextHeight(text)
 
+				' Add padding
+				r.x1 = r.x1 - padding
+				r.y1 = r.y1 - padding
+				r.x2 = r.x2 + padding
+				r.y2 = r.y2 + padding
+
+				currentOverlaps = false
+
 				j = 0
 				While j < nextRectangle.numberValue
-					overlap = overlap Or RectanglesOverlap(r, occupied(j))
+					currentOverlaps = currentOverlaps Or RectanglesOverlap(r, occupied(j))
 					j = j + 1
 				End While
+
+				' Draw labels with priority 1 if they do not overlap anything else.
+				If Not currentOverlaps And p = 1
+					Call DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor)
+
+					Call CopyRectangleValues(occupied(nextRectangle.numberValue), r)
+					nextRectangle.numberValue = nextRectangle.numberValue + 1
+				End If
+
+				overlap = overlap Or currentOverlaps
 			End If
 			i = i + 1
 		End While
-		If Not overlap
+		If Not overlap And p <> 1
 			i = 0
 			While i < yGridPositions.Length
 				y = yGridPositions(i)
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 
 				If yLabelPriorities.numberArray(i) = p
 					text = yLabels.stringArray(i).stringx
 
-					r.x1 = ox - GetTextWidth(text) - 10
-					r.y1 = py - 6
+					If textOnLeft
+						r.x1 = Floor(ox - GetTextWidth(text) - 10)
+					Else
+						r.x1 = Floor(ox + 10)
+					End If
+					r.y1 = Floor(py - 6)
 					r.x2 = r.x1 + GetTextWidth(text)
 					r.y2 = r.y1 + GetTextHeight(text)
 
@@ -778,23 +547,6 @@ Module Plots
 			End While
 		End If
 	End Sub
-
-
-	Public Sub DrawTextUpwards(ByRef text As Char (), x As Double, y As Double, ByRef canvas As RGBABitmapImage)
-		Dim buffer As RGBABitmapImage
-		Dim rotated As RGBABitmapImage
-		buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent())
-		Call DrawText(buffer, 0, 0, text, GetBlack())
-		rotated = RotateAntiClockwise90Degrees(buffer)
-		Call DrawImageOnImage(canvas, rotated, x, y)
-		Call DeleteImage(buffer)
-		Call DeleteImage(rotated)
-	End Sub
-
-
-	Public Function RoundToDigits(element As Double, digitsAfterPoint As Double) As Double
-		Return Roundx(element*10 ^ digitsAfterPoint)/10 ^ digitsAfterPoint
-	End Function
 
 
 	Public Function ComputeGridLinePositions(cMin As Double, cMax As Double, ByRef labels As StringArrayReference, ByRef priorities As NumberArrayReference) As Double ()
@@ -877,7 +629,7 @@ Module Plots
 
 			' 0 has lowest priority.
 			If EpsilonCompare(num, 0, 10 ^ (p - 5))
-				priority = 10
+				priority = 3
 			End If
 
 			priorities.numberArray(i) = priority
@@ -899,6 +651,48 @@ Module Plots
 	End Function
 
 
+	Public Function MapYCoordinate(y As Double, yMin As Double, yMax As Double, yPixelMin As Double, yPixelMax As Double) As Double
+		Dim yLength, yPixelLength As Double
+
+		yLength = yMax - yMin
+		yPixelLength = yPixelMax - yPixelMin
+
+		y = y - yMin
+		y = y*yPixelLength/yLength
+		y = yPixelLength - y
+		y = y + yPixelMin
+		Return y
+	End Function
+
+
+	Public Function MapXCoordinate(x As Double, xMin As Double, xMax As Double, xPixelMin As Double, xPixelMax As Double) As Double
+		Dim xLength, xPixelLength As Double
+
+		xLength = xMax - xMin
+		xPixelLength = xPixelMax - xPixelMin
+
+		x = x - xMin
+		x = x*xPixelLength/xLength
+		x = x + xPixelMin
+		Return x
+	End Function
+
+
+	Public Function MapXCoordinateAutoSettings(x As Double, ByRef image As RGBABitmapImage, ByRef xs As Double ()) As Double
+		Return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1 - GetDefaultPaddingPercentage())*ImageWidth(image))
+	End Function
+
+
+	Public Function MapYCoordinateAutoSettings(y As Double, ByRef image As RGBABitmapImage, ByRef ys As Double ()) As Double
+		Return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1 - GetDefaultPaddingPercentage())*ImageHeight(image))
+	End Function
+
+
+	Public Function GetDefaultPaddingPercentage() As Double
+		Return 0.10
+	End Function
+
+
 	Public Sub DrawText(ByRef canvas As RGBABitmapImage, x As Double, y As Double, ByRef text As Char (), ByRef color As RGBA)
 		Dim i, charWidth, spacing As Double
 
@@ -913,20 +707,925 @@ Module Plots
 	End Sub
 
 
-	Public Function MapYCoordinates(y As Double, ymin As Double, yLength As Double, yPixelMin As Double, yPixelLength As Double) As Double
-		y = y - ymin
-		y = y*yPixelLength/yLength
-		y = yPixelLength - y
-		y = y + yPixelMin
-		Return y
+	Public Sub DrawTextUpwards(ByRef canvas As RGBABitmapImage, x As Double, y As Double, ByRef text As Char (), ByRef color As RGBA)
+		Dim buffer, rotated As RGBABitmapImage
+
+		buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent())
+		Call DrawText(buffer, 0, 0, text, color)
+		rotated = RotateAntiClockwise90Degrees(buffer)
+		Call DrawImageOnImage(canvas, rotated, x, y)
+		Call DeleteImage(buffer)
+		Call DeleteImage(rotated)
+	End Sub
+
+
+	Public Function GetDefaultScatterPlotSettings() As ScatterPlotSettings
+		Dim settings As ScatterPlotSettings
+
+		settings = New ScatterPlotSettings()
+
+		settings.autoBoundaries = true
+		settings.xMax = 0
+		settings.xMin = 0
+		settings.yMax = 0
+		settings.yMin = 0
+		settings.autoPadding = true
+		settings.xPadding = 0
+		settings.yPadding = 0
+		settings.title = "".ToCharArray()
+		settings.yLabel = "".ToCharArray()
+		settings.xLabel = "".ToCharArray()
+		settings.scatterPlotSeries = New ScatterPlotSeries (0 - 1){}
+		settings.showGrid = true
+		settings.gridColor = GetGray(0.1)
+		settings.xAxisAuto = true
+		settings.xAxisTop = false
+		settings.xAxisBottom = false
+		settings.yAxisAuto = true
+		settings.yAxisLeft = false
+		settings.yAxisRight = false
+
+		Return settings
 	End Function
 
 
-	Public Function MapXCoordinates(x As Double, xmin As Double, xLength As Double, xPixelMin As Double, xPixelLength As Double) As Double
-		x = x - xmin
-		x = x*xPixelLength/xLength
-		x = x + xPixelMin
-		Return x
+	Public Function GetDefaultScatterPlotSeriesSettings() As ScatterPlotSeries
+		Dim series As ScatterPlotSeries
+
+		series = New ScatterPlotSeries()
+
+		series.linearInterpolation = true
+		series.pointType = "pixels".ToCharArray()
+		series.lineType = "solid".ToCharArray()
+		series.lineThickness = 1
+		series.xs = New Double (0 - 1){}
+		series.ys = New Double (0 - 1){}
+		series.color = GetBlack()
+
+		Return series
+	End Function
+
+
+	Public Sub DrawScatterPlot(ByRef canvasReference As RGBABitmapImageReference, width As Double, height As Double, ByRef xs As Double (), ByRef ys As Double ())
+		Dim settings As ScatterPlotSettings
+
+		settings = GetDefaultScatterPlotSettings()
+
+		settings.width = width
+		settings.height = height
+		settings.scatterPlotSeries = New ScatterPlotSeries (1 - 1){}
+		settings.scatterPlotSeries(0) = GetDefaultScatterPlotSeriesSettings()
+		Erase settings.scatterPlotSeries(0).xs 
+		settings.scatterPlotSeries(0).xs = xs
+		Erase settings.scatterPlotSeries(0).ys 
+		settings.scatterPlotSeries(0).ys = ys
+
+		DrawScatterPlotFromSettings(canvasReference, settings)
+	End Sub
+
+
+	Public Function DrawScatterPlotFromSettings(ByRef canvasReference As RGBABitmapImageReference, ByRef settings As ScatterPlotSettings) As Boolean
+		Dim xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot As Double
+		Dim xPadding, yPadding, originXPixels, originYPixels As Double
+		Dim xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding As Double
+		Dim nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset As NumberReference
+		Dim prevSet, success As Boolean
+		Dim gridLabelColor As RGBA
+		Dim canvas As RGBABitmapImage
+		Dim xs, ys As Double ()
+		Dim linearInterpolation As Boolean
+		Dim sp As ScatterPlotSeries
+		Dim xGridPositions, yGridPositions As Double ()
+		Dim xLabels, yLabels As StringArrayReference
+		Dim xLabelPriorities, yLabelPriorities As NumberArrayReference
+		Dim occupied As Rectangle ()
+		Dim linePattern As Boolean ()
+		Dim originXInside, originYInside, textOnLeft, textOnBottom As Boolean
+		Dim originTextX, originTextY, originTextXPixels, originTextYPixels, side As Double
+
+		canvas = CreateImage(settings.width, settings.height, GetWhite())
+		patternOffset = CreateNumberReference(0)
+
+		success = ScatterPlotFromSettingsValid(settings)
+
+		If success
+
+			If settings.scatterPlotSeries.Length >= 1
+				xMin = GetMinimum(settings.scatterPlotSeries(0).xs)
+				xMax = GetMaximum(settings.scatterPlotSeries(0).xs)
+				yMin = GetMinimum(settings.scatterPlotSeries(0).ys)
+				yMax = GetMaximum(settings.scatterPlotSeries(0).ys)
+			Else
+				xMin = -10
+				xMax = 10
+				yMin = -10
+				yMax = 10
+			End If
+
+			If Not settings.autoBoundaries
+				xMin = settings.xMin
+				xMax = settings.xMax
+				yMin = settings.yMin
+				yMax = settings.yMax
+			Else
+				plot = 1
+				While plot < settings.scatterPlotSeries.Length
+					sp = settings.scatterPlotSeries(plot)
+
+					xMin = Min(xMin, GetMinimum(sp.xs))
+					xMax = Max(xMax, GetMaximum(sp.xs))
+					yMin = Min(yMin, GetMinimum(sp.ys))
+					yMax = Max(yMax, GetMaximum(sp.ys))
+					plot = plot + 1
+				End While
+			End If
+
+			xLength = xMax - xMin
+			yLength = yMax - yMin
+
+			If settings.autoPadding
+				xPadding = Floor(GetDefaultPaddingPercentage()*ImageWidth(canvas))
+				yPadding = Floor(GetDefaultPaddingPercentage()*ImageHeight(canvas))
+			Else
+				xPadding = settings.xPadding
+				yPadding = settings.yPadding
+			End If
+
+			' Draw title
+			Call DrawText(canvas, Floor(ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2), Floor(yPadding/3), settings.title, GetBlack())
+
+			' Draw grid
+			xPixelMin = xPadding
+			yPixelMin = yPadding
+			xPixelMax = ImageWidth(canvas) - xPadding
+			yPixelMax = ImageHeight(canvas) - yPadding
+			xLengthPixels = xPixelMax - xPixelMin
+			yLengthPixels = yPixelMax - yPixelMin
+			Call DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
+
+			gridLabelColor = GetGray(0.5)
+
+			xLabels = New StringArrayReference()
+			xLabelPriorities = New NumberArrayReference()
+			yLabels = New StringArrayReference()
+			yLabelPriorities = New NumberArrayReference()
+			xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities)
+			yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities)
+
+			If settings.showGrid
+				' X-grid
+				i = 0
+				While i < xGridPositions.Length
+					x = xGridPositions(i)
+					px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+					Call DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor)
+					i = i + 1
+				End While
+
+				' Y-grid
+				i = 0
+				While i < yGridPositions.Length
+					y = yGridPositions(i)
+					py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+					Call DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
+					i = i + 1
+				End While
+			End If
+
+			' Compute origin information.
+			originYInside = yMin < 0 And yMax > 0
+			originY = 0
+			If settings.xAxisAuto
+				If originYInside
+					originY = 0
+				Else
+					originY = yMin
+				End If
+			Else
+				If settings.xAxisTop
+					originY = yMax
+				End If
+				If settings.xAxisBottom
+					originY = yMin
+				End If
+			End If
+			originYPixels = MapYCoordinate(originY, yMin, yMax, yPixelMin, yPixelMax)
+
+			originXInside = xMin < 0 And xMax > 0
+			originX = 0
+			If settings.yAxisAuto
+				If originXInside
+					originX = 0
+				Else
+					originX = xMin
+				End If
+			Else
+				If settings.yAxisLeft
+					originX = xMin
+				End If
+				If settings.yAxisRight
+					originX = xMax
+				End If
+			End If
+			originXPixels = MapXCoordinate(originX, xMin, xMax, xPixelMin, xPixelMax)
+
+			If originYInside
+				originTextY = 0
+			Else
+				originTextY = yMin + yLength/2
+			End If
+			originTextYPixels = MapYCoordinate(originTextY, yMin, yMax, yPixelMin, yPixelMax)
+
+			If originXInside
+				originTextX = 0
+			Else
+				originTextX = xMin + xLength/2
+			End If
+			originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax)
+
+			' Labels
+			occupied = New Rectangle (xLabels.stringArray.Length + yLabels.stringArray.Length - 1){}
+			i = 0
+			While i < occupied.Length
+				occupied(i) = CreateRectangle(0, 0, 0, 0)
+				i = i + 1
+			End While
+			nextRectangle = CreateNumberReference(0)
+
+			' x labels
+			i = 1
+			While i <= 5
+				textOnBottom = true
+				If Not settings.xAxisAuto And settings.xAxisTop
+					textOnBottom = false
+				End If
+				Call DrawXLabelsForPriority(i, xMin, originYPixels, xMax, xPixelMin, xPixelMax, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied, textOnBottom)
+				i = i + 1
+			End While
+
+			' y labels
+			i = 1
+			While i <= 5
+				textOnLeft = true
+				If Not settings.yAxisAuto And settings.yAxisRight
+					textOnLeft = false
+				End If
+				Call DrawYLabelsForPriority(i, yMin, originXPixels, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, textOnLeft)
+				i = i + 1
+			End While
+
+			' Draw origin line axis titles.
+			axisLabelPadding = 20
+
+			' x origin line
+			If originYInside
+				Call DrawLine1px(canvas, Roundx(xPixelMin), Roundx(originYPixels), Roundx(xPixelMax), Roundx(originYPixels), GetBlack())
+			End If
+
+			' y origin line
+			If originXInside
+				Call DrawLine1px(canvas, Roundx(originXPixels), Roundx(yPixelMin), Roundx(originXPixels), Roundx(yPixelMax), GetBlack())
+			End If
+
+			' Draw origin axis titles.
+			Call DrawTextUpwards(canvas, 10, Floor(originTextYPixels - GetTextWidth(settings.xLabel)/2), settings.xLabel, GetBlack())
+			Call DrawText(canvas, Floor(originTextXPixels - GetTextWidth(settings.yLabel)/2), yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
+
+			' X-grid-markers
+			i = 0
+			While i < xGridPositions.Length
+				x = xGridPositions(i)
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+				p = xLabelPriorities.numberArray(i)
+				l = 1
+				If p = 1
+					l = 8
+				ElseIf p = 2
+					l = 3
+				End If
+				side = -1
+				If Not settings.xAxisAuto And settings.xAxisTop
+					side = 1
+				End If
+				Call DrawLine1px(canvas, px, originYPixels, px, originYPixels + side*l, GetBlack())
+				i = i + 1
+			End While
+
+			' Y-grid-markers
+			i = 0
+			While i < yGridPositions.Length
+				y = yGridPositions(i)
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+				p = yLabelPriorities.numberArray(i)
+				l = 1
+				If p = 1
+					l = 8
+				ElseIf p = 2
+					l = 3
+				End If
+				side = 1
+				If Not settings.yAxisAuto And settings.yAxisRight
+					side = -1
+				End If
+				Call DrawLine1px(canvas, originXPixels, py, originXPixels + side*l, py, GetBlack())
+				i = i + 1
+			End While
+
+			' Draw points
+			plot = 0
+			While plot < settings.scatterPlotSeries.Length
+				sp = settings.scatterPlotSeries(plot)
+
+				xs = sp.xs
+				ys = sp.ys
+				linearInterpolation = sp.linearInterpolation
+
+				x1Ref = New NumberReference()
+				y1Ref = New NumberReference()
+				x2Ref = New NumberReference()
+				y2Ref = New NumberReference()
+				If linearInterpolation
+					prevSet = false
+					xPrev = 0
+					yPrev = 0
+					i = 0
+					While i < xs.Length
+						x = xs(i)
+						y = ys(i)
+
+						If prevSet
+							x1Ref.numberValue = xPrev
+							y1Ref.numberValue = yPrev
+							x2Ref.numberValue = x
+							y2Ref.numberValue = y
+
+							success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
+
+							If success
+								pxPrev = Floor(MapXCoordinate(x1Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax))
+								pyPrev = Floor(MapYCoordinate(y1Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax))
+								px = Floor(MapXCoordinate(x2Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax))
+								py = Floor(MapYCoordinate(y2Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax))
+
+								If aStringsEqual(sp.lineType, "solid".ToCharArray()) And sp.lineThickness = 1
+									Call DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color)
+								ElseIf aStringsEqual(sp.lineType, "solid".ToCharArray())
+									Call DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color)
+								ElseIf aStringsEqual(sp.lineType, "dashed".ToCharArray())
+									linePattern = GetLinePattern1()
+									Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+								ElseIf aStringsEqual(sp.lineType, "dotted".ToCharArray())
+									linePattern = GetLinePattern2()
+									Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+								ElseIf aStringsEqual(sp.lineType, "dotdash".ToCharArray())
+									linePattern = GetLinePattern3()
+									Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+								ElseIf aStringsEqual(sp.lineType, "longdash".ToCharArray())
+									linePattern = GetLinePattern4()
+									Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+								ElseIf aStringsEqual(sp.lineType, "twodash".ToCharArray())
+									linePattern = GetLinePattern5()
+									Call DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+								End If
+							End If
+						End If
+
+						prevSet = true
+						xPrev = x
+						yPrev = y
+						i = i + 1
+					End While
+				Else
+					i = 0
+					While i < xs.Length
+						x = xs(i)
+						y = ys(i)
+
+						If x > xMin And x < xMax And y > yMin And y < yMax
+
+							x = Floor(MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax))
+							y = Floor(MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax))
+
+							If aStringsEqual(sp.pointType, "crosses".ToCharArray())
+								Call DrawPixel(canvas, x, y, sp.color)
+								Call DrawPixel(canvas, x + 1, y, sp.color)
+								Call DrawPixel(canvas, x + 2, y, sp.color)
+								Call DrawPixel(canvas, x - 1, y, sp.color)
+								Call DrawPixel(canvas, x - 2, y, sp.color)
+								Call DrawPixel(canvas, x, y + 1, sp.color)
+								Call DrawPixel(canvas, x, y + 2, sp.color)
+								Call DrawPixel(canvas, x, y - 1, sp.color)
+								Call DrawPixel(canvas, x, y - 2, sp.color)
+							ElseIf aStringsEqual(sp.pointType, "circles".ToCharArray())
+								Call DrawCircle(canvas, x, y, 3, sp.color)
+							ElseIf aStringsEqual(sp.pointType, "dots".ToCharArray())
+								Call DrawFilledCircle(canvas, x, y, 3, sp.color)
+							ElseIf aStringsEqual(sp.pointType, "triangles".ToCharArray())
+								Call DrawTriangle(canvas, x, y, 3, sp.color)
+							ElseIf aStringsEqual(sp.pointType, "filled triangles".ToCharArray())
+								Call DrawFilledTriangle(canvas, x, y, 3, sp.color)
+							ElseIf aStringsEqual(sp.pointType, "pixels".ToCharArray())
+								Call DrawPixel(canvas, x, y, sp.color)
+							End If
+						End If
+						i = i + 1
+					End While
+				End If
+				plot = plot + 1
+			End While
+
+			Call DeleteImage(canvasReference.image)
+			canvasReference.image = canvas
+		End If
+
+		Return success
+	End Function
+
+
+	Public Function ScatterPlotFromSettingsValid(ByRef settings As ScatterPlotSettings) As Boolean
+		Dim success, found As Boolean
+		Dim series As ScatterPlotSeries
+		Dim i As Double
+
+		success = true
+
+		' Check axis placement.
+		If Not settings.xAxisAuto
+			If settings.xAxisTop And settings.xAxisBottom
+				success = false
+			End If
+			If Not settings.xAxisTop And Not settings.xAxisBottom
+				success = false
+			End If
+		End If
+
+		If Not settings.yAxisAuto
+			If settings.yAxisLeft And settings.yAxisRight
+				success = false
+			End If
+			If Not settings.yAxisLeft And Not settings.yAxisRight
+				success = false
+			End If
+		End If
+
+		' Check series lengths.
+		i = 0
+		While i < settings.scatterPlotSeries.Length
+			series = settings.scatterPlotSeries(i)
+			If series.xs.Length <> series.ys.Length
+				success = false
+			End If
+			If series.xs.Length = 0
+				success = false
+			End If
+			If series.linearInterpolation And series.xs.Length = 1
+				success = false
+			End If
+			i = i + 1
+		End While
+
+		' Check bounds.
+		If Not settings.autoBoundaries
+			If settings.xMin >= settings.xMax
+				success = false
+			End If
+			If settings.yMin >= settings.yMax
+				success = false
+			End If
+		End If
+
+		' Check padding.
+		If Not settings.autoPadding
+			If 2*settings.xPadding >= settings.width
+				success = false
+			End If
+			If 2*settings.yPadding >= settings.height
+				success = false
+			End If
+		End If
+
+		' Check width and height.
+		If settings.width < 0
+			success = false
+		End If
+		If settings.height < 0
+			success = false
+		End If
+
+		' Check point types.
+		i = 0
+		While i < settings.scatterPlotSeries.Length
+			series = settings.scatterPlotSeries(i)
+
+			If series.lineThickness < 0
+				success = false
+			End If
+
+			If Not series.linearInterpolation
+				' Point type.
+				found = false
+				If aStringsEqual(series.pointType, "crosses".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.pointType, "circles".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.pointType, "dots".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.pointType, "triangles".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.pointType, "filled triangles".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.pointType, "pixels".ToCharArray())
+					found = true
+				End If
+				If Not found
+					success = false
+				End If
+			Else
+				' Line type.
+				found = false
+				If aStringsEqual(series.lineType, "solid".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.lineType, "dashed".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.lineType, "dotted".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.lineType, "dotdash".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.lineType, "longdash".ToCharArray())
+					found = true
+				ElseIf aStringsEqual(series.lineType, "twodash".ToCharArray())
+					found = true
+				End If
+
+				If Not found
+					success = false
+				End If
+			End If
+			i = i + 1
+		End While
+
+		Return success
+	End Function
+
+
+	Public Function GetDefaultBarPlotSettings() As BarPlotSettings
+		Dim settings As BarPlotSettings
+
+		settings = New BarPlotSettings()
+
+		settings.width = 800
+		settings.height = 600
+		settings.autoBoundaries = true
+		settings.yMax = 0
+		settings.yMin = 0
+		settings.autoPadding = true
+		settings.xPadding = 0
+		settings.yPadding = 0
+		settings.title = "".ToCharArray()
+		settings.yLabel = "".ToCharArray()
+		settings.barPlotSeries = New BarPlotSeries (0 - 1){}
+		settings.showGrid = true
+		settings.gridColor = GetGray(0.1)
+		settings.autoColor = true
+		settings.grayscaleAutoColor = false
+		settings.autoSpacing = true
+		settings.groupSeparation = 0
+		settings.barSeparation = 0
+		settings.autoLabels = true
+		settings.xLabels = New StringReference (0 - 1){}
+		'settings.autoLabels = false;
+		'        settings.xLabels = new StringReference [5];
+		'        settings.xLabels[0] = CreateStringReference("may 20".toCharArray());
+		'        settings.xLabels[1] = CreateStringReference("jun 20".toCharArray());
+		'        settings.xLabels[2] = CreateStringReference("jul 20".toCharArray());
+		'        settings.xLabels[3] = CreateStringReference("aug 20".toCharArray());
+		'        settings.xLabels[4] = CreateStringReference("sep 20".toCharArray());
+		settings.barBorder = false
+
+		Return settings
+	End Function
+
+
+	Public Function GetDefaultBarPlotSeriesSettings() As BarPlotSeries
+		Dim series As BarPlotSeries
+
+		series = New BarPlotSeries()
+
+		series.ys = New Double (0 - 1){}
+		series.color = GetBlack()
+
+		Return series
+	End Function
+
+
+	Public Function DrawBarPlot(width As Double, height As Double, ByRef ys As Double ()) As RGBABitmapImage
+		Dim settings As BarPlotSettings
+		Dim canvasReference As RGBABitmapImageReference
+
+		settings = GetDefaultBarPlotSettings()
+
+		settings.barPlotSeries = New BarPlotSeries (1 - 1){}
+		settings.barPlotSeries(0) = GetDefaultBarPlotSeriesSettings()
+		Erase settings.barPlotSeries(0).ys 
+		settings.barPlotSeries(0).ys = ys
+		canvasReference = New RGBABitmapImageReference()
+		settings.width = width
+		settings.height = height
+
+		DrawBarPlotFromSettings(canvasReference, settings)
+
+		Return canvasReference.image
+	End Function
+
+
+	Public Function DrawBarPlotFromSettings(ByRef canvasReference As RGBABitmapImageReference, ByRef settings As BarPlotSettings) As Boolean
+		Dim xPadding, yPadding As Double
+		Dim xPixelMin, yPixelMin, yPixelMax, xPixelMax As Double
+		Dim xLengthPixels, yLengthPixels As Double
+		Dim s, n, y, x, w, h, yMin, yMax, b, i, py, yValue As Double
+		Dim colors As RGBA ()
+		Dim ys, yGridPositions As Double ()
+		Dim yTop, yBottom, ss, bs, yLength As Double
+		Dim groupSeparation, barSeparation, barWidth, textwidth As Double
+		Dim yLabels As StringArrayReference
+		Dim yLabelPriorities As NumberArrayReference
+		Dim occupied As Rectangle ()
+		Dim nextRectangle As NumberReference
+		Dim gridLabelColor, barColor As RGBA
+		Dim label As Char ()
+		Dim success As Boolean
+		Dim canvas As RGBABitmapImage
+
+		success = BarPlotSettingsIsValid(settings)
+
+		If success
+
+			canvas = CreateImage(settings.width, settings.height, GetWhite())
+
+			ss = settings.barPlotSeries.Length
+			gridLabelColor = GetGray(0.5)
+
+			' padding
+			If settings.autoPadding
+				xPadding = Floor(GetDefaultPaddingPercentage()*ImageWidth(canvas))
+				yPadding = Floor(GetDefaultPaddingPercentage()*ImageHeight(canvas))
+			Else
+				xPadding = settings.xPadding
+				yPadding = settings.yPadding
+			End If
+
+			' Draw title
+			Call DrawText(canvas, Floor(ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2), Floor(yPadding/3), settings.title, GetBlack())
+			Call DrawTextUpwards(canvas, 10, Floor(ImageHeight(canvas)/2 - GetTextWidth(settings.yLabel)/2), settings.yLabel, GetBlack())
+
+			' min and max
+			If settings.autoBoundaries
+				If ss >= 1
+					yMax = GetMaximum(settings.barPlotSeries(0).ys)
+					yMin = Min(0, GetMinimum(settings.barPlotSeries(0).ys))
+
+					s = 0
+					While s < ss
+						yMax = Max(yMax, GetMaximum(settings.barPlotSeries(s).ys))
+						yMin = Min(yMin, GetMinimum(settings.barPlotSeries(s).ys))
+						s = s + 1
+					End While
+				Else
+					yMax = 10
+					yMin = 0
+				End If
+			Else
+				yMin = settings.yMin
+				yMax = settings.yMax
+			End If
+			yLength = yMax - yMin
+
+			' boundaries
+			xPixelMin = xPadding
+			yPixelMin = yPadding
+			xPixelMax = ImageWidth(canvas) - xPadding
+			yPixelMax = ImageHeight(canvas) - yPadding
+			xLengthPixels = xPixelMax - xPixelMin
+			yLengthPixels = yPixelMax - yPixelMin
+
+			' Draw boundary.
+			Call DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
+
+			' Draw grid lines.
+			yLabels = New StringArrayReference()
+			yLabelPriorities = New NumberArrayReference()
+			yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities)
+
+			If settings.showGrid
+				' Y-grid
+				i = 0
+				While i < yGridPositions.Length
+					y = yGridPositions(i)
+					py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+					Call DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
+					i = i + 1
+				End While
+			End If
+
+			' Draw origin.
+			If yMin < 0 And yMax > 0
+				py = MapYCoordinate(0, yMin, yMax, yPixelMin, yPixelMax)
+				Call DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
+			End If
+
+			' Labels
+			occupied = New Rectangle (yLabels.stringArray.Length - 1){}
+			i = 0
+			While i < occupied.Length
+				occupied(i) = CreateRectangle(0, 0, 0, 0)
+				i = i + 1
+			End While
+			nextRectangle = CreateNumberReference(0)
+
+			i = 1
+			While i <= 5
+				Call DrawYLabelsForPriority(i, yMin, xPixelMin, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, true)
+				i = i + 1
+			End While
+
+			' Draw bars.
+			If settings.autoColor
+				If Not settings.grayscaleAutoColor
+					colors = Get8HighContrastColors()
+				Else
+					colors = New RGBA (ss - 1){}
+					If ss > 1
+						i = 0
+						While i < ss
+							colors(i) = GetGray(0.7 - (i/ss)*0.7)
+							i = i + 1
+						End While
+					Else
+						colors(0) = GetGray(0.5)
+					End If
+				End If
+			Else
+				colors = New RGBA (0 - 1){}
+			End If
+
+			' distances
+			bs = settings.barPlotSeries(0).ys.Length
+
+			If settings.autoSpacing
+				groupSeparation = ImageWidth(canvas)*0.05
+				barSeparation = ImageWidth(canvas)*0.005
+			Else
+				groupSeparation = settings.groupSeparation
+				barSeparation = settings.barSeparation
+			End If
+
+			barWidth = (xLengthPixels - groupSeparation*(bs - 1) - barSeparation*(bs*(ss - 1)))/(bs*ss)
+
+			' Draw bars.
+			b = 0
+			n = 0
+			While n < bs
+				s = 0
+				While s < ss
+					ys = settings.barPlotSeries(s).ys
+
+					yValue = ys(n)
+
+					yBottom = MapYCoordinate(yValue, yMin, yMax, yPixelMin, yPixelMax)
+					yTop = MapYCoordinate(0, yMin, yMax, yPixelMin, yPixelMax)
+
+					x = xPixelMin + n*(groupSeparation + ss*barWidth) + s*(barWidth) + b*barSeparation
+					w = barWidth
+
+					If yValue >= 0
+						y = yBottom
+						h = yTop - y
+					Else
+						y = yTop
+						h = yBottom - yTop
+					End If
+
+					' Cut at boundaries.
+					If y < yPixelMin And y + h > yPixelMax
+						y = yPixelMin
+						h = yPixelMax - yPixelMin
+					ElseIf y < yPixelMin
+						y = yPixelMin
+						If yValue >= 0
+							h = yTop - y
+						Else
+							h = yBottom - y
+						End If
+					ElseIf y + h > yPixelMax
+						h = yPixelMax - y
+					End If
+
+					' Get color
+					If settings.autoColor
+						barColor = colors(s)
+					Else
+						barColor = settings.barPlotSeries(s).color
+					End If
+
+					' Draw
+					If settings.barBorder
+						Call DrawFilledRectangleWithBorder(canvas, Roundx(x), Roundx(y), Roundx(w), Roundx(h), GetBlack(), barColor)
+					Else
+						Call DrawFilledRectangle(canvas, Roundx(x), Roundx(y), Roundx(w), Roundx(h), barColor)
+					End If
+
+					b = b + 1
+					s = s + 1
+				End While
+				b = b - 1
+				n = n + 1
+			End While
+
+			' x-labels
+			n = 0
+			While n < bs
+				If settings.autoLabels
+					label = CreateStringDecimalFromNumber(n + 1)
+				Else
+					label = settings.xLabels(n).stringx
+				End If
+
+				textwidth = GetTextWidth(label)
+
+				x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1)*barSeparation) + n*groupSeparation - textwidth/2
+
+				Call DrawText(canvas, Floor(x), ImageHeight(canvas) - yPadding + 20, label, gridLabelColor)
+
+				b = b + 1
+				n = n + 1
+			End While
+
+			canvasReference.image = canvas
+		End If
+
+		Return success
+	End Function
+
+
+	Public Function BarPlotSettingsIsValid(ByRef settings As BarPlotSettings) As Boolean
+		Dim success, lengthSet As Boolean
+		Dim series As BarPlotSeries
+		Dim i, width, height, length As Double
+
+		success = true
+
+		' Check series lengths.
+		lengthSet = false
+		length = 0
+		i = 0
+		While i < settings.barPlotSeries.Length
+			series = settings.barPlotSeries(i)
+
+			If Not lengthSet
+				length = series.ys.Length
+				lengthSet = true
+			ElseIf length <> series.ys.Length
+				success = false
+			End If
+			i = i + 1
+		End While
+
+		' Check bounds.
+		If Not settings.autoBoundaries
+			If settings.yMin >= settings.yMax
+				success = false
+			End If
+		End If
+
+		' Check padding.
+		If Not settings.autoPadding
+			If 2*settings.xPadding >= settings.width
+				success = false
+			End If
+			If 2*settings.yPadding >= settings.height
+				success = false
+			End If
+		End If
+
+		' Check width and height.
+		If settings.width < 0
+			success = false
+		End If
+		If settings.height < 0
+			success = false
+		End If
+
+		' Check spacing
+		If Not settings.autoSpacing
+			If settings.groupSeparation < 0
+				success = false
+			End If
+			If settings.barSeparation < 0
+				success = false
+			End If
+		End If
+
+		Return success
 	End Function
 
 
@@ -958,6 +1657,11 @@ Module Plots
 	End Function
 
 
+	Public Function RoundToDigits(element As Double, digitsAfterPoint As Double) As Double
+		Return Roundx(element*10 ^ digitsAfterPoint)/10 ^ digitsAfterPoint
+	End Function
+
+
 	Public Function test() As Double
 		Dim scatterPlotSettings As ScatterPlotSettings
 		Dim z As Double
@@ -965,8 +1669,12 @@ Module Plots
 		Dim failures As NumberReference
 		Dim labels As StringArrayReference
 		Dim labelPriorities As NumberArrayReference
+		Dim imageReference As RGBABitmapImageReference
+		Dim xs, ys As Double ()
 
 		failures = CreateNumberReference(0)
+
+		imageReference = CreateRGBABitmapImageReference()
 
 		scatterPlotSettings = GetDefaultScatterPlotSettings()
 
@@ -1008,6 +1716,22 @@ Module Plots
 		z = 2
 		gridlines = ComputeGridLinePositions(-z/2, z/2, labels, labelPriorities)
 		Call AssertEquals(gridlines.Length, 21, failures)
+
+		xs = New Double (5 - 1){}
+		xs(0) = -2
+		xs(1) = -1
+		xs(2) = 0
+		xs(3) = 1
+		xs(4) = 2
+		ys = New Double (5 - 1){}
+		ys(0) = 2
+		ys(1) = -1
+		ys(2) = -2
+		ys(3) = -1
+		ys(4) = 2
+		Call DrawScatterPlot(imageReference, 800, 600, xs, ys)
+
+		imageReference.image = DrawBarPlot(800, 600, ys)
 
 		Return failures.numberValue
 	End Function

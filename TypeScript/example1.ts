@@ -3,13 +3,13 @@ import * as fs from 'fs';
 import * as supportLib from './supportLib';
 import * as pbPlots from './pbPlots';
 
-var image = pbPlots.CreateImage(800, 600, pbPlots.GetWhite());
+var imageReference = pbPlots.CreateRGBABitmapImageReference();
 
 var xs = [-2, -1, 0, 1, 2];
 var ys = [2, -1, -2, -1, 2];
 
-pbPlots.DrawScatterPlot(image, xs, ys);
+pbPlots.DrawScatterPlot(imageReference, 800, 600, xs, ys);
 
-var pngdata = pbPlots.ConvertToPNG(image);
+var pngdata = pbPlots.ConvertToPNG(imageReference.image);
 supportLib.WriteToFile(pngdata, "example1.png");
-pbPlots.DeleteImage(image);
+pbPlots.DeleteImage(imageReference.image);

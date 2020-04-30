@@ -7,6 +7,8 @@ A plotting library available in many programming languages. Goals of this librar
 
 The library is developed using [progsbase](https://www.progsbase.com), a technology for coding timeless code in many programming languages at once.
 
+![bar plot](barplot.png "Bar Plot Example")
+
 ![atan](atan.png "Arc Tangens")
 
 ## Download
@@ -21,6 +23,10 @@ The library is developed using [progsbase](https://www.progsbase.com), a technol
  * [Python - 2+](Python/)
  * [Visual Basic - 9+](VisualBasic/)
  * [Ruby - 2+](Ruby/)
+ 
+ ## Try the Library Online:
+ * [Scatter Plot](https://repo.progsbase.com/repoviewer/no.inductive.libraries/Plots/latest///DrawScatterPlotFromSettings/online/)
+ * [Bar Plot](https://repo.progsbase.com/repoviewer/no.inductive.libraries/Plots/latest///DrawBarPlotFromSettings/online/)
 
 ## General User Guide
 The library has the same interface in all supported languages. The example below is in Java with links to complete examples in all supported programming languages.
@@ -41,12 +47,12 @@ Complete example available in the following languages:
 [Ruby](Ruby/example1.rb)
 
 ```
-RGBABitmapImage image = CreateImage(800, 600, GetWhite());
+RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
 
 double [] xs = {-2, -1, 0, 1, 2};
 double [] ys = {2, -1, -2, -1, 2};
 
-DrawScatterPlot(image, xs, ys);
+DrawScatterPlot(imageReference, 600, 400, xs, ys);
 ```
 
 This code produces the following graph. The boundaries are automatically calculated. The plot is linearly interpolated and drawn in black, one pixel wide.
@@ -78,7 +84,8 @@ series.lineThickness = 2d;
 series.color = GetGray(0.3);
 
 ScatterPlotSettings settings = GetDefaultScatterPlotSettings();
-settings.canvas = CreateImage(800, 600, GetWhite());
+settings.width = 600;
+settings.height = 400;
 settings.autoBoundaries = true;
 settings.autoPadding = true;
 settings.title = "x^2 - 2".toCharArray();
@@ -86,7 +93,8 @@ settings.xLabel = "X axis".toCharArray();
 settings.yLabel = "Y axis".toCharArray();
 settings.scatterPlotSeries = new ScatterPlotSeries [] {series};
 
-DrawScatterPlotFromSettings(settings);
+RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
+DrawScatterPlotFromSettings(imageReference, settings);
 ```
 
 This code produces the following plot. In this plot the line is changed to dashed, 2 pixels wide, light gray. A title has been added and labels for each axis.
@@ -98,9 +106,9 @@ This code produces the following plot. In this plot the line is changed to dashe
 Convert to PNG and write to file:
 
 ```
-double[] pngdata = ConvertToPNG(image);
+double[] pngdata = ConvertToPNG(imageReference.image);
 WriteToFile(pngdata, "plot.png");
-DeleteImage(image);
+DeleteImage(imageReference.image);
 ```
 
 #### Line Patterns
@@ -119,7 +127,8 @@ DeleteImage(image);
 #### Configuration Options
 
 ScatterPlotSettings
- * **canvas** - RGBABitmapImage - The image on which to draw the plot. It will fill the entire image.
+ * **width** - RGBABitmapImage - The width in pixels of the image with the plot.
+ * **height** - RGBABitmapImage - The height in pixels of the image with the plot.
  * **title** - String - The title on the top of the plot.
  * **yLabel**, **xLabel** - String - The labels for the y and x axis, respectively.
  * **scatterPlotSeries** - (See below) - The series to plot.
@@ -142,12 +151,9 @@ ScatterPlotSeries
 #### Multiple Plots in Same Image
 
 ```
+RGBABitmapImageReference canvasReference = CreateRGBABitmapImageReference();
 RGBABitmapImage combined = CreateImage(250*2, 200*2, GetWhite());
-
-RGBABitmapImage image1 = CreateImage(250, 200, GetWhite());
-RGBABitmapImage image2 = CreateImage(250, 200, GetWhite());
-RGBABitmapImage image3 = CreateImage(250, 200, GetWhite());
-RGBABitmapImage image4 = CreateImage(250, 200, GetWhite());
+RGBABitmapImage image1, image2, image3, image4;
 
 double [] xs = {-2, -1, 0, 1, 2};
 
@@ -156,10 +162,14 @@ double [] ys2 = {-2, 1, 2, 1, -2};
 double [] ys3 = {0, 1, 2, 3, 4};
 double [] ys4 = {0, -1, -2, -3, -4};
 
-DrawScatterPlot(image1, xs, ys1);
-DrawScatterPlot(image2, xs, ys2);
-DrawScatterPlot(image3, xs, ys3);
-DrawScatterPlot(image4, xs, ys4);
+DrawScatterPlot(canvasReference, 250, 200, xs, ys1);
+image1 = canvasReference.image;
+DrawScatterPlot(canvasReference, 250, 200, xs, ys2);
+image2 = canvasReference.image;
+DrawScatterPlot(canvasReference, 250, 200, xs, ys3);
+image3 = canvasReference.image;
+DrawScatterPlot(canvasReference, 250, 200, xs, ys4);
+image4 = canvasReference.image;
 
 DrawImageOnImage(combined, image1, 0, 0);
 DrawImageOnImage(combined, image2, 0, 200);
@@ -182,20 +192,20 @@ yPixels = MapYCoordinateAutoSettings(yPlot, image, ys);
 The following code draws a line from (0, 0) to (1, 1) in the plot's coordinate system. The coordinates must be mapped to pixel coordinates before drawing. The mapping is based on the automatic settings calculated from the image dimensions and plot data.
 
 ```
-RGBABitmapImage image = CreateImage(600, 400, GetWhite());
+RGBABitmapImageReference canvasReference = CreateRGBABitmapImageReference();
 
 double [] xs = {-2, -1, 0, 1, 2};
 double [] ys = {-2, 1, 2, 1, -2};
 
-DrawScatterPlot(image, xs, ys);
+DrawScatterPlot(canvasReference, 600, 400, xs, ys);
 
-double x1 = MapXCoordinateAutoSettings(0, image, xs);
-double y1 = MapYCoordinateAutoSettings(0, image, ys);
+double x1 = MapXCoordinateAutoSettings(0, canvasReference.image, xs);
+double y1 = MapYCoordinateAutoSettings(0, canvasReference.image, ys);
 
-double x2 = MapXCoordinateAutoSettings(1, image, xs);
-double y2 = MapYCoordinateAutoSettings(1, image, ys);
+double x2 = MapXCoordinateAutoSettings(1, canvasReference.image, xs);
+double y2 = MapYCoordinateAutoSettings(1, canvasReference.image, ys);
 
-DrawLine(image, x1, y1, x2, y2, 2, GetGray(0.3));
+DrawLine(canvasReference.image, x1, y1, x2, y2, 2, GetGray(0.3));
 ```
 
 This will produce the following plot.

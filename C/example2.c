@@ -19,7 +19,8 @@ int main(){
 	series->color = GetGray(0.3);
 
 	ScatterPlotSettings *settings = GetDefaultScatterPlotSettings();
-	settings->canvas = CreateImage(600, 400, GetWhite());
+	settings->width = 600;
+	settings->height = 400;
 	settings->autoBoundaries = true;
 	settings->autoPadding = true;
   settings->title = L"x^2 - 2";
@@ -32,11 +33,12 @@ int main(){
 	settings->scatterPlotSeries = s;
 	settings->scatterPlotSeriesLength = 1;
 
-	DrawScatterPlotFromSettings(settings);
+	RGBABitmapImageReference *canvasReference = CreateRGBABitmapImageReference();
+	DrawScatterPlotFromSettings(canvasReference, settings);
 
-	double *pngdata = ConvertToPNG(&length, settings->canvas);
+	double *pngdata = ConvertToPNG(&length, canvasReference->image);
 	WriteToFile(pngdata, length, "example2.png");
-	DeleteImage(settings->canvas);
+	DeleteImage(canvasReference->image);
 
 	return 0;
 }

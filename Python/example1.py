@@ -2,13 +2,13 @@ import pbPlots as pbPlots
 import supportLib as supportLib
 
 
-image = pbPlots.CreateImage(800, 600, pbPlots.GetWhite())
+imageReference = pbPlots.CreateRGBABitmapImageReference()
 
 xs = [-2, -1, 0, 1, 2]
 ys = [2, -1, -2, -1, 2]
 
-pbPlots.DrawScatterPlot(image, xs, ys)
+pbPlots.DrawScatterPlot(imageReference, 800, 600, xs, ys)
 
-pngdata = pbPlots.ConvertToPNG(image)
+pngdata = pbPlots.ConvertToPNG(imageReference.image)
 supportLib.WriteToFile(pngdata, "example1.png")
-pbPlots.DeleteImage(image)
+pbPlots.DeleteImage(imageReference.image)

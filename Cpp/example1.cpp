@@ -4,17 +4,17 @@
 int main(){
 	size_t length;
 
-	RGBABitmapImage *image = CreateImage(600, 400, GetWhite());
+	RGBABitmapImageReference *imageReference = CreateRGBABitmapImageReference();
 
 	double xsa[] = {-2, -1, 0, 1, 2};
 	vector<double> xs(xsa, xsa+sizeof(xsa)/sizeof(double));
 	double ysa[] = {2, -1, -2, -1, 2};
 	vector<double> ys(ysa, ysa+sizeof(ysa)/sizeof(double));
 
-	DrawScatterPlot(image, &xs, &ys);
-	vector<double> *pngdata = ConvertToPNG(image);
+	DrawScatterPlot(imageReference, 600, 400, &xs, &ys);
+	vector<double> *pngdata = ConvertToPNG(imageReference->image);
 	WriteToFile(pngdata, "example1.png");
-	DeleteImage(image);
+	DeleteImage(imageReference->image);
 
 	return 0;
 }

@@ -3,6 +3,7 @@
 
 int main(){
 	size_t length;
+	RGBABitmapImageReference *imageReference = CreateRGBABitmapImageReference();
 
 	double xsa[] = {-2, -1, 0, 1, 2};
 	vector<double> xs(xsa, xsa+sizeof(xsa)/sizeof(double));
@@ -18,7 +19,8 @@ int main(){
 	series->color = GetGray(0.3);
 
 	ScatterPlotSettings *settings = GetDefaultScatterPlotSettings();
-	settings->canvas = CreateImage(600, 400, GetWhite());
+	settings->width = 600;
+	settings->height = 400;
 	settings->autoBoundaries = true;
 	settings->autoPadding = true;
 	settings->title = toVector(L"x^2 - 2");
@@ -26,11 +28,11 @@ int main(){
 	settings->yLabel = toVector(L"Y axis");
 	settings->scatterPlotSeries->push_back(series);
 
-	DrawScatterPlotFromSettings(settings);
+	DrawScatterPlotFromSettings(imageReference, settings);
 
-	vector<double> *pngdata = ConvertToPNG(settings->canvas);
+	vector<double> *pngdata = ConvertToPNG(imageReference->image);
 	WriteToFile(pngdata, "example2.png");
-	DeleteImage(settings->canvas);
+	DeleteImage(imageReference->image);
 
 	return 0;
 }

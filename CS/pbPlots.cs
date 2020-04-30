@@ -2,6 +2,9 @@
 
 using static System.Math;
 
+public class RGBABitmapImageReference{
+	public RGBABitmapImage image;
+}
 public class Rectangle{
 	public double x1;
 	public double x2;
@@ -18,7 +21,6 @@ public class ScatterPlotSeries{
 	public RGBA color;
 }
 public class ScatterPlotSettings{
-	public RGBABitmapImage canvas;
 	public ScatterPlotSeries [] scatterPlotSeries;
 	public bool autoBoundaries;
 	public double xMax;
@@ -33,6 +35,41 @@ public class ScatterPlotSettings{
 	public char [] title;
 	public bool showGrid;
 	public RGBA gridColor;
+	public bool xAxisAuto;
+	public bool xAxisTop;
+	public bool xAxisBottom;
+	public bool yAxisAuto;
+	public bool yAxisLeft;
+	public bool yAxisRight;
+	public double width;
+	public double height;
+}
+public class BarPlotSeries{
+	public double [] ys;
+	public RGBA color;
+}
+public class BarPlotSettings{
+	public double width;
+	public double height;
+	public bool autoBoundaries;
+	public double yMax;
+	public double yMin;
+	public bool autoPadding;
+	public double xPadding;
+	public double yPadding;
+	public char [] title;
+	public bool showGrid;
+	public RGBA gridColor;
+	public BarPlotSeries [] barPlotSeries;
+	public char [] yLabel;
+	public bool autoColor;
+	public bool grayscaleAutoColor;
+	public bool autoSpacing;
+	public double groupSeparation;
+	public double barSeparation;
+	public bool autoLabels;
+	public StringReference [] xLabels;
+	public bool barBorder;
 }
 public class RGBA{
 	public double r;
@@ -135,363 +172,6 @@ public class DynamicArrayNumbers{
 	public double length;
 }
 public class pbPlots{
-	public static bool RectanglesOverlap(Rectangle r1, Rectangle r2){
-		bool overlap;
-
-		overlap = false;
-
-		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
-		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
-		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
-		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
-
-		return overlap;
-	}
-
-
-	public static Rectangle CreateRectangle(double x1, double y1, double x2, double y2){
-		Rectangle r;
-		r = new Rectangle();
-		r.x1 = x1;
-		r.y1 = y1;
-		r.x2 = x2;
-		r.y2 = y2;
-		return r;
-	}
-
-
-	public static void CopyRectangleValues(Rectangle rd, Rectangle rs){
-		rd.x1 = rs.x1;
-		rd.y1 = rs.y1;
-		rd.x2 = rs.x2;
-		rd.y2 = rs.y2;
-	}
-
-
-	public static ScatterPlotSettings GetDefaultScatterPlotSettings(){
-		ScatterPlotSettings settings;
-
-		settings = new ScatterPlotSettings();
-
-		settings.autoBoundaries = true;
-		settings.autoPadding = true;
-		settings.title = "".ToCharArray();
-		settings.yLabel = "".ToCharArray();
-		settings.xLabel = "".ToCharArray();
-		settings.scatterPlotSeries = new ScatterPlotSeries [0];
-		settings.showGrid = true;
-		settings.gridColor = GetGray(0.2);
-
-		return settings;
-	}
-
-
-	public static ScatterPlotSeries GetDefaultScatterPlotSeriesSettings(){
-		ScatterPlotSeries series;
-
-		series = new ScatterPlotSeries();
-
-		series.linearInterpolation = true;
-		series.pointType = "pixels".ToCharArray();
-		series.lineType = "solid".ToCharArray();
-		series.lineThickness = 1d;
-		series.xs = new double [0];
-		series.ys = new double [0];
-		series.color = GetBlack();
-
-		return series;
-	}
-
-
-	public static void DrawScatterPlot(RGBABitmapImage canvas, double [] xs, double [] ys){
-		ScatterPlotSettings settings;
-
-		settings = GetDefaultScatterPlotSettings();
-
-		settings.canvas = canvas;
-		settings.scatterPlotSeries = new ScatterPlotSeries [1];
-		settings.scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
-		delete(settings.scatterPlotSeries[0].xs);
-		settings.scatterPlotSeries[0].xs = xs;
-		delete(settings.scatterPlotSeries[0].ys);
-		settings.scatterPlotSeries[0].ys = ys;
-
-		DrawScatterPlotFromSettings(settings);
-	}
-
-
-	public static void DrawScatterPlotFromSettings(ScatterPlotSettings settings){
-		double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, xOrigin, yOrigin, p, l, plot;
-		double xPadding, yPadding, xOriginPixels, yOriginPixels;
-		double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
-		NumberReference nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset;
-		bool prevSet, success;
-		RGBA gridLabelColor;
-		RGBABitmapImage canvas;
-		double [] xs, ys;
-		bool linearInterpolation;
-		ScatterPlotSeries sp;
-		double [] xGridPositions, yGridPositions;
-		StringArrayReference xLabels, yLabels;
-		NumberArrayReference xLabelPriorities, yLabelPriorities;
-		Rectangle [] occupied;
-		bool [] linePattern;
-
-		canvas = settings.canvas;
-		patternOffset = CreateNumberReference(0d);
-
-		if(settings.scatterPlotSeries.Length >= 1d){
-			xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
-			xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
-			yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
-			yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
-		}else{
-			xMin = -10d;
-			xMax = 10d;
-			yMin = -10d;
-			yMax = 10d;
-		}
-
-		if(!settings.autoBoundaries){
-			xMin = settings.xMin;
-			xMax = settings.xMax;
-			yMin = settings.yMin;
-			yMax = settings.yMax;
-		}else{
-			for(plot = 1d; plot < settings.scatterPlotSeries.Length; plot = plot + 1d){
-				sp = settings.scatterPlotSeries[(int)(plot)];
-
-				xMin = Min(xMin, GetMinimum(sp.xs));
-				xMax = Max(xMax, GetMaximum(sp.xs));
-				yMin = Min(yMin, GetMinimum(sp.ys));
-				yMax = Max(yMax, GetMaximum(sp.ys));
-			}
-		}
-
-		xLength = xMax - xMin;
-		yLength = yMax - yMin;
-
-		if(settings.autoPadding){
-			xPadding = 0.10*ImageWidth(canvas);
-			yPadding = 0.10*ImageHeight(canvas);
-		}else{
-			xPadding = settings.xPadding;
-			yPadding = settings.yPadding;
-		}
-
-		/* Draw title*/
-		DrawText(canvas, ImageWidth(canvas)/2d - GetTextWidth(settings.title)/2d, yPadding/3d, settings.title, GetBlack());
-
-		/* Draw grid*/
-		xPixelMin = xPadding;
-		yPixelMin = yPadding;
-		xPixelMax = ImageWidth(canvas) - xPadding;
-		yPixelMax = ImageHeight(canvas) - yPadding;
-		xLengthPixels = xPixelMax - xPixelMin;
-		yLengthPixels = yPixelMax - yPixelMin;
-		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
-
-		gridLabelColor = GetGray(0.5);
-
-		xLabels = new StringArrayReference();
-		xLabelPriorities = new NumberArrayReference();
-		yLabels = new StringArrayReference();
-		yLabelPriorities = new NumberArrayReference();
-		xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities);
-		yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
-
-		if(settings.showGrid){
-			/* X-grid*/
-			for(i = 0d; i < xGridPositions.Length; i = i + 1d){
-				x = xGridPositions[(int)(i)];
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-				DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor);
-			}
-
-			/* Y-grid*/
-			for(i = 0d; i < yGridPositions.Length; i = i + 1d){
-				y = yGridPositions[(int)(i)];
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
-			}
-		}
-
-		/* Labels*/
-		occupied = new Rectangle [(int)(xLabels.stringArray.Length + yLabels.stringArray.Length)];
-		for(i = 0d; i < occupied.Length; i = i + 1d){
-			occupied[(int)(i)] = CreateRectangle(0d, 0d, 0d, 0d);
-		}
-		nextRectangle = CreateNumberReference(0d);
-
-		for(i = 1d; i <= 5d; i = i + 1d){
-			DrawXLabelsForPriority(i, xMin, yMin, yMax, yLength, yLengthPixels, xLength, xPixelMin, yPixelMin, xLengthPixels, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied);
-		}
-
-		for(i = 1d; i <= 5d; i = i + 1d){
-			DrawYLabelsForPriority(i, yMin, xMin, xMax, xLength, xLengthPixels, yLength, xPixelMin, yPixelMin, yLengthPixels, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied);
-		}
-
-		/* Draw origin and axis titles.*/
-		axisLabelPadding = 20d;
-		if(yMin < 0d && yMax > 0d){
-			yOrigin = 0d;
-		}else{
-			yOrigin = yMin + (yMax - yMin)/2d;
-		}
-		yOriginPixels = MapYCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
-		if(yMin < 0d && yMax > 0d){
-			DrawLine1px(canvas, Roundx(xPixelMin), Roundx(yOriginPixels), Roundx(xPixelMax), Roundx(yOriginPixels), GetBlack());
-		}
-		DrawTextUpwards(settings.xLabel, 10d, yOriginPixels - GetTextWidth(settings.xLabel)/2d, canvas);
-
-		if(xMin < 0d && xMax > 0d){
-			xOrigin = 0d;
-		}else{
-			xOrigin = xMin + (xMax - xMin)/2d;
-		}
-		xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels);
-		if(xMin < 0d && xMax > 0d){
-			DrawLine1px(canvas, Roundx(xOriginPixels), Roundx(yPixelMin), Roundx(xOriginPixels), Roundx(yPixelMax), GetBlack());
-		}
-		DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel)/2d, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
-
-		/* X-grid-markers*/
-		if(yMin < 0d && yMax > 0d){
-		}else{
-			yOrigin = yMax;
-			yOriginPixels = MapXCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
-		}
-		for(i = 0d; i < xGridPositions.Length; i = i + 1d){
-			x = xGridPositions[(int)(i)];
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-			p = xLabelPriorities.numberArray[(int)(i)];
-			l = 1d;
-			if(p == 1d){
-				l = 8d;
-			}else if(p == 2d){
-				l = 3d;
-			}
-			DrawLine1px(canvas, px, yOriginPixels, px, yOriginPixels - l, GetBlack());
-		}
-
-		/* Y-grid-markers*/
-		if(xMin < 0d && xMax > 0d){
-		}else{
-			xOrigin = xMin;
-			xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels);
-		}
-		for(i = 0d; i < yGridPositions.Length; i = i + 1d){
-			y = yGridPositions[(int)(i)];
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-			p = yLabelPriorities.numberArray[(int)(i)];
-			l = 1d;
-			if(p == 1d){
-				l = 8d;
-			}else if(p == 2d){
-				l = 3d;
-			}
-			DrawLine1px(canvas, xOriginPixels, py, xOriginPixels + l, py, GetBlack());
-		}
-
-		/* Draw points*/
-		for(plot = 0d; plot < settings.scatterPlotSeries.Length; plot = plot + 1d){
-			sp = settings.scatterPlotSeries[(int)(plot)];
-
-			xs = sp.xs;
-			ys = sp.ys;
-			linearInterpolation = sp.linearInterpolation;
-
-			x1Ref = new NumberReference();
-			y1Ref = new NumberReference();
-			x2Ref = new NumberReference();
-			y2Ref = new NumberReference();
-			if(linearInterpolation){
-				prevSet = false;
-				xPrev = 0d;
-				yPrev = 0d;
-				for(i = 0d; i < xs.Length; i = i + 1d){
-					x = xs[(int)(i)];
-					y = ys[(int)(i)];
-
-					if(prevSet){
-						x1Ref.numberValue = xPrev;
-						y1Ref.numberValue = yPrev;
-						x2Ref.numberValue = x;
-						y2Ref.numberValue = y;
-
-						success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax);
-
-						if(success){
-							pxPrev = MapXCoordinates(x1Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels);
-							pyPrev = MapYCoordinates(y1Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels);
-							px = MapXCoordinates(x2Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels);
-							py = MapYCoordinates(y2Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels);
-
-							if(aStringsEqual(sp.lineType, "solid".ToCharArray()) && sp.lineThickness == 1d){
-								DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color);
-							}else if(aStringsEqual(sp.lineType, "solid".ToCharArray())){
-								DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color);
-							}else if(aStringsEqual(sp.lineType, "dashed".ToCharArray())){
-								linePattern = GetLinePattern1();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "dotted".ToCharArray())){
-								linePattern = GetLinePattern2();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "dotdash".ToCharArray())){
-								linePattern = GetLinePattern3();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "longdash".ToCharArray())){
-								linePattern = GetLinePattern4();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}else if(aStringsEqual(sp.lineType, "twodash".ToCharArray())){
-								linePattern = GetLinePattern5();
-								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
-							}
-						}
-					}
-
-					prevSet = true;
-					xPrev = x;
-					yPrev = y;
-				}
-			}else{
-				for(i = 0d; i < xs.Length; i = i + 1d){
-					x = xs[(int)(i)];
-					y = ys[(int)(i)];
-
-					if(x > xMin && x < xMax && y > yMin && y < yMax){
-
-						x = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-						y = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-
-						if(aStringsEqual(sp.pointType, "crosses".ToCharArray())){
-							DrawPixel(canvas, x, y, sp.color);
-							DrawPixel(canvas, x + 1d, y, sp.color);
-							DrawPixel(canvas, x + 2d, y, sp.color);
-							DrawPixel(canvas, x - 1d, y, sp.color);
-							DrawPixel(canvas, x - 2d, y, sp.color);
-							DrawPixel(canvas, x, y + 1d, sp.color);
-							DrawPixel(canvas, x, y + 2d, sp.color);
-							DrawPixel(canvas, x, y - 1d, sp.color);
-							DrawPixel(canvas, x, y - 2d, sp.color);
-						}else if(aStringsEqual(sp.pointType, "circles".ToCharArray())){
-							DrawCircle(canvas, x, y, 3d, sp.color);
-						}else if(aStringsEqual(sp.pointType, "dots".ToCharArray())){
-							DrawFilledCircle(canvas, x, y, 3d, sp.color);
-						}else if(aStringsEqual(sp.pointType, "triangles".ToCharArray())){
-							DrawTriangle(canvas, x, y, 3d, sp.color);
-						}else if(aStringsEqual(sp.pointType, "filled triangles".ToCharArray())){
-							DrawFilledTriangle(canvas, x, y, 3d, sp.color);
-						}else if(aStringsEqual(sp.pointType, "pixels".ToCharArray())){
-							DrawPixel(canvas, x, y, sp.color);
-						}
-					}
-				}
-			}
-		}
-	}
-
-
 	public static bool CropLineWithinBoundary(NumberReference x1Ref, NumberReference y1Ref, NumberReference x2Ref, NumberReference y2Ref, double xMin, double xMax, double yMin, double yMax){
 		double x1, y1, x2, y2;
 		bool success, p1In, p2In;
@@ -611,48 +291,135 @@ public class pbPlots{
 	}
 
 
-	public static void DrawXLabelsForPriority(double p, double xMin, double yMin, double yMax, double yLength, double yLengthPixels, double xLength, double xPixelMin, double yPixelMin, double xLengthPixels, NumberReference nextRectangle, RGBA gridLabelColor, RGBABitmapImage canvas, double [] xGridPositions, StringArrayReference xLabels, NumberArrayReference xLabelPriorities, Rectangle [] occupied){
+	public static RGBA [] Get8HighContrastColors(){
+		RGBA [] colors;
+		colors = new RGBA [8];
+		colors[0] = CreateRGBColor(3d/256d, 146d/256d, 206d/256d);
+		colors[1] = CreateRGBColor(253d/256d, 83d/256d, 8d/256d);
+		colors[2] = CreateRGBColor(102d/256d, 176d/256d, 50d/256d);
+		colors[3] = CreateRGBColor(208d/256d, 234d/256d, 43d/256d);
+		colors[4] = CreateRGBColor(167d/256d, 25d/256d, 75d/256d);
+		colors[5] = CreateRGBColor(254d/256d, 254d/256d, 51d/256d);
+		colors[6] = CreateRGBColor(134d/256d, 1d/256d, 175d/256d);
+		colors[7] = CreateRGBColor(251d/256d, 153d/256d, 2d/256d);
+		return colors;
+	}
+
+
+	public static void DrawFilledRectangleWithBorder(RGBABitmapImage image, double x, double y, double w, double h, RGBA borderColor, RGBA fillColor){
+		if(h > 0d && w > 0d){
+			DrawFilledRectangle(image, x, y, w, h, fillColor);
+			DrawRectangle1px(image, x, y, w, h, borderColor);
+		}
+	}
+
+
+	public static RGBABitmapImageReference CreateRGBABitmapImageReference(){
+		RGBABitmapImageReference reference;
+
+		reference = new RGBABitmapImageReference();
+		reference.image = new RGBABitmapImage();
+		reference.image.x = new RGBABitmap [0];
+
+		return reference;
+	}
+
+
+	public static bool RectanglesOverlap(Rectangle r1, Rectangle r2){
 		bool overlap;
-		double i, j, x, px, oy;
+
+		overlap = false;
+
+		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
+		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2);
+		overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
+		overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2);
+
+		return overlap;
+	}
+
+
+	public static Rectangle CreateRectangle(double x1, double y1, double x2, double y2){
+		Rectangle r;
+		r = new Rectangle();
+		r.x1 = x1;
+		r.y1 = y1;
+		r.x2 = x2;
+		r.y2 = y2;
+		return r;
+	}
+
+
+	public static void CopyRectangleValues(Rectangle rd, Rectangle rs){
+		rd.x1 = rs.x1;
+		rd.y1 = rs.y1;
+		rd.x2 = rs.x2;
+		rd.y2 = rs.y2;
+	}
+
+
+	public static void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, double xPixelMin, double xPixelMax, NumberReference nextRectangle, RGBA gridLabelColor, RGBABitmapImage canvas, double [] xGridPositions, StringArrayReference xLabels, NumberArrayReference xLabelPriorities, Rectangle [] occupied, bool textOnBottom){
+		bool overlap, currentOverlaps;
+		double i, j, x, px, padding;
 		char [] text;
 		Rectangle r;
 
 		r = new Rectangle();
-
-		if(yMin < 0d && yMax > 0d){
-			oy = MapYCoordinates(0d, yMin, yLength, yPixelMin, yLengthPixels);
-		}else{
-			oy = MapYCoordinates(yMin, yMin, yLength, yPixelMin, yLengthPixels);
-		}
+		padding = 10d;
 
 		overlap = false;
 		for(i = 0d; i < xLabels.stringArray.Length; i = i + 1d){
 			if(xLabelPriorities.numberArray[(int)(i)] == p){
 
 				x = xGridPositions[(int)(i)];
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
 				text = xLabels.stringArray[(int)(i)].stringx;
 
-				r.x1 = px - GetTextWidth(text)/2d;
-				r.y1 = oy + 5d;
+				r.x1 = Floor(px - GetTextWidth(text)/2d);
+				if(textOnBottom){
+					r.y1 = Floor(oy + 5d);
+				}else{
+					r.y1 = Floor(oy - 20d);
+				}
 				r.x2 = r.x1 + GetTextWidth(text);
 				r.y2 = r.y1 + GetTextHeight(text);
 
+				/* Add padding*/
+				r.x1 = r.x1 - padding;
+				r.y1 = r.y1 - padding;
+				r.x2 = r.x2 + padding;
+				r.y2 = r.y2 + padding;
+
+				currentOverlaps = false;
+
 				for(j = 0d; j < nextRectangle.numberValue; j = j + 1d){
-					overlap = overlap || RectanglesOverlap(r, occupied[(int)(j)]);
+					currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[(int)(j)]);
 				}
+
+				if(!currentOverlaps && p == 1d){
+					DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor);
+
+					CopyRectangleValues(occupied[(int)(nextRectangle.numberValue)], r);
+					nextRectangle.numberValue = nextRectangle.numberValue + 1d;
+				}
+
+				overlap = overlap || currentOverlaps;
 			}
 		}
-		if(!overlap){
+		if(!overlap && p != 1d){
 			for(i = 0d; i < xGridPositions.Length; i = i + 1d){
 				x = xGridPositions[(int)(i)];
-				px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
 
 				if(xLabelPriorities.numberArray[(int)(i)] == p){
 					text = xLabels.stringArray[(int)(i)].stringx;
 
-					r.x1 = px - GetTextWidth(text)/2d;
-					r.y1 = oy + 5d;
+					r.x1 = Floor(px - GetTextWidth(text)/2d);
+					if(textOnBottom){
+						r.y1 = Floor(oy + 5d);
+					}else{
+						r.y1 = Floor(oy - 20d);
+					}
 					r.x2 = r.x1 + GetTextWidth(text);
 					r.y2 = r.y1 + GetTextHeight(text);
 
@@ -666,48 +433,69 @@ public class pbPlots{
 	}
 
 
-	public static void DrawYLabelsForPriority(double p, double yMin, double xMin, double xMax, double xLength, double xLengthPixels, double yLength, double xPixelMin, double yPixelMin, double yLengthPixels, NumberReference nextRectangle, RGBA gridLabelColor, RGBABitmapImage canvas, double [] yGridPositions, StringArrayReference yLabels, NumberArrayReference yLabelPriorities, Rectangle [] occupied){
-		bool overlap;
-		double i, j, y, py, ox;
+	public static void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, double yPixelMin, double yPixelMax, NumberReference nextRectangle, RGBA gridLabelColor, RGBABitmapImage canvas, double [] yGridPositions, StringArrayReference yLabels, NumberArrayReference yLabelPriorities, Rectangle [] occupied, bool textOnLeft){
+		bool overlap, currentOverlaps;
+		double i, j, y, py, padding;
 		char [] text;
 		Rectangle r;
 
 		r = new Rectangle();
-
-		if(xMin < 0d && xMax > 0d){
-			ox = MapXCoordinates(0d, xMin, xLength, xPixelMin, xLengthPixels);
-		}else{
-			ox = MapXCoordinates(xMin, xMin, xLength, xPixelMin, xLengthPixels);
-		}
+		padding = 10d;
 
 		overlap = false;
 		for(i = 0d; i < yLabels.stringArray.Length; i = i + 1d){
 			if(yLabelPriorities.numberArray[(int)(i)] == p){
 
 				y = yGridPositions[(int)(i)];
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 				text = yLabels.stringArray[(int)(i)].stringx;
 
-				r.x1 = ox - GetTextWidth(text) - 10d;
-				r.y1 = py - 6d;
+				if(textOnLeft){
+					r.x1 = Floor(ox - GetTextWidth(text) - 10d);
+				}else{
+					r.x1 = Floor(ox + 10d);
+				}
+				r.y1 = Floor(py - 6d);
 				r.x2 = r.x1 + GetTextWidth(text);
 				r.y2 = r.y1 + GetTextHeight(text);
 
+				/* Add padding*/
+				r.x1 = r.x1 - padding;
+				r.y1 = r.y1 - padding;
+				r.x2 = r.x2 + padding;
+				r.y2 = r.y2 + padding;
+
+				currentOverlaps = false;
+
 				for(j = 0d; j < nextRectangle.numberValue; j = j + 1d){
-					overlap = overlap || RectanglesOverlap(r, occupied[(int)(j)]);
+					currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[(int)(j)]);
 				}
+
+				/* Draw labels with priority 1 if they do not overlap anything else.*/
+				if(!currentOverlaps && p == 1d){
+					DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor);
+
+					CopyRectangleValues(occupied[(int)(nextRectangle.numberValue)], r);
+					nextRectangle.numberValue = nextRectangle.numberValue + 1d;
+				}
+
+				overlap = overlap || currentOverlaps;
 			}
 		}
-		if(!overlap){
+		if(!overlap && p != 1d){
 			for(i = 0d; i < yGridPositions.Length; i = i + 1d){
 				y = yGridPositions[(int)(i)];
-				py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 
 				if(yLabelPriorities.numberArray[(int)(i)] == p){
 					text = yLabels.stringArray[(int)(i)].stringx;
 
-					r.x1 = ox - GetTextWidth(text) - 10d;
-					r.y1 = py - 6d;
+					if(textOnLeft){
+						r.x1 = Floor(ox - GetTextWidth(text) - 10d);
+					}else{
+						r.x1 = Floor(ox + 10d);
+					}
+					r.y1 = Floor(py - 6d);
 					r.x2 = r.x1 + GetTextWidth(text);
 					r.y2 = r.y1 + GetTextHeight(text);
 
@@ -718,23 +506,6 @@ public class pbPlots{
 				}
 			}
 		}
-	}
-
-
-	public static void DrawTextUpwards(char [] text, double x, double y, RGBABitmapImage canvas){
-		RGBABitmapImage buffer;
-		RGBABitmapImage rotated;
-		buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent());
-		DrawText(buffer, 0d, 0d, text, GetBlack());
-		rotated = RotateAntiClockwise90Degrees(buffer);
-		DrawImageOnImage(canvas, rotated, x, y);
-		DeleteImage(buffer);
-		DeleteImage(rotated);
-	}
-
-
-	public static double RoundToDigits(double element, double digitsAfterPoint){
-		return Roundx(element*Pow(10d, digitsAfterPoint))/Pow(10d, digitsAfterPoint);
 	}
 
 
@@ -817,7 +588,7 @@ public class pbPlots{
 
 			/* 0 has lowest priority.*/
 			if(EpsilonCompare(num, 0d, Pow(10d, p - 5d))){
-				priority = 10d;
+				priority = 3d;
 			}
 
 			priorities.numberArray[(int)(i)] = priority;
@@ -838,6 +609,48 @@ public class pbPlots{
 	}
 
 
+	public static double MapYCoordinate(double y, double yMin, double yMax, double yPixelMin, double yPixelMax){
+		double yLength, yPixelLength;
+
+		yLength = yMax - yMin;
+		yPixelLength = yPixelMax - yPixelMin;
+
+		y = y - yMin;
+		y = y*yPixelLength/yLength;
+		y = yPixelLength - y;
+		y = y + yPixelMin;
+		return y;
+	}
+
+
+	public static double MapXCoordinate(double x, double xMin, double xMax, double xPixelMin, double xPixelMax){
+		double xLength, xPixelLength;
+
+		xLength = xMax - xMin;
+		xPixelLength = xPixelMax - xPixelMin;
+
+		x = x - xMin;
+		x = x*xPixelLength/xLength;
+		x = x + xPixelMin;
+		return x;
+	}
+
+
+	public static double MapXCoordinateAutoSettings(double x, RGBABitmapImage image, double [] xs){
+		return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1d - GetDefaultPaddingPercentage())*ImageWidth(image));
+	}
+
+
+	public static double MapYCoordinateAutoSettings(double y, RGBABitmapImage image, double [] ys){
+		return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1d - GetDefaultPaddingPercentage())*ImageHeight(image));
+	}
+
+
+	public static double GetDefaultPaddingPercentage(){
+		return 0.10;
+	}
+
+
 	public static void DrawText(RGBABitmapImage canvas, double x, double y, char [] text, RGBA color){
 		double i, charWidth, spacing;
 
@@ -850,20 +663,881 @@ public class pbPlots{
 	}
 
 
-	public static double MapYCoordinates(double y, double ymin, double yLength, double yPixelMin, double yPixelLength){
-		y = y - ymin;
-		y = y*yPixelLength/yLength;
-		y = yPixelLength - y;
-		y = y + yPixelMin;
-		return y;
+	public static void DrawTextUpwards(RGBABitmapImage canvas, double x, double y, char [] text, RGBA color){
+		RGBABitmapImage buffer, rotated;
+
+		buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent());
+		DrawText(buffer, 0d, 0d, text, color);
+		rotated = RotateAntiClockwise90Degrees(buffer);
+		DrawImageOnImage(canvas, rotated, x, y);
+		DeleteImage(buffer);
+		DeleteImage(rotated);
 	}
 
 
-	public static double MapXCoordinates(double x, double xmin, double xLength, double xPixelMin, double xPixelLength){
-		x = x - xmin;
-		x = x*xPixelLength/xLength;
-		x = x + xPixelMin;
-		return x;
+	public static ScatterPlotSettings GetDefaultScatterPlotSettings(){
+		ScatterPlotSettings settings;
+
+		settings = new ScatterPlotSettings();
+
+		settings.autoBoundaries = true;
+		settings.xMax = 0d;
+		settings.xMin = 0d;
+		settings.yMax = 0d;
+		settings.yMin = 0d;
+		settings.autoPadding = true;
+		settings.xPadding = 0d;
+		settings.yPadding = 0d;
+		settings.title = "".ToCharArray();
+		settings.yLabel = "".ToCharArray();
+		settings.xLabel = "".ToCharArray();
+		settings.scatterPlotSeries = new ScatterPlotSeries [0];
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.1);
+		settings.xAxisAuto = true;
+		settings.xAxisTop = false;
+		settings.xAxisBottom = false;
+		settings.yAxisAuto = true;
+		settings.yAxisLeft = false;
+		settings.yAxisRight = false;
+
+		return settings;
+	}
+
+
+	public static ScatterPlotSeries GetDefaultScatterPlotSeriesSettings(){
+		ScatterPlotSeries series;
+
+		series = new ScatterPlotSeries();
+
+		series.linearInterpolation = true;
+		series.pointType = "pixels".ToCharArray();
+		series.lineType = "solid".ToCharArray();
+		series.lineThickness = 1d;
+		series.xs = new double [0];
+		series.ys = new double [0];
+		series.color = GetBlack();
+
+		return series;
+	}
+
+
+	public static void DrawScatterPlot(RGBABitmapImageReference canvasReference, double width, double height, double [] xs, double [] ys){
+		ScatterPlotSettings settings;
+
+		settings = GetDefaultScatterPlotSettings();
+
+		settings.width = width;
+		settings.height = height;
+		settings.scatterPlotSeries = new ScatterPlotSeries [1];
+		settings.scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
+		delete(settings.scatterPlotSeries[0].xs);
+		settings.scatterPlotSeries[0].xs = xs;
+		delete(settings.scatterPlotSeries[0].ys);
+		settings.scatterPlotSeries[0].ys = ys;
+
+		DrawScatterPlotFromSettings(canvasReference, settings);
+	}
+
+
+	public static bool DrawScatterPlotFromSettings(RGBABitmapImageReference canvasReference, ScatterPlotSettings settings){
+		double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot;
+		double xPadding, yPadding, originXPixels, originYPixels;
+		double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
+		NumberReference nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset;
+		bool prevSet, success;
+		RGBA gridLabelColor;
+		RGBABitmapImage canvas;
+		double [] xs, ys;
+		bool linearInterpolation;
+		ScatterPlotSeries sp;
+		double [] xGridPositions, yGridPositions;
+		StringArrayReference xLabels, yLabels;
+		NumberArrayReference xLabelPriorities, yLabelPriorities;
+		Rectangle [] occupied;
+		bool [] linePattern;
+		bool originXInside, originYInside, textOnLeft, textOnBottom;
+		double originTextX, originTextY, originTextXPixels, originTextYPixels, side;
+
+		canvas = CreateImage(settings.width, settings.height, GetWhite());
+		patternOffset = CreateNumberReference(0d);
+
+		success = ScatterPlotFromSettingsValid(settings);
+
+		if(success){
+
+			if(settings.scatterPlotSeries.Length >= 1d){
+				xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
+				xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
+				yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
+				yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
+			}else{
+				xMin = -10d;
+				xMax = 10d;
+				yMin = -10d;
+				yMax = 10d;
+			}
+
+			if(!settings.autoBoundaries){
+				xMin = settings.xMin;
+				xMax = settings.xMax;
+				yMin = settings.yMin;
+				yMax = settings.yMax;
+			}else{
+				for(plot = 1d; plot < settings.scatterPlotSeries.Length; plot = plot + 1d){
+					sp = settings.scatterPlotSeries[(int)(plot)];
+
+					xMin = Min(xMin, GetMinimum(sp.xs));
+					xMax = Max(xMax, GetMaximum(sp.xs));
+					yMin = Min(yMin, GetMinimum(sp.ys));
+					yMax = Max(yMax, GetMaximum(sp.ys));
+				}
+			}
+
+			xLength = xMax - xMin;
+			yLength = yMax - yMin;
+
+			if(settings.autoPadding){
+				xPadding = Floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
+				yPadding = Floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+			}else{
+				xPadding = settings.xPadding;
+				yPadding = settings.yPadding;
+			}
+
+			/* Draw title*/
+			DrawText(canvas, Floor(ImageWidth(canvas)/2d - GetTextWidth(settings.title)/2d), Floor(yPadding/3d), settings.title, GetBlack());
+
+			/* Draw grid*/
+			xPixelMin = xPadding;
+			yPixelMin = yPadding;
+			xPixelMax = ImageWidth(canvas) - xPadding;
+			yPixelMax = ImageHeight(canvas) - yPadding;
+			xLengthPixels = xPixelMax - xPixelMin;
+			yLengthPixels = yPixelMax - yPixelMin;
+			DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
+
+			gridLabelColor = GetGray(0.5);
+
+			xLabels = new StringArrayReference();
+			xLabelPriorities = new NumberArrayReference();
+			yLabels = new StringArrayReference();
+			yLabelPriorities = new NumberArrayReference();
+			xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities);
+			yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
+
+			if(settings.showGrid){
+				/* X-grid*/
+				for(i = 0d; i < xGridPositions.Length; i = i + 1d){
+					x = xGridPositions[(int)(i)];
+					px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+					DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor);
+				}
+
+				/* Y-grid*/
+				for(i = 0d; i < yGridPositions.Length; i = i + 1d){
+					y = yGridPositions[(int)(i)];
+					py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+					DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+				}
+			}
+
+			/* Compute origin information.*/
+			originYInside = yMin < 0d && yMax > 0d;
+			originY = 0d;
+			if(settings.xAxisAuto){
+				if(originYInside){
+					originY = 0d;
+				}else{
+					originY = yMin;
+				}
+			}else{
+if(settings.xAxisTop){
+					originY = yMax;
+				}
+				if(settings.xAxisBottom){
+					originY = yMin;
+				}
+			}
+			originYPixels = MapYCoordinate(originY, yMin, yMax, yPixelMin, yPixelMax);
+
+			originXInside = xMin < 0d && xMax > 0d;
+			originX = 0d;
+			if(settings.yAxisAuto){
+				if(originXInside){
+					originX = 0d;
+				}else{
+					originX = xMin;
+				}
+			}else{
+if(settings.yAxisLeft){
+					originX = xMin;
+				}
+				if(settings.yAxisRight){
+					originX = xMax;
+				}
+			}
+			originXPixels = MapXCoordinate(originX, xMin, xMax, xPixelMin, xPixelMax);
+
+			if(originYInside){
+				originTextY = 0d;
+			}else{
+				originTextY = yMin + yLength/2d;
+			}
+			originTextYPixels = MapYCoordinate(originTextY, yMin, yMax, yPixelMin, yPixelMax);
+
+			if(originXInside){
+				originTextX = 0d;
+			}else{
+				originTextX = xMin + xLength/2d;
+			}
+			originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax);
+
+			/* Labels*/
+			occupied = new Rectangle [(int)(xLabels.stringArray.Length + yLabels.stringArray.Length)];
+			for(i = 0d; i < occupied.Length; i = i + 1d){
+				occupied[(int)(i)] = CreateRectangle(0d, 0d, 0d, 0d);
+			}
+			nextRectangle = CreateNumberReference(0d);
+
+			/* x labels*/
+			for(i = 1d; i <= 5d; i = i + 1d){
+				textOnBottom = true;
+				if(!settings.xAxisAuto && settings.xAxisTop){
+					textOnBottom = false;
+				}
+				DrawXLabelsForPriority(i, xMin, originYPixels, xMax, xPixelMin, xPixelMax, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied, textOnBottom);
+			}
+
+			/* y labels*/
+			for(i = 1d; i <= 5d; i = i + 1d){
+				textOnLeft = true;
+				if(!settings.yAxisAuto && settings.yAxisRight){
+					textOnLeft = false;
+				}
+				DrawYLabelsForPriority(i, yMin, originXPixels, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, textOnLeft);
+			}
+
+			/* Draw origin line axis titles.*/
+			axisLabelPadding = 20d;
+
+			/* x origin line*/
+			if(originYInside){
+				DrawLine1px(canvas, Roundx(xPixelMin), Roundx(originYPixels), Roundx(xPixelMax), Roundx(originYPixels), GetBlack());
+			}
+
+			/* y origin line*/
+			if(originXInside){
+				DrawLine1px(canvas, Roundx(originXPixels), Roundx(yPixelMin), Roundx(originXPixels), Roundx(yPixelMax), GetBlack());
+			}
+
+			/* Draw origin axis titles.*/
+			DrawTextUpwards(canvas, 10d, Floor(originTextYPixels - GetTextWidth(settings.xLabel)/2d), settings.xLabel, GetBlack());
+			DrawText(canvas, Floor(originTextXPixels - GetTextWidth(settings.yLabel)/2d), yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
+
+			/* X-grid-markers*/
+			for(i = 0d; i < xGridPositions.Length; i = i + 1d){
+				x = xGridPositions[(int)(i)];
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+				p = xLabelPriorities.numberArray[(int)(i)];
+				l = 1d;
+				if(p == 1d){
+					l = 8d;
+				}else if(p == 2d){
+					l = 3d;
+				}
+				side = -1d;
+				if(!settings.xAxisAuto && settings.xAxisTop){
+					side = 1d;
+				}
+				DrawLine1px(canvas, px, originYPixels, px, originYPixels + side*l, GetBlack());
+			}
+
+			/* Y-grid-markers*/
+			for(i = 0d; i < yGridPositions.Length; i = i + 1d){
+				y = yGridPositions[(int)(i)];
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+				p = yLabelPriorities.numberArray[(int)(i)];
+				l = 1d;
+				if(p == 1d){
+					l = 8d;
+				}else if(p == 2d){
+					l = 3d;
+				}
+				side = 1d;
+				if(!settings.yAxisAuto && settings.yAxisRight){
+					side = -1d;
+				}
+				DrawLine1px(canvas, originXPixels, py, originXPixels + side*l, py, GetBlack());
+			}
+
+			/* Draw points*/
+			for(plot = 0d; plot < settings.scatterPlotSeries.Length; plot = plot + 1d){
+				sp = settings.scatterPlotSeries[(int)(plot)];
+
+				xs = sp.xs;
+				ys = sp.ys;
+				linearInterpolation = sp.linearInterpolation;
+
+				x1Ref = new NumberReference();
+				y1Ref = new NumberReference();
+				x2Ref = new NumberReference();
+				y2Ref = new NumberReference();
+				if(linearInterpolation){
+					prevSet = false;
+					xPrev = 0d;
+					yPrev = 0d;
+					for(i = 0d; i < xs.Length; i = i + 1d){
+						x = xs[(int)(i)];
+						y = ys[(int)(i)];
+
+						if(prevSet){
+							x1Ref.numberValue = xPrev;
+							y1Ref.numberValue = yPrev;
+							x2Ref.numberValue = x;
+							y2Ref.numberValue = y;
+
+							success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax);
+
+							if(success){
+								pxPrev = Floor(MapXCoordinate(x1Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax));
+								pyPrev = Floor(MapYCoordinate(y1Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax));
+								px = Floor(MapXCoordinate(x2Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax));
+								py = Floor(MapYCoordinate(y2Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax));
+
+								if(aStringsEqual(sp.lineType, "solid".ToCharArray()) && sp.lineThickness == 1d){
+									DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color);
+								}else if(aStringsEqual(sp.lineType, "solid".ToCharArray())){
+									DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color);
+								}else if(aStringsEqual(sp.lineType, "dashed".ToCharArray())){
+									linePattern = GetLinePattern1();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "dotted".ToCharArray())){
+									linePattern = GetLinePattern2();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "dotdash".ToCharArray())){
+									linePattern = GetLinePattern3();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "longdash".ToCharArray())){
+									linePattern = GetLinePattern4();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}else if(aStringsEqual(sp.lineType, "twodash".ToCharArray())){
+									linePattern = GetLinePattern5();
+									DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color);
+								}
+							}
+						}
+
+						prevSet = true;
+						xPrev = x;
+						yPrev = y;
+					}
+				}else{
+					for(i = 0d; i < xs.Length; i = i + 1d){
+						x = xs[(int)(i)];
+						y = ys[(int)(i)];
+
+						if(x > xMin && x < xMax && y > yMin && y < yMax){
+
+							x = Floor(MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax));
+							y = Floor(MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax));
+
+							if(aStringsEqual(sp.pointType, "crosses".ToCharArray())){
+								DrawPixel(canvas, x, y, sp.color);
+								DrawPixel(canvas, x + 1d, y, sp.color);
+								DrawPixel(canvas, x + 2d, y, sp.color);
+								DrawPixel(canvas, x - 1d, y, sp.color);
+								DrawPixel(canvas, x - 2d, y, sp.color);
+								DrawPixel(canvas, x, y + 1d, sp.color);
+								DrawPixel(canvas, x, y + 2d, sp.color);
+								DrawPixel(canvas, x, y - 1d, sp.color);
+								DrawPixel(canvas, x, y - 2d, sp.color);
+							}else if(aStringsEqual(sp.pointType, "circles".ToCharArray())){
+								DrawCircle(canvas, x, y, 3d, sp.color);
+							}else if(aStringsEqual(sp.pointType, "dots".ToCharArray())){
+								DrawFilledCircle(canvas, x, y, 3d, sp.color);
+							}else if(aStringsEqual(sp.pointType, "triangles".ToCharArray())){
+								DrawTriangle(canvas, x, y, 3d, sp.color);
+							}else if(aStringsEqual(sp.pointType, "filled triangles".ToCharArray())){
+								DrawFilledTriangle(canvas, x, y, 3d, sp.color);
+							}else if(aStringsEqual(sp.pointType, "pixels".ToCharArray())){
+								DrawPixel(canvas, x, y, sp.color);
+							}
+						}
+					}
+				}
+			}
+
+			DeleteImage(canvasReference.image);
+			canvasReference.image = canvas;
+		}
+
+		return success;
+	}
+
+
+	public static bool ScatterPlotFromSettingsValid(ScatterPlotSettings settings){
+		bool success, found;
+		ScatterPlotSeries series;
+		double i;
+
+		success = true;
+
+		/* Check axis placement.*/
+		if(!settings.xAxisAuto){
+			if(settings.xAxisTop && settings.xAxisBottom){
+				success = false;
+			}
+			if(!settings.xAxisTop && !settings.xAxisBottom){
+				success = false;
+			}
+		}
+
+		if(!settings.yAxisAuto){
+			if(settings.yAxisLeft && settings.yAxisRight){
+				success = false;
+			}
+			if(!settings.yAxisLeft && !settings.yAxisRight){
+				success = false;
+			}
+		}
+
+		/* Check series lengths.*/
+		for(i = 0d; i < settings.scatterPlotSeries.Length; i = i + 1d){
+			series = settings.scatterPlotSeries[(int)(i)];
+			if(series.xs.Length != series.ys.Length){
+				success = false;
+			}
+			if(series.xs.Length == 0d){
+				success = false;
+			}
+			if(series.linearInterpolation && series.xs.Length == 1d){
+				success = false;
+			}
+		}
+
+		/* Check bounds.*/
+		if(!settings.autoBoundaries){
+			if(settings.xMin >= settings.xMax){
+				success = false;
+			}
+			if(settings.yMin >= settings.yMax){
+				success = false;
+			}
+		}
+
+		/* Check padding.*/
+		if(!settings.autoPadding){
+			if(2d*settings.xPadding >= settings.width){
+				success = false;
+			}
+			if(2d*settings.yPadding >= settings.height){
+				success = false;
+			}
+		}
+
+		/* Check width and height.*/
+		if(settings.width < 0d){
+			success = false;
+		}
+		if(settings.height < 0d){
+			success = false;
+		}
+
+		/* Check point types.*/
+		for(i = 0d; i < settings.scatterPlotSeries.Length; i = i + 1d){
+			series = settings.scatterPlotSeries[(int)(i)];
+
+			if(series.lineThickness < 0d){
+				success = false;
+			}
+
+			if(!series.linearInterpolation){
+				/* Point type.*/
+				found = false;
+				if(aStringsEqual(series.pointType, "crosses".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "circles".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "dots".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "triangles".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "filled triangles".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.pointType, "pixels".ToCharArray())){
+					found = true;
+				}
+				if(!found){
+					success = false;
+				}
+			}else{
+				/* Line type.*/
+				found = false;
+				if(aStringsEqual(series.lineType, "solid".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "dashed".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "dotted".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "dotdash".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "longdash".ToCharArray())){
+					found = true;
+				}else if(aStringsEqual(series.lineType, "twodash".ToCharArray())){
+					found = true;
+				}
+
+				if(!found){
+					success = false;
+				}
+			}
+		}
+
+		return success;
+	}
+
+
+	public static BarPlotSettings GetDefaultBarPlotSettings(){
+		BarPlotSettings settings;
+
+		settings = new BarPlotSettings();
+
+		settings.width = 800d;
+		settings.height = 600d;
+		settings.autoBoundaries = true;
+		settings.yMax = 0d;
+		settings.yMin = 0d;
+		settings.autoPadding = true;
+		settings.xPadding = 0d;
+		settings.yPadding = 0d;
+		settings.title = "".ToCharArray();
+		settings.yLabel = "".ToCharArray();
+		settings.barPlotSeries = new BarPlotSeries [0];
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.1);
+		settings.autoColor = true;
+		settings.grayscaleAutoColor = false;
+		settings.autoSpacing = true;
+		settings.groupSeparation = 0d;
+		settings.barSeparation = 0d;
+		settings.autoLabels = true;
+		settings.xLabels = new StringReference [0];
+		/*settings.autoLabels = false;
+        settings.xLabels = new StringReference [5];
+        settings.xLabels[0] = CreateStringReference("may 20".toCharArray());
+        settings.xLabels[1] = CreateStringReference("jun 20".toCharArray());
+        settings.xLabels[2] = CreateStringReference("jul 20".toCharArray());
+        settings.xLabels[3] = CreateStringReference("aug 20".toCharArray());
+        settings.xLabels[4] = CreateStringReference("sep 20".toCharArray());*/
+		settings.barBorder = false;
+
+		return settings;
+	}
+
+
+	public static BarPlotSeries GetDefaultBarPlotSeriesSettings(){
+		BarPlotSeries series;
+
+		series = new BarPlotSeries();
+
+		series.ys = new double [0];
+		series.color = GetBlack();
+
+		return series;
+	}
+
+
+	public static RGBABitmapImage DrawBarPlot(double width, double height, double [] ys){
+		BarPlotSettings settings;
+		RGBABitmapImageReference canvasReference;
+
+		settings = GetDefaultBarPlotSettings();
+
+		settings.barPlotSeries = new BarPlotSeries [1];
+		settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
+		delete(settings.barPlotSeries[0].ys);
+		settings.barPlotSeries[0].ys = ys;
+		canvasReference = new RGBABitmapImageReference();
+		settings.width = width;
+		settings.height = height;
+
+		DrawBarPlotFromSettings(canvasReference, settings);
+
+		return canvasReference.image;
+	}
+
+
+	public static bool DrawBarPlotFromSettings(RGBABitmapImageReference canvasReference, BarPlotSettings settings){
+		double xPadding, yPadding;
+		double xPixelMin, yPixelMin, yPixelMax, xPixelMax;
+		double xLengthPixels, yLengthPixels;
+		double s, n, y, x, w, h, yMin, yMax, b, i, py, yValue;
+		RGBA [] colors;
+		double [] ys, yGridPositions;
+		double yTop, yBottom, ss, bs, yLength;
+		double groupSeparation, barSeparation, barWidth, textwidth;
+		StringArrayReference yLabels;
+		NumberArrayReference yLabelPriorities;
+		Rectangle [] occupied;
+		NumberReference nextRectangle;
+		RGBA gridLabelColor, barColor;
+		char [] label;
+		bool success;
+		RGBABitmapImage canvas;
+
+		success = BarPlotSettingsIsValid(settings);
+
+		if(success){
+
+			canvas = CreateImage(settings.width, settings.height, GetWhite());
+
+			ss = settings.barPlotSeries.Length;
+			gridLabelColor = GetGray(0.5);
+
+			/* padding*/
+			if(settings.autoPadding){
+				xPadding = Floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
+				yPadding = Floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+			}else{
+				xPadding = settings.xPadding;
+				yPadding = settings.yPadding;
+			}
+
+			/* Draw title*/
+			DrawText(canvas, Floor(ImageWidth(canvas)/2d - GetTextWidth(settings.title)/2d), Floor(yPadding/3d), settings.title, GetBlack());
+			DrawTextUpwards(canvas, 10d, Floor(ImageHeight(canvas)/2d - GetTextWidth(settings.yLabel)/2d), settings.yLabel, GetBlack());
+
+			/* min and max*/
+			if(settings.autoBoundaries){
+				if(ss >= 1d){
+					yMax = GetMaximum(settings.barPlotSeries[0].ys);
+					yMin = Min(0d, GetMinimum(settings.barPlotSeries[0].ys));
+
+					for(s = 0d; s < ss; s = s + 1d){
+						yMax = Max(yMax, GetMaximum(settings.barPlotSeries[(int)(s)].ys));
+						yMin = Min(yMin, GetMinimum(settings.barPlotSeries[(int)(s)].ys));
+					}
+				}else{
+					yMax = 10d;
+					yMin = 0d;
+				}
+			}else{
+				yMin = settings.yMin;
+				yMax = settings.yMax;
+			}
+			yLength = yMax - yMin;
+
+			/* boundaries*/
+			xPixelMin = xPadding;
+			yPixelMin = yPadding;
+			xPixelMax = ImageWidth(canvas) - xPadding;
+			yPixelMax = ImageHeight(canvas) - yPadding;
+			xLengthPixels = xPixelMax - xPixelMin;
+			yLengthPixels = yPixelMax - yPixelMin;
+
+			/* Draw boundary.*/
+			DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
+
+			/* Draw grid lines.*/
+			yLabels = new StringArrayReference();
+			yLabelPriorities = new NumberArrayReference();
+			yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
+
+			if(settings.showGrid){
+				/* Y-grid*/
+				for(i = 0d; i < yGridPositions.Length; i = i + 1d){
+					y = yGridPositions[(int)(i)];
+					py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+					DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+				}
+			}
+
+			/* Draw origin.*/
+			if(yMin < 0d && yMax > 0d){
+				py = MapYCoordinate(0d, yMin, yMax, yPixelMin, yPixelMax);
+				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor);
+			}
+
+			/* Labels*/
+			occupied = new Rectangle [(int)(yLabels.stringArray.Length)];
+			for(i = 0d; i < occupied.Length; i = i + 1d){
+				occupied[(int)(i)] = CreateRectangle(0d, 0d, 0d, 0d);
+			}
+			nextRectangle = CreateNumberReference(0d);
+
+			for(i = 1d; i <= 5d; i = i + 1d){
+				DrawYLabelsForPriority(i, yMin, xPixelMin, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, true);
+			}
+
+			/* Draw bars.*/
+			if(settings.autoColor){
+				if(!settings.grayscaleAutoColor){
+					colors = Get8HighContrastColors();
+				}else{
+					colors = new RGBA [(int)(ss)];
+					if(ss > 1d){
+						for(i = 0d; i < ss; i = i + 1d){
+							colors[(int)(i)] = GetGray(0.7 - (i/ss)*0.7);
+						}
+					}else{
+						colors[0] = GetGray(0.5);
+					}
+				}
+			}else{
+				colors = new RGBA [0];
+			}
+
+			/* distances*/
+			bs = settings.barPlotSeries[0].ys.Length;
+
+			if(settings.autoSpacing){
+				groupSeparation = ImageWidth(canvas)*0.05;
+				barSeparation = ImageWidth(canvas)*0.005;
+			}else{
+				groupSeparation = settings.groupSeparation;
+				barSeparation = settings.barSeparation;
+			}
+
+			barWidth = (xLengthPixels - groupSeparation*(bs - 1d) - barSeparation*(bs*(ss - 1d)))/(bs*ss);
+
+			/* Draw bars.*/
+			b = 0d;
+			for(n = 0d; n < bs; n = n + 1d){
+				for(s = 0d; s < ss; s = s + 1d){
+					ys = settings.barPlotSeries[(int)(s)].ys;
+
+					yValue = ys[(int)(n)];
+
+					yBottom = MapYCoordinate(yValue, yMin, yMax, yPixelMin, yPixelMax);
+					yTop = MapYCoordinate(0d, yMin, yMax, yPixelMin, yPixelMax);
+
+					x = xPixelMin + n*(groupSeparation + ss*barWidth) + s*(barWidth) + b*barSeparation;
+					w = barWidth;
+
+					if(yValue >= 0d){
+						y = yBottom;
+						h = yTop - y;
+					}else{
+						y = yTop;
+						h = yBottom - yTop;
+					}
+
+					/* Cut at boundaries.*/
+					if(y < yPixelMin && y + h > yPixelMax){
+						y = yPixelMin;
+						h = yPixelMax - yPixelMin;
+					}else if(y < yPixelMin){
+						y = yPixelMin;
+						if(yValue >= 0d){
+							h = yTop - y;
+						}else{
+							h = yBottom - y;
+						}
+					}else if(y + h > yPixelMax){
+						h = yPixelMax - y;
+					}
+
+					/* Get color*/
+					if(settings.autoColor){
+						barColor = colors[(int)(s)];
+					}else{
+						barColor = settings.barPlotSeries[(int)(s)].color;
+					}
+
+					/* Draw*/
+					if(settings.barBorder){
+						DrawFilledRectangleWithBorder(canvas, Roundx(x), Roundx(y), Roundx(w), Roundx(h), GetBlack(), barColor);
+					}else{
+						DrawFilledRectangle(canvas, Roundx(x), Roundx(y), Roundx(w), Roundx(h), barColor);
+					}
+
+					b = b + 1d;
+				}
+				b = b - 1d;
+			}
+
+			/* x-labels*/
+			for(n = 0d; n < bs; n = n + 1d){
+				if(settings.autoLabels){
+					label = CreateStringDecimalFromNumber(n + 1d);
+				}else{
+					label = settings.xLabels[(int)(n)].stringx;
+				}
+
+				textwidth = GetTextWidth(label);
+
+				x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1d)*barSeparation) + n*groupSeparation - textwidth/2d;
+
+				DrawText(canvas, Floor(x), ImageHeight(canvas) - yPadding + 20d, label, gridLabelColor);
+
+				b = b + 1d;
+			}
+
+			canvasReference.image = canvas;
+		}
+
+		return success;
+	}
+
+
+	public static bool BarPlotSettingsIsValid(BarPlotSettings settings){
+		bool success, lengthSet;
+		BarPlotSeries series;
+		double i, width, height, length;
+
+		success = true;
+
+		/* Check series lengths.*/
+		lengthSet = false;
+		length = 0d;
+		for(i = 0d; i < settings.barPlotSeries.Length; i = i + 1d){
+			series = settings.barPlotSeries[(int)(i)];
+
+			if(!lengthSet){
+				length = series.ys.Length;
+				lengthSet = true;
+			}else if(length != series.ys.Length){
+				success = false;
+			}
+		}
+
+		/* Check bounds.*/
+		if(!settings.autoBoundaries){
+			if(settings.yMin >= settings.yMax){
+				success = false;
+			}
+		}
+
+		/* Check padding.*/
+		if(!settings.autoPadding){
+			if(2d*settings.xPadding >= settings.width){
+				success = false;
+			}
+			if(2d*settings.yPadding >= settings.height){
+				success = false;
+			}
+		}
+
+		/* Check width and height.*/
+		if(settings.width < 0d){
+			success = false;
+		}
+		if(settings.height < 0d){
+			success = false;
+		}
+
+		/* Check spacing*/
+		if(!settings.autoSpacing){
+			if(settings.groupSeparation < 0d){
+				success = false;
+			}
+			if(settings.barSeparation < 0d){
+				success = false;
+			}
+		}
+
+		return success;
 	}
 
 
@@ -891,6 +1565,11 @@ public class pbPlots{
 	}
 
 
+	public static double RoundToDigits(double element, double digitsAfterPoint){
+		return Roundx(element*Pow(10d, digitsAfterPoint))/Pow(10d, digitsAfterPoint);
+	}
+
+
 	public static double test(){
 		ScatterPlotSettings scatterPlotSettings;
 		double z;
@@ -898,8 +1577,12 @@ public class pbPlots{
 		NumberReference failures;
 		StringArrayReference labels;
 		NumberArrayReference labelPriorities;
+		RGBABitmapImageReference imageReference;
+		double [] xs, ys;
 
 		failures = CreateNumberReference(0d);
+
+		imageReference = CreateRGBABitmapImageReference();
 
 		scatterPlotSettings = GetDefaultScatterPlotSettings();
 
@@ -941,6 +1624,22 @@ public class pbPlots{
 		z = 2d;
 		gridlines = ComputeGridLinePositions(-z/2d, z/2d, labels, labelPriorities);
 		AssertEquals(gridlines.Length, 21d, failures);
+
+		xs = new double [5];
+		xs[0] = -2d;
+		xs[1] = -1d;
+		xs[2] = 0d;
+		xs[3] = 1d;
+		xs[4] = 2d;
+		ys = new double [5];
+		ys[0] = 2d;
+		ys[1] = -1d;
+		ys[2] = -2d;
+		ys[3] = -1d;
+		ys[4] = 2d;
+		DrawScatterPlot(imageReference, 800d, 600d, xs, ys);
+
+		imageReference.image = DrawBarPlot(800d, 600d, ys);
 
 		return failures.numberValue;
 	}

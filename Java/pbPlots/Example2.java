@@ -14,7 +14,8 @@ public class Example2{
 		series.color = GetGray(0.3);
 
 		ScatterPlotSettings settings = GetDefaultScatterPlotSettings();
-		settings.canvas = CreateImage(600, 400, GetWhite());
+		settings.width = 600;
+		settings.height = 400;
 		settings.autoBoundaries = true;
 		settings.autoPadding = true;
 		settings.title = "x^2 - 2".toCharArray();
@@ -22,10 +23,11 @@ public class Example2{
 		settings.yLabel = "Y axis".toCharArray();
 		settings.scatterPlotSeries = new ScatterPlotSeries [] {series};
 
-		DrawScatterPlotFromSettings(settings);
+		RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
+		DrawScatterPlotFromSettings(imageReference, settings);
 
-		double[] pngdata = ConvertToPNG(settings.canvas);
+		double[] pngdata = ConvertToPNG(imageReference.image);
 		WriteToFile(pngdata, "example2.png");
-		DeleteImage(settings.canvas);
+		DeleteImage(imageReference.image);
 	}
 }

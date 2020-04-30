@@ -1,6 +1,9 @@
 
 # Downloaded from https://repo.progsbase.com - Code Developed Using progsbase.
 
+class RGBABitmapImageReference
+	attr_accessor :image
+end
 class Rectangle
 	attr_accessor :x1
 	attr_accessor :x2
@@ -17,7 +20,6 @@ class ScatterPlotSeries
 	attr_accessor :color
 end
 class ScatterPlotSettings
-	attr_accessor :canvas
 	attr_accessor :scatterPlotSeries
 	attr_accessor :autoBoundaries
 	attr_accessor :xMax
@@ -32,6 +34,41 @@ class ScatterPlotSettings
 	attr_accessor :title
 	attr_accessor :showGrid
 	attr_accessor :gridColor
+	attr_accessor :xAxisAuto
+	attr_accessor :xAxisTop
+	attr_accessor :xAxisBottom
+	attr_accessor :yAxisAuto
+	attr_accessor :yAxisLeft
+	attr_accessor :yAxisRight
+	attr_accessor :width
+	attr_accessor :height
+end
+class BarPlotSeries
+	attr_accessor :ys
+	attr_accessor :color
+end
+class BarPlotSettings
+	attr_accessor :width
+	attr_accessor :height
+	attr_accessor :autoBoundaries
+	attr_accessor :yMax
+	attr_accessor :yMin
+	attr_accessor :autoPadding
+	attr_accessor :xPadding
+	attr_accessor :yPadding
+	attr_accessor :title
+	attr_accessor :showGrid
+	attr_accessor :gridColor
+	attr_accessor :barPlotSeries
+	attr_accessor :yLabel
+	attr_accessor :autoColor
+	attr_accessor :grayscaleAutoColor
+	attr_accessor :autoSpacing
+	attr_accessor :groupSeparation
+	attr_accessor :barSeparation
+	attr_accessor :autoLabels
+	attr_accessor :xLabels
+	attr_accessor :barBorder
 end
 class RGBA
 	attr_accessor :r
@@ -133,365 +170,6 @@ class DynamicArrayNumbers
 	attr_accessor :array
 	attr_accessor :length
 end
-def RectanglesOverlap(r1, r2)
-
-	overlap = false
-
-	overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2)
-	overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2)
-	overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2)
-	overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2)
-
-	return overlap
-end
-
-
-def CreateRectangle(x1, y1, x2, y2)
-	r = Rectangle.new
-	r.x1 = x1
-	r.y1 = y1
-	r.x2 = x2
-	r.y2 = y2
-	return r
-end
-
-
-def CopyRectangleValues(rd, rs)
-	rd.x1 = rs.x1
-	rd.y1 = rs.y1
-	rd.x2 = rs.x2
-	rd.y2 = rs.y2
-end
-
-
-def GetDefaultScatterPlotSettings()
-
-	settings = ScatterPlotSettings.new
-
-	settings.autoBoundaries = true
-	settings.autoPadding = true
-	settings.title = "".split("")
-	settings.yLabel = "".split("")
-	settings.xLabel = "".split("")
-	settings.scatterPlotSeries = Array.new(0)
-	settings.showGrid = true
-	settings.gridColor = GetGray(0.2)
-
-	return settings
-end
-
-
-def GetDefaultScatterPlotSeriesSettings()
-
-	series = ScatterPlotSeries.new
-
-	series.linearInterpolation = true
-	series.pointType = "pixels".split("")
-	series.lineType = "solid".split("")
-	series.lineThickness = 1.0
-	series.xs = Array.new(0)
-	series.ys = Array.new(0)
-	series.color = GetBlack()
-
-	return series
-end
-
-
-def DrawScatterPlot(canvas, xs, ys)
-
-	settings = GetDefaultScatterPlotSettings()
-
-	settings.canvas = canvas
-	settings.scatterPlotSeries = Array.new(1)
-	settings.scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings()
-	delete(settings.scatterPlotSeries[0].xs)
-	settings.scatterPlotSeries[0].xs = xs
-	delete(settings.scatterPlotSeries[0].ys)
-	settings.scatterPlotSeries[0].ys = ys
-
-	DrawScatterPlotFromSettings(settings)
-end
-
-
-def DrawScatterPlotFromSettings(settings)
-
-	canvas = settings.canvas
-	patternOffset = CreateNumberReference(0.0)
-
-	if settings.scatterPlotSeries.length >= 1.0
-		xMin = GetMinimum(settings.scatterPlotSeries[0].xs)
-		xMax = GetMaximum(settings.scatterPlotSeries[0].xs)
-		yMin = GetMinimum(settings.scatterPlotSeries[0].ys)
-		yMax = GetMaximum(settings.scatterPlotSeries[0].ys)
-	else
-		xMin = -10.0
-		xMax = 10.0
-		yMin = -10.0
-		yMax = 10.0
-	end
-
-	if !settings.autoBoundaries
-		xMin = settings.xMin
-		xMax = settings.xMax
-		yMin = settings.yMin
-		yMax = settings.yMax
-	else
-		plot = 1.0
-		while(plot < settings.scatterPlotSeries.length)
-			sp = settings.scatterPlotSeries[plot]
-
-			xMin = [xMin, GetMinimum(sp.xs)].min
-			xMax = [xMax, GetMaximum(sp.xs)].max
-			yMin = [yMin, GetMinimum(sp.ys)].min
-			yMax = [yMax, GetMaximum(sp.ys)].max
-			plot = plot + 1.0
-		end
-	end
-
-	xLength = xMax - xMin
-	yLength = yMax - yMin
-
-	if settings.autoPadding
-		xPadding = 0.10*ImageWidth(canvas)
-		yPadding = 0.10*ImageHeight(canvas)
-	else
-		xPadding = settings.xPadding
-		yPadding = settings.yPadding
-	end
-
-	# Draw title
-	DrawText(canvas, ImageWidth(canvas) / 2.0 - GetTextWidth(settings.title) / 2.0, yPadding / 3.0, settings.title, GetBlack())
-
-	# Draw grid
-	xPixelMin = xPadding
-	yPixelMin = yPadding
-	xPixelMax = ImageWidth(canvas) - xPadding
-	yPixelMax = ImageHeight(canvas) - yPadding
-	xLengthPixels = xPixelMax - xPixelMin
-	yLengthPixels = yPixelMax - yPixelMin
-	DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
-
-	gridLabelColor = GetGray(0.5)
-
-	xLabels = StringArrayReference.new
-	xLabelPriorities = NumberArrayReference.new
-	yLabels = StringArrayReference.new
-	yLabelPriorities = NumberArrayReference.new
-	xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities)
-	yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities)
-
-	if settings.showGrid
-		# X-grid
-		i = 0.0
-		while(i < xGridPositions.length)
-			x = xGridPositions[i]
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
-			DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor)
-			i = i + 1.0
-		end
-
-		# Y-grid
-		i = 0.0
-		while(i < yGridPositions.length)
-			y = yGridPositions[i]
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
-			DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
-			i = i + 1.0
-		end
-	end
-
-	# Labels
-	occupied = Array.new(xLabels.stringArray.length + yLabels.stringArray.length)
-	i = 0.0
-	while(i < occupied.length)
-		occupied[i] = CreateRectangle(0.0, 0.0, 0.0, 0.0)
-		i = i + 1.0
-	end
-	nextRectangle = CreateNumberReference(0.0)
-
-	i = 1.0
-	while(i <= 5.0)
-		DrawXLabelsForPriority(i, xMin, yMin, yMax, yLength, yLengthPixels, xLength, xPixelMin, yPixelMin, xLengthPixels, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied)
-		i = i + 1.0
-	end
-
-	i = 1.0
-	while(i <= 5.0)
-		DrawYLabelsForPriority(i, yMin, xMin, xMax, xLength, xLengthPixels, yLength, xPixelMin, yPixelMin, yLengthPixels, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied)
-		i = i + 1.0
-	end
-
-	# Draw origin and axis titles.
-	axisLabelPadding = 20.0
-	if yMin < 0.0 && yMax > 0.0
-		yOrigin = 0.0
-	else
-		yOrigin = yMin + (yMax - yMin) / 2.0
-	end
-	yOriginPixels = MapYCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels)
-	if yMin < 0.0 && yMax > 0.0
-		DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack())
-	end
-	DrawTextUpwards(settings.xLabel, 10.0, yOriginPixels - GetTextWidth(settings.xLabel) / 2.0, canvas)
-
-	if xMin < 0.0 && xMax > 0.0
-		xOrigin = 0.0
-	else
-		xOrigin = xMin + (xMax - xMin) / 2.0
-	end
-	xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels)
-	if xMin < 0.0 && xMax > 0.0
-		DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack())
-	end
-	DrawText(canvas, xOriginPixels - GetTextWidth(settings.yLabel) / 2.0, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
-
-	# X-grid-markers
-	if yMin < 0.0 && yMax > 0.0
-	else
-		yOrigin = yMax
-		yOriginPixels = MapXCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels)
-	end
-	i = 0.0
-	while(i < xGridPositions.length)
-		x = xGridPositions[i]
-		px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
-		p = xLabelPriorities.numberArray[i]
-		l = 1.0
-		if p == 1.0
-			l = 8.0
-		elsif p == 2.0
-			l = 3.0
-		end
-		DrawLine1px(canvas, px, yOriginPixels, px, yOriginPixels - l, GetBlack())
-		i = i + 1.0
-	end
-
-	# Y-grid-markers
-	if xMin < 0.0 && xMax > 0.0
-	else
-		xOrigin = xMin
-		xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels)
-	end
-	i = 0.0
-	while(i < yGridPositions.length)
-		y = yGridPositions[i]
-		py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
-		p = yLabelPriorities.numberArray[i]
-		l = 1.0
-		if p == 1.0
-			l = 8.0
-		elsif p == 2.0
-			l = 3.0
-		end
-		DrawLine1px(canvas, xOriginPixels, py, xOriginPixels + l, py, GetBlack())
-		i = i + 1.0
-	end
-
-	# Draw points
-	plot = 0.0
-	while(plot < settings.scatterPlotSeries.length)
-		sp = settings.scatterPlotSeries[plot]
-
-		xs = sp.xs
-		ys = sp.ys
-		linearInterpolation = sp.linearInterpolation
-
-		x1Ref = NumberReference.new
-		y1Ref = NumberReference.new
-		x2Ref = NumberReference.new
-		y2Ref = NumberReference.new
-		if linearInterpolation
-			prevSet = false
-			xPrev = 0.0
-			yPrev = 0.0
-			i = 0.0
-			while(i < xs.length)
-				x = xs[i]
-				y = ys[i]
-
-				if prevSet
-					x1Ref.numberValue = xPrev
-					y1Ref.numberValue = yPrev
-					x2Ref.numberValue = x
-					y2Ref.numberValue = y
-
-					success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
-
-					if success
-						pxPrev = MapXCoordinates(x1Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels)
-						pyPrev = MapYCoordinates(y1Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels)
-						px = MapXCoordinates(x2Ref.numberValue, xMin, xLength, xPixelMin, xLengthPixels)
-						py = MapYCoordinates(y2Ref.numberValue, yMin, yLength, yPixelMin, yLengthPixels)
-
-						if aStringsEqual(sp.lineType, "solid".split("")) && sp.lineThickness == 1.0
-							DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color)
-						elsif aStringsEqual(sp.lineType, "solid".split(""))
-							DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color)
-						elsif aStringsEqual(sp.lineType, "dashed".split(""))
-							linePattern = GetLinePattern1()
-							DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-						elsif aStringsEqual(sp.lineType, "dotted".split(""))
-							linePattern = GetLinePattern2()
-							DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-						elsif aStringsEqual(sp.lineType, "dotdash".split(""))
-							linePattern = GetLinePattern3()
-							DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-						elsif aStringsEqual(sp.lineType, "longdash".split(""))
-							linePattern = GetLinePattern4()
-							DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-						elsif aStringsEqual(sp.lineType, "twodash".split(""))
-							linePattern = GetLinePattern5()
-							DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
-						end
-					end
-				end
-
-				prevSet = true
-				xPrev = x
-				yPrev = y
-				i = i + 1.0
-			end
-		else
-			i = 0.0
-			while(i < xs.length)
-				x = xs[i]
-				y = ys[i]
-
-				if x > xMin && x < xMax && y > yMin && y < yMax
-
-					x = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
-					y = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
-
-					if aStringsEqual(sp.pointType, "crosses".split(""))
-						DrawPixel(canvas, x, y, sp.color)
-						DrawPixel(canvas, x + 1.0, y, sp.color)
-						DrawPixel(canvas, x + 2.0, y, sp.color)
-						DrawPixel(canvas, x - 1.0, y, sp.color)
-						DrawPixel(canvas, x - 2.0, y, sp.color)
-						DrawPixel(canvas, x, y + 1.0, sp.color)
-						DrawPixel(canvas, x, y + 2.0, sp.color)
-						DrawPixel(canvas, x, y - 1.0, sp.color)
-						DrawPixel(canvas, x, y - 2.0, sp.color)
-					elsif aStringsEqual(sp.pointType, "circles".split(""))
-						DrawCircle(canvas, x, y, 3.0, sp.color)
-					elsif aStringsEqual(sp.pointType, "dots".split(""))
-						DrawFilledCircle(canvas, x, y, 3.0, sp.color)
-					elsif aStringsEqual(sp.pointType, "triangles".split(""))
-						DrawTriangle(canvas, x, y, 3.0, sp.color)
-					elsif aStringsEqual(sp.pointType, "filled triangles".split(""))
-						DrawFilledTriangle(canvas, x, y, 3.0, sp.color)
-					elsif aStringsEqual(sp.pointType, "pixels".split(""))
-						DrawPixel(canvas, x, y, sp.color)
-					end
-				end
-				i = i + 1.0
-			end
-		end
-		plot = plot + 1.0
-	end
-end
-
-
 def CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
 
 	x1 = x1Ref.numberValue
@@ -607,15 +285,73 @@ def InterceptFromCoordinates(x1, y1, x2, y2)
 end
 
 
-def DrawXLabelsForPriority(p, xMin, yMin, yMax, yLength, yLengthPixels, xLength, xPixelMin, yPixelMin, xLengthPixels, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied)
+def Get8HighContrastColors()
+	colors = Array.new(8)
+	colors[0] = CreateRGBColor(3.0 / 256.0, 146.0 / 256.0, 206.0 / 256.0)
+	colors[1] = CreateRGBColor(253.0 / 256.0, 83.0 / 256.0, 8.0 / 256.0)
+	colors[2] = CreateRGBColor(102.0 / 256.0, 176.0 / 256.0, 50.0 / 256.0)
+	colors[3] = CreateRGBColor(208.0 / 256.0, 234.0 / 256.0, 43.0 / 256.0)
+	colors[4] = CreateRGBColor(167.0 / 256.0, 25.0 / 256.0, 75.0 / 256.0)
+	colors[5] = CreateRGBColor(254.0 / 256.0, 254.0 / 256.0, 51.0 / 256.0)
+	colors[6] = CreateRGBColor(134.0 / 256.0, 1.0 / 256.0, 175.0 / 256.0)
+	colors[7] = CreateRGBColor(251.0 / 256.0, 153.0 / 256.0, 2.0 / 256.0)
+	return colors
+end
+
+
+def DrawFilledRectangleWithBorder(image, x, y, w, h, borderColor, fillColor)
+	if h > 0.0 && w > 0.0
+		DrawFilledRectangle(image, x, y, w, h, fillColor)
+		DrawRectangle1px(image, x, y, w, h, borderColor)
+	end
+end
+
+
+def CreateRGBABitmapImageReference()
+
+	reference = RGBABitmapImageReference.new
+	reference.image = RGBABitmapImage.new
+	reference.image.x = Array.new(0)
+
+	return reference
+end
+
+
+def RectanglesOverlap(r1, r2)
+
+	overlap = false
+
+	overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2)
+	overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y1 >= r1.y1 && r2.y1 <= r1.y2)
+	overlap = overlap || (r2.x1 >= r1.x1 && r2.x1 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2)
+	overlap = overlap || (r2.x2 >= r1.x1 && r2.x2 <= r1.x2 && r2.y2 >= r1.y1 && r2.y2 <= r1.y2)
+
+	return overlap
+end
+
+
+def CreateRectangle(x1, y1, x2, y2)
+	r = Rectangle.new
+	r.x1 = x1
+	r.y1 = y1
+	r.x2 = x2
+	r.y2 = y2
+	return r
+end
+
+
+def CopyRectangleValues(rd, rs)
+	rd.x1 = rs.x1
+	rd.y1 = rs.y1
+	rd.x2 = rs.x2
+	rd.y2 = rs.y2
+end
+
+
+def DrawXLabelsForPriority(p, xMin, oy, xMax, xPixelMin, xPixelMax, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied, textOnBottom)
 
 	r = Rectangle.new
-
-	if yMin < 0.0 && yMax > 0.0
-		oy = MapYCoordinates(0.0, yMin, yLength, yPixelMin, yLengthPixels)
-	else
-		oy = MapYCoordinates(yMin, yMin, yLength, yPixelMin, yLengthPixels)
-	end
+	padding = 10.0
 
 	overlap = false
 	i = 0.0
@@ -623,33 +359,58 @@ def DrawXLabelsForPriority(p, xMin, yMin, yMax, yLength, yLengthPixels, xLength,
 		if xLabelPriorities.numberArray[i] == p
 
 			x = xGridPositions[i]
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
+			px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
 			text = xLabels.stringArray[i].string
 
-			r.x1 = px - GetTextWidth(text) / 2.0
-			r.y1 = oy + 5.0
+			r.x1 = (px - GetTextWidth(text) / 2.0).floor
+			if textOnBottom
+				r.y1 = (oy + 5.0).floor
+			else
+				r.y1 = (oy - 20.0).floor
+			end
 			r.x2 = r.x1 + GetTextWidth(text)
 			r.y2 = r.y1 + GetTextHeight(text)
 
+			# Add padding
+			r.x1 = r.x1 - padding
+			r.y1 = r.y1 - padding
+			r.x2 = r.x2 + padding
+			r.y2 = r.y2 + padding
+
+			currentOverlaps = false
+
 			j = 0.0
 			while(j < nextRectangle.numberValue)
-				overlap = overlap || RectanglesOverlap(r, occupied[j])
+				currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[j])
 				j = j + 1.0
 			end
+
+			if !currentOverlaps && p == 1.0
+				DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor)
+
+				CopyRectangleValues(occupied[nextRectangle.numberValue], r)
+				nextRectangle.numberValue = nextRectangle.numberValue + 1.0
+			end
+
+			overlap = overlap || currentOverlaps
 		end
 		i = i + 1.0
 	end
-	if !overlap
+	if !overlap && p != 1.0
 		i = 0.0
 		while(i < xGridPositions.length)
 			x = xGridPositions[i]
-			px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels)
+			px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
 
 			if xLabelPriorities.numberArray[i] == p
 				text = xLabels.stringArray[i].string
 
-				r.x1 = px - GetTextWidth(text) / 2.0
-				r.y1 = oy + 5.0
+				r.x1 = (px - GetTextWidth(text) / 2.0).floor
+				if textOnBottom
+					r.y1 = (oy + 5.0).floor
+				else
+					r.y1 = (oy - 20.0).floor
+				end
 				r.x2 = r.x1 + GetTextWidth(text)
 				r.y2 = r.y1 + GetTextHeight(text)
 
@@ -664,15 +425,10 @@ def DrawXLabelsForPriority(p, xMin, yMin, yMax, yLength, yLengthPixels, xLength,
 end
 
 
-def DrawYLabelsForPriority(p, yMin, xMin, xMax, xLength, xLengthPixels, yLength, xPixelMin, yPixelMin, yLengthPixels, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied)
+def DrawYLabelsForPriority(p, yMin, ox, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, textOnLeft)
 
 	r = Rectangle.new
-
-	if xMin < 0.0 && xMax > 0.0
-		ox = MapXCoordinates(0.0, xMin, xLength, xPixelMin, xLengthPixels)
-	else
-		ox = MapXCoordinates(xMin, xMin, xLength, xPixelMin, xLengthPixels)
-	end
+	padding = 10.0
 
 	overlap = false
 	i = 0.0
@@ -680,33 +436,59 @@ def DrawYLabelsForPriority(p, yMin, xMin, xMax, xLength, xLengthPixels, yLength,
 		if yLabelPriorities.numberArray[i] == p
 
 			y = yGridPositions[i]
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
+			py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 			text = yLabels.stringArray[i].string
 
-			r.x1 = ox - GetTextWidth(text) - 10.0
-			r.y1 = py - 6.0
+			if textOnLeft
+				r.x1 = (ox - GetTextWidth(text) - 10.0).floor
+			else
+				r.x1 = (ox + 10.0).floor
+			end
+			r.y1 = (py - 6.0).floor
 			r.x2 = r.x1 + GetTextWidth(text)
 			r.y2 = r.y1 + GetTextHeight(text)
 
+			# Add padding
+			r.x1 = r.x1 - padding
+			r.y1 = r.y1 - padding
+			r.x2 = r.x2 + padding
+			r.y2 = r.y2 + padding
+
+			currentOverlaps = false
+
 			j = 0.0
 			while(j < nextRectangle.numberValue)
-				overlap = overlap || RectanglesOverlap(r, occupied[j])
+				currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[j])
 				j = j + 1.0
 			end
+
+			# Draw labels with priority 1 if they do not overlap anything else.
+			if !currentOverlaps && p == 1.0
+				DrawText(canvas, r.x1 + padding, r.y1 + padding, text, gridLabelColor)
+
+				CopyRectangleValues(occupied[nextRectangle.numberValue], r)
+				nextRectangle.numberValue = nextRectangle.numberValue + 1.0
+			end
+
+			overlap = overlap || currentOverlaps
 		end
 		i = i + 1.0
 	end
-	if !overlap
+	if !overlap && p != 1.0
 		i = 0.0
 		while(i < yGridPositions.length)
 			y = yGridPositions[i]
-			py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels)
+			py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 
 			if yLabelPriorities.numberArray[i] == p
 				text = yLabels.stringArray[i].string
 
-				r.x1 = ox - GetTextWidth(text) - 10.0
-				r.y1 = py - 6.0
+				if textOnLeft
+					r.x1 = (ox - GetTextWidth(text) - 10.0).floor
+				else
+					r.x1 = (ox + 10.0).floor
+				end
+				r.y1 = (py - 6.0).floor
 				r.x2 = r.x1 + GetTextWidth(text)
 				r.y2 = r.y1 + GetTextHeight(text)
 
@@ -718,21 +500,6 @@ def DrawYLabelsForPriority(p, yMin, xMin, xMax, xLength, xLengthPixels, yLength,
 			i = i + 1.0
 		end
 	end
-end
-
-
-def DrawTextUpwards(text, x, y, canvas)
-	buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent())
-	DrawText(buffer, 0.0, 0.0, text, GetBlack())
-	rotated = RotateAntiClockwise90Degrees(buffer)
-	DrawImageOnImage(canvas, rotated, x, y)
-	DeleteImage(buffer)
-	DeleteImage(rotated)
-end
-
-
-def RoundToDigits(element, digitsAfterPoint)
-	return Round(element*10.0**digitsAfterPoint) / 10.0**digitsAfterPoint
 end
 
 
@@ -814,7 +581,7 @@ def ComputeGridLinePositions(cMin, cMax, labels, priorities)
 
 		# 0 has lowest priority.
 		if EpsilonCompare(num, 0.0, 10.0**(p - 5.0))
-			priority = 10.0
+			priority = 3.0
 		end
 
 		priorities.numberArray[i] = priority
@@ -836,6 +603,46 @@ def ComputeGridLinePositions(cMin, cMax, labels, priorities)
 end
 
 
+def MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+
+	yLength = yMax - yMin
+	yPixelLength = yPixelMax - yPixelMin
+
+	y = y - yMin
+	y = y*yPixelLength / yLength
+	y = yPixelLength - y
+	y = y + yPixelMin
+	return y
+end
+
+
+def MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+
+	xLength = xMax - xMin
+	xPixelLength = xPixelMax - xPixelMin
+
+	x = x - xMin
+	x = x*xPixelLength / xLength
+	x = x + xPixelMin
+	return x
+end
+
+
+def MapXCoordinateAutoSettings(x, image, xs)
+	return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth(image))
+end
+
+
+def MapYCoordinateAutoSettings(y, image, ys)
+	return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1.0 - GetDefaultPaddingPercentage())*ImageHeight(image))
+end
+
+
+def GetDefaultPaddingPercentage()
+	return 0.10
+end
+
+
 def DrawText(canvas, x, y, text, color)
 
 	charWidth = 8.0
@@ -849,20 +656,881 @@ def DrawText(canvas, x, y, text, color)
 end
 
 
-def MapYCoordinates(y, ymin, yLength, yPixelMin, yPixelLength)
-	y = y - ymin
-	y = y*yPixelLength / yLength
-	y = yPixelLength - y
-	y = y + yPixelMin
-	return y
+def DrawTextUpwards(canvas, x, y, text, color)
+
+	buffer = CreateImage(GetTextWidth(text), GetTextHeight(text), GetTransparent())
+	DrawText(buffer, 0.0, 0.0, text, color)
+	rotated = RotateAntiClockwise90Degrees(buffer)
+	DrawImageOnImage(canvas, rotated, x, y)
+	DeleteImage(buffer)
+	DeleteImage(rotated)
 end
 
 
-def MapXCoordinates(x, xmin, xLength, xPixelMin, xPixelLength)
-	x = x - xmin
-	x = x*xPixelLength / xLength
-	x = x + xPixelMin
-	return x
+def GetDefaultScatterPlotSettings()
+
+	settings = ScatterPlotSettings.new
+
+	settings.autoBoundaries = true
+	settings.xMax = 0.0
+	settings.xMin = 0.0
+	settings.yMax = 0.0
+	settings.yMin = 0.0
+	settings.autoPadding = true
+	settings.xPadding = 0.0
+	settings.yPadding = 0.0
+	settings.title = "".split("")
+	settings.yLabel = "".split("")
+	settings.xLabel = "".split("")
+	settings.scatterPlotSeries = Array.new(0)
+	settings.showGrid = true
+	settings.gridColor = GetGray(0.1)
+	settings.xAxisAuto = true
+	settings.xAxisTop = false
+	settings.xAxisBottom = false
+	settings.yAxisAuto = true
+	settings.yAxisLeft = false
+	settings.yAxisRight = false
+
+	return settings
+end
+
+
+def GetDefaultScatterPlotSeriesSettings()
+
+	series = ScatterPlotSeries.new
+
+	series.linearInterpolation = true
+	series.pointType = "pixels".split("")
+	series.lineType = "solid".split("")
+	series.lineThickness = 1.0
+	series.xs = Array.new(0)
+	series.ys = Array.new(0)
+	series.color = GetBlack()
+
+	return series
+end
+
+
+def DrawScatterPlot(canvasReference, width, height, xs, ys)
+
+	settings = GetDefaultScatterPlotSettings()
+
+	settings.width = width
+	settings.height = height
+	settings.scatterPlotSeries = Array.new(1)
+	settings.scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings()
+	delete(settings.scatterPlotSeries[0].xs)
+	settings.scatterPlotSeries[0].xs = xs
+	delete(settings.scatterPlotSeries[0].ys)
+	settings.scatterPlotSeries[0].ys = ys
+
+	DrawScatterPlotFromSettings(canvasReference, settings)
+end
+
+
+def DrawScatterPlotFromSettings(canvasReference, settings)
+
+	canvas = CreateImage(settings.width, settings.height, GetWhite())
+	patternOffset = CreateNumberReference(0.0)
+
+	success = ScatterPlotFromSettingsValid(settings)
+
+	if success
+
+		if settings.scatterPlotSeries.length >= 1.0
+			xMin = GetMinimum(settings.scatterPlotSeries[0].xs)
+			xMax = GetMaximum(settings.scatterPlotSeries[0].xs)
+			yMin = GetMinimum(settings.scatterPlotSeries[0].ys)
+			yMax = GetMaximum(settings.scatterPlotSeries[0].ys)
+		else
+			xMin = -10.0
+			xMax = 10.0
+			yMin = -10.0
+			yMax = 10.0
+		end
+
+		if !settings.autoBoundaries
+			xMin = settings.xMin
+			xMax = settings.xMax
+			yMin = settings.yMin
+			yMax = settings.yMax
+		else
+			plot = 1.0
+			while(plot < settings.scatterPlotSeries.length)
+				sp = settings.scatterPlotSeries[plot]
+
+				xMin = [xMin, GetMinimum(sp.xs)].min
+				xMax = [xMax, GetMaximum(sp.xs)].max
+				yMin = [yMin, GetMinimum(sp.ys)].min
+				yMax = [yMax, GetMaximum(sp.ys)].max
+				plot = plot + 1.0
+			end
+		end
+
+		xLength = xMax - xMin
+		yLength = yMax - yMin
+
+		if settings.autoPadding
+			xPadding = (GetDefaultPaddingPercentage()*ImageWidth(canvas)).floor
+			yPadding = (GetDefaultPaddingPercentage()*ImageHeight(canvas)).floor
+		else
+			xPadding = settings.xPadding
+			yPadding = settings.yPadding
+		end
+
+		# Draw title
+		DrawText(canvas, (ImageWidth(canvas) / 2.0 - GetTextWidth(settings.title) / 2.0).floor, (yPadding / 3.0).floor, settings.title, GetBlack())
+
+		# Draw grid
+		xPixelMin = xPadding
+		yPixelMin = yPadding
+		xPixelMax = ImageWidth(canvas) - xPadding
+		yPixelMax = ImageHeight(canvas) - yPadding
+		xLengthPixels = xPixelMax - xPixelMin
+		yLengthPixels = yPixelMax - yPixelMin
+		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
+
+		gridLabelColor = GetGray(0.5)
+
+		xLabels = StringArrayReference.new
+		xLabelPriorities = NumberArrayReference.new
+		yLabels = StringArrayReference.new
+		yLabelPriorities = NumberArrayReference.new
+		xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities)
+		yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities)
+
+		if settings.showGrid
+			# X-grid
+			i = 0.0
+			while(i < xGridPositions.length)
+				x = xGridPositions[i]
+				px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+				DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings.gridColor)
+				i = i + 1.0
+			end
+
+			# Y-grid
+			i = 0.0
+			while(i < yGridPositions.length)
+				y = yGridPositions[i]
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
+				i = i + 1.0
+			end
+		end
+
+		# Compute origin information.
+		originYInside = yMin < 0.0 && yMax > 0.0
+		originY = 0.0
+		if settings.xAxisAuto
+			if originYInside
+				originY = 0.0
+			else
+				originY = yMin
+			end
+		else
+if settings.xAxisTop
+				originY = yMax
+			end
+			if settings.xAxisBottom
+				originY = yMin
+			end
+		end
+		originYPixels = MapYCoordinate(originY, yMin, yMax, yPixelMin, yPixelMax)
+
+		originXInside = xMin < 0.0 && xMax > 0.0
+		originX = 0.0
+		if settings.yAxisAuto
+			if originXInside
+				originX = 0.0
+			else
+				originX = xMin
+			end
+		else
+if settings.yAxisLeft
+				originX = xMin
+			end
+			if settings.yAxisRight
+				originX = xMax
+			end
+		end
+		originXPixels = MapXCoordinate(originX, xMin, xMax, xPixelMin, xPixelMax)
+
+		if originYInside
+			originTextY = 0.0
+		else
+			originTextY = yMin + yLength / 2.0
+		end
+		originTextYPixels = MapYCoordinate(originTextY, yMin, yMax, yPixelMin, yPixelMax)
+
+		if originXInside
+			originTextX = 0.0
+		else
+			originTextX = xMin + xLength / 2.0
+		end
+		originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax)
+
+		# Labels
+		occupied = Array.new(xLabels.stringArray.length + yLabels.stringArray.length)
+		i = 0.0
+		while(i < occupied.length)
+			occupied[i] = CreateRectangle(0.0, 0.0, 0.0, 0.0)
+			i = i + 1.0
+		end
+		nextRectangle = CreateNumberReference(0.0)
+
+		# x labels
+		i = 1.0
+		while(i <= 5.0)
+			textOnBottom = true
+			if !settings.xAxisAuto && settings.xAxisTop
+				textOnBottom = false
+			end
+			DrawXLabelsForPriority(i, xMin, originYPixels, xMax, xPixelMin, xPixelMax, nextRectangle, gridLabelColor, canvas, xGridPositions, xLabels, xLabelPriorities, occupied, textOnBottom)
+			i = i + 1.0
+		end
+
+		# y labels
+		i = 1.0
+		while(i <= 5.0)
+			textOnLeft = true
+			if !settings.yAxisAuto && settings.yAxisRight
+				textOnLeft = false
+			end
+			DrawYLabelsForPriority(i, yMin, originXPixels, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, textOnLeft)
+			i = i + 1.0
+		end
+
+		# Draw origin line axis titles.
+		axisLabelPadding = 20.0
+
+		# x origin line
+		if originYInside
+			DrawLine1px(canvas, Round(xPixelMin), Round(originYPixels), Round(xPixelMax), Round(originYPixels), GetBlack())
+		end
+
+		# y origin line
+		if originXInside
+			DrawLine1px(canvas, Round(originXPixels), Round(yPixelMin), Round(originXPixels), Round(yPixelMax), GetBlack())
+		end
+
+		# Draw origin axis titles.
+		DrawTextUpwards(canvas, 10.0, (originTextYPixels - GetTextWidth(settings.xLabel) / 2.0).floor, settings.xLabel, GetBlack())
+		DrawText(canvas, (originTextXPixels - GetTextWidth(settings.yLabel) / 2.0).floor, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
+
+		# X-grid-markers
+		i = 0.0
+		while(i < xGridPositions.length)
+			x = xGridPositions[i]
+			px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+			p = xLabelPriorities.numberArray[i]
+			l = 1.0
+			if p == 1.0
+				l = 8.0
+			elsif p == 2.0
+				l = 3.0
+			end
+			side = -1.0
+			if !settings.xAxisAuto && settings.xAxisTop
+				side = 1.0
+			end
+			DrawLine1px(canvas, px, originYPixels, px, originYPixels + side*l, GetBlack())
+			i = i + 1.0
+		end
+
+		# Y-grid-markers
+		i = 0.0
+		while(i < yGridPositions.length)
+			y = yGridPositions[i]
+			py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+			p = yLabelPriorities.numberArray[i]
+			l = 1.0
+			if p == 1.0
+				l = 8.0
+			elsif p == 2.0
+				l = 3.0
+			end
+			side = 1.0
+			if !settings.yAxisAuto && settings.yAxisRight
+				side = -1.0
+			end
+			DrawLine1px(canvas, originXPixels, py, originXPixels + side*l, py, GetBlack())
+			i = i + 1.0
+		end
+
+		# Draw points
+		plot = 0.0
+		while(plot < settings.scatterPlotSeries.length)
+			sp = settings.scatterPlotSeries[plot]
+
+			xs = sp.xs
+			ys = sp.ys
+			linearInterpolation = sp.linearInterpolation
+
+			x1Ref = NumberReference.new
+			y1Ref = NumberReference.new
+			x2Ref = NumberReference.new
+			y2Ref = NumberReference.new
+			if linearInterpolation
+				prevSet = false
+				xPrev = 0.0
+				yPrev = 0.0
+				i = 0.0
+				while(i < xs.length)
+					x = xs[i]
+					y = ys[i]
+
+					if prevSet
+						x1Ref.numberValue = xPrev
+						y1Ref.numberValue = yPrev
+						x2Ref.numberValue = x
+						y2Ref.numberValue = y
+
+						success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
+
+						if success
+							pxPrev = (MapXCoordinate(x1Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax)).floor
+							pyPrev = (MapYCoordinate(y1Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax)).floor
+							px = (MapXCoordinate(x2Ref.numberValue, xMin, xMax, xPixelMin, xPixelMax)).floor
+							py = (MapYCoordinate(y2Ref.numberValue, yMin, yMax, yPixelMin, yPixelMax)).floor
+
+							if aStringsEqual(sp.lineType, "solid".split("")) && sp.lineThickness == 1.0
+								DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp.color)
+							elsif aStringsEqual(sp.lineType, "solid".split(""))
+								DrawLine(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, sp.color)
+							elsif aStringsEqual(sp.lineType, "dashed".split(""))
+								linePattern = GetLinePattern1()
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+							elsif aStringsEqual(sp.lineType, "dotted".split(""))
+								linePattern = GetLinePattern2()
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+							elsif aStringsEqual(sp.lineType, "dotdash".split(""))
+								linePattern = GetLinePattern3()
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+							elsif aStringsEqual(sp.lineType, "longdash".split(""))
+								linePattern = GetLinePattern4()
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+							elsif aStringsEqual(sp.lineType, "twodash".split(""))
+								linePattern = GetLinePattern5()
+								DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp.lineThickness, linePattern, patternOffset, sp.color)
+							end
+						end
+					end
+
+					prevSet = true
+					xPrev = x
+					yPrev = y
+					i = i + 1.0
+				end
+			else
+				i = 0.0
+				while(i < xs.length)
+					x = xs[i]
+					y = ys[i]
+
+					if x > xMin && x < xMax && y > yMin && y < yMax
+
+						x = (MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)).floor
+						y = (MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)).floor
+
+						if aStringsEqual(sp.pointType, "crosses".split(""))
+							DrawPixel(canvas, x, y, sp.color)
+							DrawPixel(canvas, x + 1.0, y, sp.color)
+							DrawPixel(canvas, x + 2.0, y, sp.color)
+							DrawPixel(canvas, x - 1.0, y, sp.color)
+							DrawPixel(canvas, x - 2.0, y, sp.color)
+							DrawPixel(canvas, x, y + 1.0, sp.color)
+							DrawPixel(canvas, x, y + 2.0, sp.color)
+							DrawPixel(canvas, x, y - 1.0, sp.color)
+							DrawPixel(canvas, x, y - 2.0, sp.color)
+						elsif aStringsEqual(sp.pointType, "circles".split(""))
+							DrawCircle(canvas, x, y, 3.0, sp.color)
+						elsif aStringsEqual(sp.pointType, "dots".split(""))
+							DrawFilledCircle(canvas, x, y, 3.0, sp.color)
+						elsif aStringsEqual(sp.pointType, "triangles".split(""))
+							DrawTriangle(canvas, x, y, 3.0, sp.color)
+						elsif aStringsEqual(sp.pointType, "filled triangles".split(""))
+							DrawFilledTriangle(canvas, x, y, 3.0, sp.color)
+						elsif aStringsEqual(sp.pointType, "pixels".split(""))
+							DrawPixel(canvas, x, y, sp.color)
+						end
+					end
+					i = i + 1.0
+				end
+			end
+			plot = plot + 1.0
+		end
+
+		DeleteImage(canvasReference.image)
+		canvasReference.image = canvas
+	end
+
+	return success
+end
+
+
+def ScatterPlotFromSettingsValid(settings)
+
+	success = true
+
+	# Check axis placement.
+	if !settings.xAxisAuto
+		if settings.xAxisTop && settings.xAxisBottom
+			success = false
+		end
+		if !settings.xAxisTop && !settings.xAxisBottom
+			success = false
+		end
+	end
+
+	if !settings.yAxisAuto
+		if settings.yAxisLeft && settings.yAxisRight
+			success = false
+		end
+		if !settings.yAxisLeft && !settings.yAxisRight
+			success = false
+		end
+	end
+
+	# Check series lengths.
+	i = 0.0
+	while(i < settings.scatterPlotSeries.length)
+		series = settings.scatterPlotSeries[i]
+		if series.xs.length != series.ys.length
+			success = false
+		end
+		if series.xs.length == 0.0
+			success = false
+		end
+		if series.linearInterpolation && series.xs.length == 1.0
+			success = false
+		end
+		i = i + 1.0
+	end
+
+	# Check bounds.
+	if !settings.autoBoundaries
+		if settings.xMin >= settings.xMax
+			success = false
+		end
+		if settings.yMin >= settings.yMax
+			success = false
+		end
+	end
+
+	# Check padding.
+	if !settings.autoPadding
+		if 2.0*settings.xPadding >= settings.width
+			success = false
+		end
+		if 2.0*settings.yPadding >= settings.height
+			success = false
+		end
+	end
+
+	# Check width and height.
+	if settings.width < 0.0
+		success = false
+	end
+	if settings.height < 0.0
+		success = false
+	end
+
+	# Check point types.
+	i = 0.0
+	while(i < settings.scatterPlotSeries.length)
+		series = settings.scatterPlotSeries[i]
+
+		if series.lineThickness < 0.0
+			success = false
+		end
+
+		if !series.linearInterpolation
+			# Point type.
+			found = false
+			if aStringsEqual(series.pointType, "crosses".split(""))
+				found = true
+			elsif aStringsEqual(series.pointType, "circles".split(""))
+				found = true
+			elsif aStringsEqual(series.pointType, "dots".split(""))
+				found = true
+			elsif aStringsEqual(series.pointType, "triangles".split(""))
+				found = true
+			elsif aStringsEqual(series.pointType, "filled triangles".split(""))
+				found = true
+			elsif aStringsEqual(series.pointType, "pixels".split(""))
+				found = true
+			end
+			if !found
+				success = false
+			end
+		else
+			# Line type.
+			found = false
+			if aStringsEqual(series.lineType, "solid".split(""))
+				found = true
+			elsif aStringsEqual(series.lineType, "dashed".split(""))
+				found = true
+			elsif aStringsEqual(series.lineType, "dotted".split(""))
+				found = true
+			elsif aStringsEqual(series.lineType, "dotdash".split(""))
+				found = true
+			elsif aStringsEqual(series.lineType, "longdash".split(""))
+				found = true
+			elsif aStringsEqual(series.lineType, "twodash".split(""))
+				found = true
+			end
+
+			if !found
+				success = false
+			end
+		end
+		i = i + 1.0
+	end
+
+	return success
+end
+
+
+def GetDefaultBarPlotSettings()
+
+	settings = BarPlotSettings.new
+
+	settings.width = 800.0
+	settings.height = 600.0
+	settings.autoBoundaries = true
+	settings.yMax = 0.0
+	settings.yMin = 0.0
+	settings.autoPadding = true
+	settings.xPadding = 0.0
+	settings.yPadding = 0.0
+	settings.title = "".split("")
+	settings.yLabel = "".split("")
+	settings.barPlotSeries = Array.new(0)
+	settings.showGrid = true
+	settings.gridColor = GetGray(0.1)
+	settings.autoColor = true
+	settings.grayscaleAutoColor = false
+	settings.autoSpacing = true
+	settings.groupSeparation = 0.0
+	settings.barSeparation = 0.0
+	settings.autoLabels = true
+	settings.xLabels = Array.new(0)
+=begin
+settings.autoLabels = false;
+        settings.xLabels = new StringReference [5];
+        settings.xLabels[0] = CreateStringReference("may 20".toCharArray());
+        settings.xLabels[1] = CreateStringReference("jun 20".toCharArray());
+        settings.xLabels[2] = CreateStringReference("jul 20".toCharArray());
+        settings.xLabels[3] = CreateStringReference("aug 20".toCharArray());
+        settings.xLabels[4] = CreateStringReference("sep 20".toCharArray());
+=end
+
+	settings.barBorder = false
+
+	return settings
+end
+
+
+def GetDefaultBarPlotSeriesSettings()
+
+	series = BarPlotSeries.new
+
+	series.ys = Array.new(0)
+	series.color = GetBlack()
+
+	return series
+end
+
+
+def DrawBarPlot(width, height, ys)
+
+	settings = GetDefaultBarPlotSettings()
+
+	settings.barPlotSeries = Array.new(1)
+	settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings()
+	delete(settings.barPlotSeries[0].ys)
+	settings.barPlotSeries[0].ys = ys
+	canvasReference = RGBABitmapImageReference.new
+	settings.width = width
+	settings.height = height
+
+	DrawBarPlotFromSettings(canvasReference, settings)
+
+	return canvasReference.image
+end
+
+
+def DrawBarPlotFromSettings(canvasReference, settings)
+
+	success = BarPlotSettingsIsValid(settings)
+
+	if success
+
+		canvas = CreateImage(settings.width, settings.height, GetWhite())
+
+		ss = settings.barPlotSeries.length
+		gridLabelColor = GetGray(0.5)
+
+		# padding
+		if settings.autoPadding
+			xPadding = (GetDefaultPaddingPercentage()*ImageWidth(canvas)).floor
+			yPadding = (GetDefaultPaddingPercentage()*ImageHeight(canvas)).floor
+		else
+			xPadding = settings.xPadding
+			yPadding = settings.yPadding
+		end
+
+		# Draw title
+		DrawText(canvas, (ImageWidth(canvas) / 2.0 - GetTextWidth(settings.title) / 2.0).floor, (yPadding / 3.0).floor, settings.title, GetBlack())
+		DrawTextUpwards(canvas, 10.0, (ImageHeight(canvas) / 2.0 - GetTextWidth(settings.yLabel) / 2.0).floor, settings.yLabel, GetBlack())
+
+		# min and max
+		if settings.autoBoundaries
+			if ss >= 1.0
+				yMax = GetMaximum(settings.barPlotSeries[0].ys)
+				yMin = [0.0, GetMinimum(settings.barPlotSeries[0].ys)].min
+
+				s = 0.0
+				while(s < ss)
+					yMax = [yMax, GetMaximum(settings.barPlotSeries[s].ys)].max
+					yMin = [yMin, GetMinimum(settings.barPlotSeries[s].ys)].min
+					s = s + 1.0
+				end
+			else
+				yMax = 10.0
+				yMin = 0.0
+			end
+		else
+			yMin = settings.yMin
+			yMax = settings.yMax
+		end
+		yLength = yMax - yMin
+
+		# boundaries
+		xPixelMin = xPadding
+		yPixelMin = yPadding
+		xPixelMax = ImageWidth(canvas) - xPadding
+		yPixelMax = ImageHeight(canvas) - yPadding
+		xLengthPixels = xPixelMax - xPixelMin
+		yLengthPixels = yPixelMax - yPixelMin
+
+		# Draw boundary.
+		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
+
+		# Draw grid lines.
+		yLabels = StringArrayReference.new
+		yLabelPriorities = NumberArrayReference.new
+		yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities)
+
+		if settings.showGrid
+			# Y-grid
+			i = 0.0
+			while(i < yGridPositions.length)
+				y = yGridPositions[i]
+				py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
+				DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
+				i = i + 1.0
+			end
+		end
+
+		# Draw origin.
+		if yMin < 0.0 && yMax > 0.0
+			py = MapYCoordinate(0.0, yMin, yMax, yPixelMin, yPixelMax)
+			DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings.gridColor)
+		end
+
+		# Labels
+		occupied = Array.new(yLabels.stringArray.length)
+		i = 0.0
+		while(i < occupied.length)
+			occupied[i] = CreateRectangle(0.0, 0.0, 0.0, 0.0)
+			i = i + 1.0
+		end
+		nextRectangle = CreateNumberReference(0.0)
+
+		i = 1.0
+		while(i <= 5.0)
+			DrawYLabelsForPriority(i, yMin, xPixelMin, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yLabels, yLabelPriorities, occupied, true)
+			i = i + 1.0
+		end
+
+		# Draw bars.
+		if settings.autoColor
+			if !settings.grayscaleAutoColor
+				colors = Get8HighContrastColors()
+			else
+				colors = Array.new(ss)
+				if ss > 1.0
+					i = 0.0
+					while(i < ss)
+						colors[i] = GetGray(0.7 - (i / ss)*0.7)
+						i = i + 1.0
+					end
+				else
+					colors[0] = GetGray(0.5)
+				end
+			end
+		else
+			colors = Array.new(0)
+		end
+
+		# distances
+		bs = settings.barPlotSeries[0].ys.length
+
+		if settings.autoSpacing
+			groupSeparation = ImageWidth(canvas)*0.05
+			barSeparation = ImageWidth(canvas)*0.005
+		else
+			groupSeparation = settings.groupSeparation
+			barSeparation = settings.barSeparation
+		end
+
+		barWidth = (xLengthPixels - groupSeparation*(bs - 1.0) - barSeparation*(bs*(ss - 1.0))) / (bs*ss)
+
+		# Draw bars.
+		b = 0.0
+		n = 0.0
+		while(n < bs)
+			s = 0.0
+			while(s < ss)
+				ys = settings.barPlotSeries[s].ys
+
+				yValue = ys[n]
+
+				yBottom = MapYCoordinate(yValue, yMin, yMax, yPixelMin, yPixelMax)
+				yTop = MapYCoordinate(0.0, yMin, yMax, yPixelMin, yPixelMax)
+
+				x = xPixelMin + n*(groupSeparation + ss*barWidth) + s*(barWidth) + b*barSeparation
+				w = barWidth
+
+				if yValue >= 0.0
+					y = yBottom
+					h = yTop - y
+				else
+					y = yTop
+					h = yBottom - yTop
+				end
+
+				# Cut at boundaries.
+				if y < yPixelMin && y + h > yPixelMax
+					y = yPixelMin
+					h = yPixelMax - yPixelMin
+				elsif y < yPixelMin
+					y = yPixelMin
+					if yValue >= 0.0
+						h = yTop - y
+					else
+						h = yBottom - y
+					end
+				elsif y + h > yPixelMax
+					h = yPixelMax - y
+				end
+
+				# Get color
+				if settings.autoColor
+					barColor = colors[s]
+				else
+					barColor = settings.barPlotSeries[s].color
+				end
+
+				# Draw
+				if settings.barBorder
+					DrawFilledRectangleWithBorder(canvas, Round(x), Round(y), Round(w), Round(h), GetBlack(), barColor)
+				else
+					DrawFilledRectangle(canvas, Round(x), Round(y), Round(w), Round(h), barColor)
+				end
+
+				b = b + 1.0
+				s = s + 1.0
+			end
+			b = b - 1.0
+			n = n + 1.0
+		end
+
+		# x-labels
+		n = 0.0
+		while(n < bs)
+			if settings.autoLabels
+				label = CreateStringDecimalFromNumber(n + 1.0)
+			else
+				label = settings.xLabels[n].string
+			end
+
+			textwidth = GetTextWidth(label)
+
+			x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1.0)*barSeparation) + n*groupSeparation - textwidth / 2.0
+
+			DrawText(canvas, (x).floor, ImageHeight(canvas) - yPadding + 20.0, label, gridLabelColor)
+
+			b = b + 1.0
+			n = n + 1.0
+		end
+
+		canvasReference.image = canvas
+	end
+
+	return success
+end
+
+
+def BarPlotSettingsIsValid(settings)
+
+	success = true
+
+	# Check series lengths.
+	lengthSet = false
+	length = 0.0
+	i = 0.0
+	while(i < settings.barPlotSeries.length)
+		series = settings.barPlotSeries[i]
+
+		if !lengthSet
+			length = series.ys.length
+			lengthSet = true
+		elsif length != series.ys.length
+			success = false
+		end
+		i = i + 1.0
+	end
+
+	# Check bounds.
+	if !settings.autoBoundaries
+		if settings.yMin >= settings.yMax
+			success = false
+		end
+	end
+
+	# Check padding.
+	if !settings.autoPadding
+		if 2.0*settings.xPadding >= settings.width
+			success = false
+		end
+		if 2.0*settings.yPadding >= settings.height
+			success = false
+		end
+	end
+
+	# Check width and height.
+	if settings.width < 0.0
+		success = false
+	end
+	if settings.height < 0.0
+		success = false
+	end
+
+	# Check spacing
+	if !settings.autoSpacing
+		if settings.groupSeparation < 0.0
+			success = false
+		end
+		if settings.barSeparation < 0.0
+			success = false
+		end
+	end
+
+	return success
 end
 
 
@@ -892,9 +1560,16 @@ def GetMaximum(data)
 end
 
 
+def RoundToDigits(element, digitsAfterPoint)
+	return Round(element*10.0**digitsAfterPoint) / 10.0**digitsAfterPoint
+end
+
+
 def test()
 
 	failures = CreateNumberReference(0.0)
+
+	imageReference = CreateRGBABitmapImageReference()
 
 	scatterPlotSettings = GetDefaultScatterPlotSettings()
 
@@ -936,6 +1611,22 @@ def test()
 	z = 2.0
 	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 21.0, failures)
+
+	xs = Array.new(5)
+	xs[0] = -2.0
+	xs[1] = -1.0
+	xs[2] = 0.0
+	xs[3] = 1.0
+	xs[4] = 2.0
+	ys = Array.new(5)
+	ys[0] = 2.0
+	ys[1] = -1.0
+	ys[2] = -2.0
+	ys[3] = -1.0
+	ys[4] = 2.0
+	DrawScatterPlot(imageReference, 800.0, 600.0, xs, ys)
+
+	imageReference.image = DrawBarPlot(800.0, 600.0, ys)
 
 	return failures.numberValue
 end

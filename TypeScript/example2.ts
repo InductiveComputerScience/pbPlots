@@ -10,7 +10,8 @@ series.lineThickness = 2;
 series.color = pbPlots.GetGray(0.3);
 
 var settings = pbPlots.GetDefaultScatterPlotSettings();
-settings.canvas = pbPlots.CreateImage(800, 600, pbPlots.GetWhite());
+settings.width = 800;
+settings.height = 600;
 settings.autoBoundaries = true;
 settings.autoPadding = true;
 settings.title = "x^2 - 2".split('');
@@ -18,8 +19,9 @@ settings.xLabel = "X axis".split('');
 settings.yLabel = "Y axis".split('');
 settings.scatterPlotSeries = [series];
 
-pbPlots.DrawScatterPlotFromSettings(settings);
+var imageReference = pbPlots.CreateRGBABitmapImageReference();
+pbPlots.DrawScatterPlotFromSettings(imageReference, settings);
 
-var pngdata = pbPlots.ConvertToPNG(settings.canvas);
+var pngdata = pbPlots.ConvertToPNG(imageReference.image);
 supportLib.WriteToFile(pngdata, "example2.png");
-pbPlots.DeleteImage(settings.canvas);
+pbPlots.DeleteImage(imageReference.image);

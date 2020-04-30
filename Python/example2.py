@@ -10,7 +10,8 @@ series.lineThickness = 2
 series.color = pbPlots.GetGray(0.3)
 
 settings = pbPlots.GetDefaultScatterPlotSettings()
-settings.canvas = pbPlots.CreateImage(800, 600, pbPlots.GetWhite())
+settings.width = 800
+settings.height = 600
 settings.autoBoundaries = True
 settings.autoPadding = True
 settings.title = "x^2 - 2"
@@ -18,8 +19,9 @@ settings.xLabel = "X axis"
 settings.yLabel = "Y axis"
 settings.scatterPlotSeries = [series]
 
-pbPlots.DrawScatterPlotFromSettings(settings)
+imageReference = pbPlots.CreateRGBABitmapImageReference()
+pbPlots.DrawScatterPlotFromSettings(imageReference, settings)
 
-pngdata = pbPlots.ConvertToPNG(settings.canvas)
+pngdata = pbPlots.ConvertToPNG(imageReference.image)
 supportLib.WriteToFile(pngdata, "example2.png")
-pbPlots.DeleteImage(settings.canvas)
+pbPlots.DeleteImage(imageReference.image)

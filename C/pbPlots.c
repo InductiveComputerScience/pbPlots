@@ -12,6 +12,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+struct RGBABitmapImageReference;
+typedef struct RGBABitmapImageReference RGBABitmapImageReference;
+
 struct Rectangle;
 typedef struct Rectangle Rectangle;
 
@@ -20,6 +23,12 @@ typedef struct ScatterPlotSeries ScatterPlotSeries;
 
 struct ScatterPlotSettings;
 typedef struct ScatterPlotSettings ScatterPlotSettings;
+
+struct BarPlotSeries;
+typedef struct BarPlotSeries BarPlotSeries;
+
+struct BarPlotSettings;
+typedef struct BarPlotSettings BarPlotSettings;
 
 struct RGBA;
 typedef struct RGBA RGBA;
@@ -87,6 +96,10 @@ typedef struct LinkedListNodeCharacters LinkedListNodeCharacters;
 struct DynamicArrayNumbers;
 typedef struct DynamicArrayNumbers DynamicArrayNumbers;
 
+struct RGBABitmapImageReference{
+  RGBABitmapImage *image;
+};
+
 struct Rectangle{
   double x1;
   double x2;
@@ -109,7 +122,6 @@ struct ScatterPlotSeries{
 };
 
 struct ScatterPlotSettings{
-  RGBABitmapImage *canvas;
   ScatterPlotSeries **scatterPlotSeries;
   size_t scatterPlotSeriesLength;
   _Bool autoBoundaries;
@@ -128,6 +140,48 @@ struct ScatterPlotSettings{
   size_t titleLength;
   _Bool showGrid;
   RGBA *gridColor;
+  _Bool xAxisAuto;
+  _Bool xAxisTop;
+  _Bool xAxisBottom;
+  _Bool yAxisAuto;
+  _Bool yAxisLeft;
+  _Bool yAxisRight;
+  double width;
+  double height;
+};
+
+struct BarPlotSeries{
+  double *ys;
+  size_t ysLength;
+  RGBA *color;
+};
+
+struct BarPlotSettings{
+  double width;
+  double height;
+  _Bool autoBoundaries;
+  double yMax;
+  double yMin;
+  _Bool autoPadding;
+  double xPadding;
+  double yPadding;
+  wchar_t *title;
+  size_t titleLength;
+  _Bool showGrid;
+  RGBA *gridColor;
+  BarPlotSeries **barPlotSeries;
+  size_t barPlotSeriesLength;
+  wchar_t *yLabel;
+  size_t yLabelLength;
+  _Bool autoColor;
+  _Bool grayscaleAutoColor;
+  _Bool autoSpacing;
+  double groupSeparation;
+  double barSeparation;
+  _Bool autoLabels;
+  StringReference **xLabels;
+  size_t xLabelsLength;
+  _Bool barBorder;
 };
 
 struct RGBA{
@@ -264,27 +318,47 @@ struct DynamicArrayNumbers{
   double length;
 };
 
+_Bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax);
+double IncrementFromCoordinates(double x1, double y1, double x2, double y2);
+double InterceptFromCoordinates(double x1, double y1, double x2, double y2);
+
+RGBA **Get8HighContrastColors(size_t *returnArrayLength);
+
+void DrawFilledRectangleWithBorder(RGBABitmapImage *image, double x, double y, double w, double h, RGBA *borderColor, RGBA *fillColor);
+RGBABitmapImageReference *CreateRGBABitmapImageReference();
+
 _Bool RectanglesOverlap(Rectangle *r1, Rectangle *r2);
 Rectangle *CreateRectangle(double x1, double y1, double x2, double y2);
 void CopyRectangleValues(Rectangle *rd, Rectangle *rs);
 
+void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, double xPixelMin, double xPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *xGridPositions, size_t xGridPositionsLength, StringArrayReference *xLabels, NumberArrayReference *xLabelPriorities, Rectangle **occupied, size_t occupiedLength, _Bool textOnBottom);
+void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, double yPixelMin, double yPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *yGridPositions, size_t yGridPositionsLength, StringArrayReference *yLabels, NumberArrayReference *yLabelPriorities, Rectangle **occupied, size_t occupiedLength, _Bool textOnLeft);
+double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double cMax, StringArrayReference *labels, NumberArrayReference *priorities);
+double MapYCoordinate(double y, double yMin, double yMax, double yPixelMin, double yPixelMax);
+double MapXCoordinate(double x, double xMin, double xMax, double xPixelMin, double xPixelMax);
+double MapXCoordinateAutoSettings(double x, RGBABitmapImage *image, double *xs, size_t xsLength);
+double MapYCoordinateAutoSettings(double y, RGBABitmapImage *image, double *ys, size_t ysLength);
+double GetDefaultPaddingPercentage();
+
+void DrawText(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t textLength, RGBA *color);
+void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t textLength, RGBA *color);
+
 ScatterPlotSettings *GetDefaultScatterPlotSettings();
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings();
-void DrawScatterPlot(RGBABitmapImage *canvas, double *xs, size_t xsLength, double *ys, size_t ysLength);
-void DrawScatterPlotFromSettings(ScatterPlotSettings *settings);
-_Bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax);
-double IncrementFromCoordinates(double x1, double y1, double x2, double y2);
-double InterceptFromCoordinates(double x1, double y1, double x2, double y2);
-void DrawXLabelsForPriority(double p, double xMin, double yMin, double yMax, double yLength, double yLengthPixels, double xLength, double xPixelMin, double yPixelMin, double xLengthPixels, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *xGridPositions, size_t xGridPositionsLength, StringArrayReference *xLabels, NumberArrayReference *xLabelPriorities, Rectangle **occupied, size_t occupiedLength);
-void DrawYLabelsForPriority(double p, double yMin, double xMin, double xMax, double xLength, double xLengthPixels, double yLength, double xPixelMin, double yPixelMin, double yLengthPixels, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *yGridPositions, size_t yGridPositionsLength, StringArrayReference *yLabels, NumberArrayReference *yLabelPriorities, Rectangle **occupied, size_t occupiedLength);
-void DrawTextUpwards(wchar_t *text, size_t textLength, double x, double y, RGBABitmapImage *canvas);
-double RoundToDigits(double element, double digitsAfterPoint);
-double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double cMax, StringArrayReference *labels, NumberArrayReference *priorities);
-void DrawText(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t textLength, RGBA *color);
-double MapYCoordinates(double y, double ymin, double yLength, double yPixelMin, double yPixelLength);
-double MapXCoordinates(double x, double xmin, double xLength, double xPixelMin, double xPixelLength);
+void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, double *xs, size_t xsLength, double *ys, size_t ysLength);
+_Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings);
+_Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings);
+
+BarPlotSettings *GetDefaultBarPlotSettings();
+BarPlotSeries *GetDefaultBarPlotSeriesSettings();
+RGBABitmapImage *DrawBarPlot(double width, double height, double *ys, size_t ysLength);
+_Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings);
+_Bool BarPlotSettingsIsValid(BarPlotSettings *settings);
+
 double GetMinimum(double *data, size_t dataLength);
 double GetMaximum(double *data, size_t dataLength);
+
+double RoundToDigits(double element, double digitsAfterPoint);
 
 double test();
 
@@ -672,367 +746,6 @@ void GetDeflateDistanceCode(double distance, NumberReference *code, NumberRefere
 void AppendBitsToBytesLeft(double *bytes, size_t bytesLength, NumberReference *nextbit, double data, double length);
 void AppendBitsToBytesRight(double *bytes, size_t bytesLength, NumberReference *nextbit, double data, double length);
 
-_Bool RectanglesOverlap(Rectangle *r1, Rectangle *r2){
-  _Bool overlap;
-
-  overlap = false;
-
-  overlap = overlap || (r2->x1 >= r1->x1 && r2->x1 <= r1->x2 && r2->y1 >= r1->y1 && r2->y1 <= r1->y2);
-  overlap = overlap || (r2->x2 >= r1->x1 && r2->x2 <= r1->x2 && r2->y1 >= r1->y1 && r2->y1 <= r1->y2);
-  overlap = overlap || (r2->x1 >= r1->x1 && r2->x1 <= r1->x2 && r2->y2 >= r1->y1 && r2->y2 <= r1->y2);
-  overlap = overlap || (r2->x2 >= r1->x1 && r2->x2 <= r1->x2 && r2->y2 >= r1->y1 && r2->y2 <= r1->y2);
-
-  return overlap;
-}
-Rectangle *CreateRectangle(double x1, double y1, double x2, double y2){
-  Rectangle *r;
-  r = (Rectangle *)malloc(sizeof(Rectangle));
-  r->x1 = x1;
-  r->y1 = y1;
-  r->x2 = x2;
-  r->y2 = y2;
-  return r;
-}
-void CopyRectangleValues(Rectangle *rd, Rectangle *rs){
-  rd->x1 = rs->x1;
-  rd->y1 = rs->y1;
-  rd->x2 = rs->x2;
-  rd->y2 = rs->y2;
-}
-ScatterPlotSettings *GetDefaultScatterPlotSettings(){
-  ScatterPlotSettings *settings;
-
-  settings = (ScatterPlotSettings *)malloc(sizeof(ScatterPlotSettings));
-
-  settings->autoBoundaries = true;
-  settings->autoPadding = true;
-  settings->title = L"";
-  settings->titleLength = wcslen(settings->title);
-  settings->yLabel = L"";
-  settings->yLabelLength = wcslen(settings->yLabel);
-  settings->xLabel = L"";
-  settings->xLabelLength = wcslen(settings->xLabel);
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 0.0);
-  settings->scatterPlotSeriesLength = 0.0;
-  settings->showGrid = true;
-  settings->gridColor = GetGray(0.2);
-
-  return settings;
-}
-ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings(){
-  ScatterPlotSeries *series;
-
-  series = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
-
-  series->linearInterpolation = true;
-  series->pointType = L"pixels";
-  series->pointTypeLength = wcslen(series->pointType);
-  series->lineType = L"solid";
-  series->lineTypeLength = wcslen(series->lineType);
-  series->lineThickness = 1.0;
-  series->xs = (double*)malloc(sizeof(double) * (0.0));
-  series->xsLength = 0.0;
-  series->ys = (double*)malloc(sizeof(double) * (0.0));
-  series->ysLength = 0.0;
-  series->color = GetBlack();
-
-  return series;
-}
-void DrawScatterPlot(RGBABitmapImage *canvas, double *xs, size_t xsLength, double *ys, size_t ysLength){
-  ScatterPlotSettings *settings;
-
-  settings = GetDefaultScatterPlotSettings();
-
-  settings->canvas = canvas;
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 1.0);
-  settings->scatterPlotSeriesLength = 1.0;
-  settings->scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
-  free(settings->scatterPlotSeries[0]->xs);
-  settings->scatterPlotSeries[0]->xs = xs;
-  settings->scatterPlotSeries[0]->xsLength = xsLength;
-  free(settings->scatterPlotSeries[0]->ys);
-  settings->scatterPlotSeries[0]->ys = ys;
-  settings->scatterPlotSeries[0]->ysLength = ysLength;
-
-  DrawScatterPlotFromSettings(settings);
-}
-void DrawScatterPlotFromSettings(ScatterPlotSettings *settings){
-  double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, xOrigin, yOrigin, p, l, plot;
-  double xPadding, yPadding, xOriginPixels, yOriginPixels;
-  double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
-  NumberReference *nextRectangle, *x1Ref, *y1Ref, *x2Ref, *y2Ref, *patternOffset;
-  _Bool prevSet, success;
-  RGBA *gridLabelColor;
-  RGBABitmapImage *canvas;
-  double *xs, *ys;
-  size_t xsLength, ysLength;
-  _Bool linearInterpolation;
-  ScatterPlotSeries *sp;
-  double *xGridPositions, *yGridPositions;
-  size_t xGridPositionsLength, yGridPositionsLength;
-  StringArrayReference *xLabels, *yLabels;
-  NumberArrayReference *xLabelPriorities, *yLabelPriorities;
-  Rectangle **occupied;
-  size_t occupiedLength;
-  _Bool *linePattern;
-  size_t linePatternLength;
-
-  canvas = settings->canvas;
-  patternOffset = CreateNumberReference(0.0);
-
-  if(settings->scatterPlotSeriesLength >= 1.0){
-    xMin = GetMinimum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
-    xMax = GetMaximum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
-    yMin = GetMinimum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
-    yMax = GetMaximum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
-  }else{
-    xMin =  -10.0;
-    xMax = 10.0;
-    yMin =  -10.0;
-    yMax = 10.0;
-  }
-
-  if( !settings->autoBoundaries ){
-    xMin = settings->xMin;
-    xMax = settings->xMax;
-    yMin = settings->yMin;
-    yMax = settings->yMax;
-  }else{
-    for(plot = 1.0; plot < settings->scatterPlotSeriesLength; plot = plot + 1.0){
-      sp = settings->scatterPlotSeries[(int)(plot)];
-
-      xMin = fmin(xMin, GetMinimum(sp->xs, sp->xsLength));
-      xMax = fmax(xMax, GetMaximum(sp->xs, sp->xsLength));
-      yMin = fmin(yMin, GetMinimum(sp->ys, sp->ysLength));
-      yMax = fmax(yMax, GetMaximum(sp->ys, sp->ysLength));
-    }
-  }
-
-  xLength = xMax - xMin;
-  yLength = yMax - yMin;
-
-  if(settings->autoPadding){
-    xPadding = 0.10*ImageWidth(canvas);
-    yPadding = 0.10*ImageHeight(canvas);
-  }else{
-    xPadding = settings->xPadding;
-    yPadding = settings->yPadding;
-  }
-
-  /* Draw title */
-  DrawText(canvas, ImageWidth(canvas)/2.0 - GetTextWidth(settings->title, settings->titleLength)/2.0, yPadding/3.0, settings->title, settings->titleLength, GetBlack());
-
-  /* Draw grid */
-  xPixelMin = xPadding;
-  yPixelMin = yPadding;
-  xPixelMax = ImageWidth(canvas) - xPadding;
-  yPixelMax = ImageHeight(canvas) - yPadding;
-  xLengthPixels = xPixelMax - xPixelMin;
-  yLengthPixels = yPixelMax - yPixelMin;
-  DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings->gridColor);
-
-  gridLabelColor = GetGray(0.5);
-
-  xLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-  xLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-  yLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-  yLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-  xGridPositions = ComputeGridLinePositions(&xGridPositionsLength, xMin, xMax, xLabels, xLabelPriorities);
-  yGridPositions = ComputeGridLinePositions(&yGridPositionsLength, yMin, yMax, yLabels, yLabelPriorities);
-
-  if(settings->showGrid){
-    /* X-grid */
-    for(i = 0.0; i < xGridPositionsLength; i = i + 1.0){
-      x = xGridPositions[(int)(i)];
-      px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-      DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings->gridColor);
-    }
-
-    /* Y-grid */
-    for(i = 0.0; i < yGridPositionsLength; i = i + 1.0){
-      y = yGridPositions[(int)(i)];
-      py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-      DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings->gridColor);
-    }
-  }
-
-  /* Labels */
-  occupied = (Rectangle**)malloc(sizeof(Rectangle) * xLabels->stringArrayLength + yLabels->stringArrayLength);
-  occupiedLength = xLabels->stringArrayLength + yLabels->stringArrayLength;
-  for(i = 0.0; i < occupiedLength; i = i + 1.0){
-    occupied[(int)(i)] = CreateRectangle(0.0, 0.0, 0.0, 0.0);
-  }
-  nextRectangle = CreateNumberReference(0.0);
-
-  for(i = 1.0; i <= 5.0; i = i + 1.0){
-    DrawXLabelsForPriority(i, xMin, yMin, yMax, yLength, yLengthPixels, xLength, xPixelMin, yPixelMin, xLengthPixels, nextRectangle, gridLabelColor, canvas, xGridPositions, xGridPositionsLength, xLabels, xLabelPriorities, occupied, occupiedLength);
-  }
-
-  for(i = 1.0; i <= 5.0; i = i + 1.0){
-    DrawYLabelsForPriority(i, yMin, xMin, xMax, xLength, xLengthPixels, yLength, xPixelMin, yPixelMin, yLengthPixels, nextRectangle, gridLabelColor, canvas, yGridPositions, yGridPositionsLength, yLabels, yLabelPriorities, occupied, occupiedLength);
-  }
-
-  /* Draw origin and axis titles. */
-  axisLabelPadding = 20.0;
-  if(yMin < 0.0 && yMax > 0.0){
-    yOrigin = 0.0;
-  }else{
-    yOrigin = yMin + (yMax - yMin)/2.0;
-  }
-  yOriginPixels = MapYCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
-  if(yMin < 0.0 && yMax > 0.0){
-    DrawLine1px(canvas, Round(xPixelMin), Round(yOriginPixels), Round(xPixelMax), Round(yOriginPixels), GetBlack());
-  }
-  DrawTextUpwards(settings->xLabel, settings->xLabelLength, 10.0, yOriginPixels - GetTextWidth(settings->xLabel, settings->xLabelLength)/2.0, canvas);
-
-  if(xMin < 0.0 && xMax > 0.0){
-    xOrigin = 0.0;
-  }else{
-    xOrigin = xMin + (xMax - xMin)/2.0;
-  }
-  xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels);
-  if(xMin < 0.0 && xMax > 0.0){
-    DrawLine1px(canvas, Round(xOriginPixels), Round(yPixelMin), Round(xOriginPixels), Round(yPixelMax), GetBlack());
-  }
-  DrawText(canvas, xOriginPixels - GetTextWidth(settings->yLabel, settings->yLabelLength)/2.0, yPixelMax + axisLabelPadding, settings->yLabel, settings->yLabelLength, GetBlack());
-
-  /* X-grid-markers */
-  if(yMin < 0.0 && yMax > 0.0){
-  }else{
-    yOrigin = yMax;
-    yOriginPixels = MapXCoordinates(yOrigin, yMin, yLength, yPixelMin, yLengthPixels);
-  }
-  for(i = 0.0; i < xGridPositionsLength; i = i + 1.0){
-    x = xGridPositions[(int)(i)];
-    px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-    p = xLabelPriorities->numberArray[(int)(i)];
-    l = 1.0;
-    if(p == 1.0){
-      l = 8.0;
-    }else if(p == 2.0){
-      l = 3.0;
-    }
-    DrawLine1px(canvas, px, yOriginPixels, px, yOriginPixels - l, GetBlack());
-  }
-
-  /* Y-grid-markers */
-  if(xMin < 0.0 && xMax > 0.0){
-  }else{
-    xOrigin = xMin;
-    xOriginPixels = MapXCoordinates(xOrigin, xMin, xLength, xPixelMin, xLengthPixels);
-  }
-  for(i = 0.0; i < yGridPositionsLength; i = i + 1.0){
-    y = yGridPositions[(int)(i)];
-    py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-    p = yLabelPriorities->numberArray[(int)(i)];
-    l = 1.0;
-    if(p == 1.0){
-      l = 8.0;
-    }else if(p == 2.0){
-      l = 3.0;
-    }
-    DrawLine1px(canvas, xOriginPixels, py, xOriginPixels + l, py, GetBlack());
-  }
-
-  /* Draw points */
-  for(plot = 0.0; plot < settings->scatterPlotSeriesLength; plot = plot + 1.0){
-    sp = settings->scatterPlotSeries[(int)(plot)];
-
-    xs = sp->xs;
-    xsLength = sp->xsLength;
-    ys = sp->ys;
-    ysLength = sp->ysLength;
-    linearInterpolation = sp->linearInterpolation;
-
-    x1Ref = (NumberReference *)malloc(sizeof(NumberReference));
-    y1Ref = (NumberReference *)malloc(sizeof(NumberReference));
-    x2Ref = (NumberReference *)malloc(sizeof(NumberReference));
-    y2Ref = (NumberReference *)malloc(sizeof(NumberReference));
-    if(linearInterpolation){
-      prevSet = false;
-      xPrev = 0.0;
-      yPrev = 0.0;
-      for(i = 0.0; i < xsLength; i = i + 1.0){
-        x = xs[(int)(i)];
-        y = ys[(int)(i)];
-
-        if(prevSet){
-          x1Ref->numberValue = xPrev;
-          y1Ref->numberValue = yPrev;
-          x2Ref->numberValue = x;
-          y2Ref->numberValue = y;
-
-          success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax);
-
-          if(success){
-            pxPrev = MapXCoordinates(x1Ref->numberValue, xMin, xLength, xPixelMin, xLengthPixels);
-            pyPrev = MapYCoordinates(y1Ref->numberValue, yMin, yLength, yPixelMin, yLengthPixels);
-            px = MapXCoordinates(x2Ref->numberValue, xMin, xLength, xPixelMin, xLengthPixels);
-            py = MapYCoordinates(y2Ref->numberValue, yMin, yLength, yPixelMin, yLengthPixels);
-
-            if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"solid")) && sp->lineThickness == 1.0){
-              DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp->color);
-            }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"solid"))){
-              DrawLine(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, sp->color);
-            }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"dashed"))){
-              linePattern = GetLinePattern1(&linePatternLength);
-              DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
-            }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"dotted"))){
-              linePattern = GetLinePattern2(&linePatternLength);
-              DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
-            }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"dotdash"))){
-              linePattern = GetLinePattern3(&linePatternLength);
-              DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
-            }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"longdash"))){
-              linePattern = GetLinePattern4(&linePatternLength);
-              DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
-            }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"twodash"))){
-              linePattern = GetLinePattern5(&linePatternLength);
-              DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
-            }
-          }
-        }
-
-        prevSet = true;
-        xPrev = x;
-        yPrev = y;
-      }
-    }else{
-      for(i = 0.0; i < xsLength; i = i + 1.0){
-        x = xs[(int)(i)];
-        y = ys[(int)(i)];
-
-        if(x > xMin && x < xMax && y > yMin && y < yMax){
-
-          x = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
-          y = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
-
-          if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"crosses"))){
-            DrawPixel(canvas, x, y, sp->color);
-            DrawPixel(canvas, x + 1.0, y, sp->color);
-            DrawPixel(canvas, x + 2.0, y, sp->color);
-            DrawPixel(canvas, x - 1.0, y, sp->color);
-            DrawPixel(canvas, x - 2.0, y, sp->color);
-            DrawPixel(canvas, x, y + 1.0, sp->color);
-            DrawPixel(canvas, x, y + 2.0, sp->color);
-            DrawPixel(canvas, x, y - 1.0, sp->color);
-            DrawPixel(canvas, x, y - 2.0, sp->color);
-          }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"circles"))){
-            DrawCircle(canvas, x, y, 3.0, sp->color);
-          }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"dots"))){
-            DrawFilledCircle(canvas, x, y, 3.0, sp->color);
-          }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"triangles"))){
-            DrawTriangle(canvas, x, y, 3.0, sp->color);
-          }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"filled triangles"))){
-            DrawFilledTriangle(canvas, x, y, 3.0, sp->color);
-          }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"pixels"))){
-            DrawPixel(canvas, x, y, sp->color);
-          }
-        }
-      }
-    }
-  }
-}
 _Bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax){
   double x1, y1, x2, y2;
   _Bool success, p1In, p2In;
@@ -1146,51 +859,130 @@ double InterceptFromCoordinates(double x1, double y1, double x2, double y2){
 
   return b;
 }
-void DrawXLabelsForPriority(double p, double xMin, double yMin, double yMax, double yLength, double yLengthPixels, double xLength, double xPixelMin, double yPixelMin, double xLengthPixels, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *xGridPositions, size_t xGridPositionsLength, StringArrayReference *xLabels, NumberArrayReference *xLabelPriorities, Rectangle **occupied, size_t occupiedLength){
+RGBA **Get8HighContrastColors(size_t *returnArrayLength){
+  RGBA **colors;
+  size_t colorsLength;
+  colors = (RGBA**)malloc(sizeof(RGBA) * 8.0);
+  colorsLength = 8.0;
+  colors[0] = CreateRGBColor(3.0/256.0, 146.0/256.0, 206.0/256.0);
+  colors[1] = CreateRGBColor(253.0/256.0, 83.0/256.0, 8.0/256.0);
+  colors[2] = CreateRGBColor(102.0/256.0, 176.0/256.0, 50.0/256.0);
+  colors[3] = CreateRGBColor(208.0/256.0, 234.0/256.0, 43.0/256.0);
+  colors[4] = CreateRGBColor(167.0/256.0, 25.0/256.0, 75.0/256.0);
+  colors[5] = CreateRGBColor(254.0/256.0, 254.0/256.0, 51.0/256.0);
+  colors[6] = CreateRGBColor(134.0/256.0, 1.0/256.0, 175.0/256.0);
+  colors[7] = CreateRGBColor(251.0/256.0, 153.0/256.0, 2.0/256.0);
+  *returnArrayLength = colorsLength;
+  return colors;
+}
+void DrawFilledRectangleWithBorder(RGBABitmapImage *image, double x, double y, double w, double h, RGBA *borderColor, RGBA *fillColor){
+  if(h > 0.0 && w > 0.0){
+    DrawFilledRectangle(image, x, y, w, h, fillColor);
+    DrawRectangle1px(image, x, y, w, h, borderColor);
+  }
+}
+RGBABitmapImageReference *CreateRGBABitmapImageReference(){
+  RGBABitmapImageReference *reference;
+
+  reference = (RGBABitmapImageReference *)malloc(sizeof(RGBABitmapImageReference));
+  reference->image = (RGBABitmapImage *)malloc(sizeof(RGBABitmapImage));
+  reference->image->x = (RGBABitmap**)malloc(sizeof(RGBABitmap) * 0.0);
+  reference->image->xLength = 0.0;
+
+  return reference;
+}
+_Bool RectanglesOverlap(Rectangle *r1, Rectangle *r2){
   _Bool overlap;
-  double i, j, x, px, oy;
+
+  overlap = false;
+
+  overlap = overlap || (r2->x1 >= r1->x1 && r2->x1 <= r1->x2 && r2->y1 >= r1->y1 && r2->y1 <= r1->y2);
+  overlap = overlap || (r2->x2 >= r1->x1 && r2->x2 <= r1->x2 && r2->y1 >= r1->y1 && r2->y1 <= r1->y2);
+  overlap = overlap || (r2->x1 >= r1->x1 && r2->x1 <= r1->x2 && r2->y2 >= r1->y1 && r2->y2 <= r1->y2);
+  overlap = overlap || (r2->x2 >= r1->x1 && r2->x2 <= r1->x2 && r2->y2 >= r1->y1 && r2->y2 <= r1->y2);
+
+  return overlap;
+}
+Rectangle *CreateRectangle(double x1, double y1, double x2, double y2){
+  Rectangle *r;
+  r = (Rectangle *)malloc(sizeof(Rectangle));
+  r->x1 = x1;
+  r->y1 = y1;
+  r->x2 = x2;
+  r->y2 = y2;
+  return r;
+}
+void CopyRectangleValues(Rectangle *rd, Rectangle *rs){
+  rd->x1 = rs->x1;
+  rd->y1 = rs->y1;
+  rd->x2 = rs->x2;
+  rd->y2 = rs->y2;
+}
+void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, double xPixelMin, double xPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *xGridPositions, size_t xGridPositionsLength, StringArrayReference *xLabels, NumberArrayReference *xLabelPriorities, Rectangle **occupied, size_t occupiedLength, _Bool textOnBottom){
+  _Bool overlap, currentOverlaps;
+  double i, j, x, px, padding;
   wchar_t *text;
   size_t textLength;
   Rectangle *r;
 
   r = (Rectangle *)malloc(sizeof(Rectangle));
-
-  if(yMin < 0.0 && yMax > 0.0){
-    oy = MapYCoordinates(0.0, yMin, yLength, yPixelMin, yLengthPixels);
-  }else{
-    oy = MapYCoordinates(yMin, yMin, yLength, yPixelMin, yLengthPixels);
-  }
+  padding = 10.0;
 
   overlap = false;
   for(i = 0.0; i < xLabels->stringArrayLength; i = i + 1.0){
     if(xLabelPriorities->numberArray[(int)(i)] == p){
 
       x = xGridPositions[(int)(i)];
-      px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+      px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
       text = xLabels->stringArray[(int)(i)]->string;
       textLength = xLabels->stringArray[(int)(i)]->stringLength;
 
-      r->x1 = px - GetTextWidth(text, textLength)/2.0;
-      r->y1 = oy + 5.0;
+      r->x1 = floor(px - GetTextWidth(text, textLength)/2.0);
+      if(textOnBottom){
+        r->y1 = floor(oy + 5.0);
+      }else{
+        r->y1 = floor(oy - 20.0);
+      }
       r->x2 = r->x1 + GetTextWidth(text, textLength);
       r->y2 = r->y1 + GetTextHeight(text, textLength);
 
+      /* Add padding */
+      r->x1 = r->x1 - padding;
+      r->y1 = r->y1 - padding;
+      r->x2 = r->x2 + padding;
+      r->y2 = r->y2 + padding;
+
+      currentOverlaps = false;
+
       for(j = 0.0; j < nextRectangle->numberValue; j = j + 1.0){
-        overlap = overlap || RectanglesOverlap(r, occupied[(int)(j)]);
+        currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[(int)(j)]);
       }
+
+      if( !currentOverlaps  && p == 1.0){
+        DrawText(canvas, r->x1 + padding, r->y1 + padding, text, textLength, gridLabelColor);
+
+        CopyRectangleValues(occupied[(int)(nextRectangle->numberValue)], r);
+        nextRectangle->numberValue = nextRectangle->numberValue + 1.0;
+      }
+
+      overlap = overlap || currentOverlaps;
     }
   }
-  if( !overlap ){
+  if( !overlap  && p != 1.0){
     for(i = 0.0; i < xGridPositionsLength; i = i + 1.0){
       x = xGridPositions[(int)(i)];
-      px = MapXCoordinates(x, xMin, xLength, xPixelMin, xLengthPixels);
+      px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
 
       if(xLabelPriorities->numberArray[(int)(i)] == p){
         text = xLabels->stringArray[(int)(i)]->string;
         textLength = xLabels->stringArray[(int)(i)]->stringLength;
 
-        r->x1 = px - GetTextWidth(text, textLength)/2.0;
-        r->y1 = oy + 5.0;
+        r->x1 = floor(px - GetTextWidth(text, textLength)/2.0);
+        if(textOnBottom){
+          r->y1 = floor(oy + 5.0);
+        }else{
+          r->y1 = floor(oy - 20.0);
+        }
         r->x2 = r->x1 + GetTextWidth(text, textLength);
         r->y2 = r->y1 + GetTextHeight(text, textLength);
 
@@ -1202,51 +994,72 @@ void DrawXLabelsForPriority(double p, double xMin, double yMin, double yMax, dou
     }
   }
 }
-void DrawYLabelsForPriority(double p, double yMin, double xMin, double xMax, double xLength, double xLengthPixels, double yLength, double xPixelMin, double yPixelMin, double yLengthPixels, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *yGridPositions, size_t yGridPositionsLength, StringArrayReference *yLabels, NumberArrayReference *yLabelPriorities, Rectangle **occupied, size_t occupiedLength){
-  _Bool overlap;
-  double i, j, y, py, ox;
+void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, double yPixelMin, double yPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, double *yGridPositions, size_t yGridPositionsLength, StringArrayReference *yLabels, NumberArrayReference *yLabelPriorities, Rectangle **occupied, size_t occupiedLength, _Bool textOnLeft){
+  _Bool overlap, currentOverlaps;
+  double i, j, y, py, padding;
   wchar_t *text;
   size_t textLength;
   Rectangle *r;
 
   r = (Rectangle *)malloc(sizeof(Rectangle));
-
-  if(xMin < 0.0 && xMax > 0.0){
-    ox = MapXCoordinates(0.0, xMin, xLength, xPixelMin, xLengthPixels);
-  }else{
-    ox = MapXCoordinates(xMin, xMin, xLength, xPixelMin, xLengthPixels);
-  }
+  padding = 10.0;
 
   overlap = false;
   for(i = 0.0; i < yLabels->stringArrayLength; i = i + 1.0){
     if(yLabelPriorities->numberArray[(int)(i)] == p){
 
       y = yGridPositions[(int)(i)];
-      py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+      py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
       text = yLabels->stringArray[(int)(i)]->string;
       textLength = yLabels->stringArray[(int)(i)]->stringLength;
 
-      r->x1 = ox - GetTextWidth(text, textLength) - 10.0;
-      r->y1 = py - 6.0;
+      if(textOnLeft){
+        r->x1 = floor(ox - GetTextWidth(text, textLength) - 10.0);
+      }else{
+        r->x1 = floor(ox + 10.0);
+      }
+      r->y1 = floor(py - 6.0);
       r->x2 = r->x1 + GetTextWidth(text, textLength);
       r->y2 = r->y1 + GetTextHeight(text, textLength);
 
+      /* Add padding */
+      r->x1 = r->x1 - padding;
+      r->y1 = r->y1 - padding;
+      r->x2 = r->x2 + padding;
+      r->y2 = r->y2 + padding;
+
+      currentOverlaps = false;
+
       for(j = 0.0; j < nextRectangle->numberValue; j = j + 1.0){
-        overlap = overlap || RectanglesOverlap(r, occupied[(int)(j)]);
+        currentOverlaps = currentOverlaps || RectanglesOverlap(r, occupied[(int)(j)]);
       }
+
+      /* Draw labels with priority 1 if they do not overlap anything else. */
+      if( !currentOverlaps  && p == 1.0){
+        DrawText(canvas, r->x1 + padding, r->y1 + padding, text, textLength, gridLabelColor);
+
+        CopyRectangleValues(occupied[(int)(nextRectangle->numberValue)], r);
+        nextRectangle->numberValue = nextRectangle->numberValue + 1.0;
+      }
+
+      overlap = overlap || currentOverlaps;
     }
   }
-  if( !overlap ){
+  if( !overlap  && p != 1.0){
     for(i = 0.0; i < yGridPositionsLength; i = i + 1.0){
       y = yGridPositions[(int)(i)];
-      py = MapYCoordinates(y, yMin, yLength, yPixelMin, yLengthPixels);
+      py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 
       if(yLabelPriorities->numberArray[(int)(i)] == p){
         text = yLabels->stringArray[(int)(i)]->string;
         textLength = yLabels->stringArray[(int)(i)]->stringLength;
 
-        r->x1 = ox - GetTextWidth(text, textLength) - 10.0;
-        r->y1 = py - 6.0;
+        if(textOnLeft){
+          r->x1 = floor(ox - GetTextWidth(text, textLength) - 10.0);
+        }else{
+          r->x1 = floor(ox + 10.0);
+        }
+        r->y1 = floor(py - 6.0);
         r->x2 = r->x1 + GetTextWidth(text, textLength);
         r->y2 = r->y1 + GetTextHeight(text, textLength);
 
@@ -1257,19 +1070,6 @@ void DrawYLabelsForPriority(double p, double yMin, double xMin, double xMax, dou
       }
     }
   }
-}
-void DrawTextUpwards(wchar_t *text, size_t textLength, double x, double y, RGBABitmapImage *canvas){
-  RGBABitmapImage *buffer;
-  RGBABitmapImage *rotated;
-  buffer = CreateImage(GetTextWidth(text, textLength), GetTextHeight(text, textLength), GetTransparent());
-  DrawText(buffer, 0.0, 0.0, text, textLength, GetBlack());
-  rotated = RotateAntiClockwise90Degrees(buffer);
-  DrawImageOnImage(canvas, rotated, x, y);
-  DeleteImage(buffer);
-  DeleteImage(rotated);
-}
-double RoundToDigits(double element, double digitsAfterPoint){
-  return Round(element*pow(10.0, digitsAfterPoint))/pow(10.0, digitsAfterPoint);
 }
 double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double cMax, StringArrayReference *labels, NumberArrayReference *priorities){
   double *positions;
@@ -1354,7 +1154,7 @@ double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double 
 
     /* 0 has lowest priority. */
     if(EpsilonCompare(num, 0.0, pow(10.0, p - 5.0))){
-      priority = 10.0;
+      priority = 3.0;
     }
 
     priorities->numberArray[(int)(i)] = priority;
@@ -1374,6 +1174,38 @@ double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double 
   *returnArrayLength = positionsLength;
   return positions;
 }
+double MapYCoordinate(double y, double yMin, double yMax, double yPixelMin, double yPixelMax){
+  double yLength, yPixelLength;
+
+  yLength = yMax - yMin;
+  yPixelLength = yPixelMax - yPixelMin;
+
+  y = y - yMin;
+  y = y*yPixelLength/yLength;
+  y = yPixelLength - y;
+  y = y + yPixelMin;
+  return y;
+}
+double MapXCoordinate(double x, double xMin, double xMax, double xPixelMin, double xPixelMax){
+  double xLength, xPixelLength;
+
+  xLength = xMax - xMin;
+  xPixelLength = xPixelMax - xPixelMin;
+
+  x = x - xMin;
+  x = x*xPixelLength/xLength;
+  x = x + xPixelMin;
+  return x;
+}
+double MapXCoordinateAutoSettings(double x, RGBABitmapImage *image, double *xs, size_t xsLength){
+  return MapXCoordinate(x, GetMinimum(xs, xsLength), GetMaximum(xs, xsLength) - GetMinimum(xs, xsLength), GetDefaultPaddingPercentage()*ImageWidth(image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth(image));
+}
+double MapYCoordinateAutoSettings(double y, RGBABitmapImage *image, double *ys, size_t ysLength){
+  return MapYCoordinate(y, GetMinimum(ys, ysLength), GetMaximum(ys, ysLength), GetDefaultPaddingPercentage()*ImageHeight(image), (1.0 - GetDefaultPaddingPercentage())*ImageHeight(image));
+}
+double GetDefaultPaddingPercentage(){
+  return 0.10;
+}
 void DrawText(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t textLength, RGBA *color){
   double i, charWidth, spacing;
 
@@ -1384,18 +1216,895 @@ void DrawText(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t
     DrawAsciiCharacter(canvas, x + i*(charWidth + spacing), y, text[(int)(i)], color);
   }
 }
-double MapYCoordinates(double y, double ymin, double yLength, double yPixelMin, double yPixelLength){
-  y = y - ymin;
-  y = y*yPixelLength/yLength;
-  y = yPixelLength - y;
-  y = y + yPixelMin;
-  return y;
+void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t textLength, RGBA *color){
+  RGBABitmapImage *buffer, *rotated;
+
+  buffer = CreateImage(GetTextWidth(text, textLength), GetTextHeight(text, textLength), GetTransparent());
+  DrawText(buffer, 0.0, 0.0, text, textLength, color);
+  rotated = RotateAntiClockwise90Degrees(buffer);
+  DrawImageOnImage(canvas, rotated, x, y);
+  DeleteImage(buffer);
+  DeleteImage(rotated);
 }
-double MapXCoordinates(double x, double xmin, double xLength, double xPixelMin, double xPixelLength){
-  x = x - xmin;
-  x = x*xPixelLength/xLength;
-  x = x + xPixelMin;
-  return x;
+ScatterPlotSettings *GetDefaultScatterPlotSettings(){
+  ScatterPlotSettings *settings;
+
+  settings = (ScatterPlotSettings *)malloc(sizeof(ScatterPlotSettings));
+
+  settings->autoBoundaries = true;
+  settings->xMax = 0.0;
+  settings->xMin = 0.0;
+  settings->yMax = 0.0;
+  settings->yMin = 0.0;
+  settings->autoPadding = true;
+  settings->xPadding = 0.0;
+  settings->yPadding = 0.0;
+  settings->title = L"";
+  settings->titleLength = wcslen(settings->title);
+  settings->yLabel = L"";
+  settings->yLabelLength = wcslen(settings->yLabel);
+  settings->xLabel = L"";
+  settings->xLabelLength = wcslen(settings->xLabel);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 0.0);
+  settings->scatterPlotSeriesLength = 0.0;
+  settings->showGrid = true;
+  settings->gridColor = GetGray(0.1);
+  settings->xAxisAuto = true;
+  settings->xAxisTop = false;
+  settings->xAxisBottom = false;
+  settings->yAxisAuto = true;
+  settings->yAxisLeft = false;
+  settings->yAxisRight = false;
+
+  return settings;
+}
+ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings(){
+  ScatterPlotSeries *series;
+
+  series = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+
+  series->linearInterpolation = true;
+  series->pointType = L"pixels";
+  series->pointTypeLength = wcslen(series->pointType);
+  series->lineType = L"solid";
+  series->lineTypeLength = wcslen(series->lineType);
+  series->lineThickness = 1.0;
+  series->xs = (double*)malloc(sizeof(double) * (0.0));
+  series->xsLength = 0.0;
+  series->ys = (double*)malloc(sizeof(double) * (0.0));
+  series->ysLength = 0.0;
+  series->color = GetBlack();
+
+  return series;
+}
+void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, double *xs, size_t xsLength, double *ys, size_t ysLength){
+  ScatterPlotSettings *settings;
+
+  settings = GetDefaultScatterPlotSettings();
+
+  settings->width = width;
+  settings->height = height;
+  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 1.0);
+  settings->scatterPlotSeriesLength = 1.0;
+  settings->scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
+  free(settings->scatterPlotSeries[0]->xs);
+  settings->scatterPlotSeries[0]->xs = xs;
+  settings->scatterPlotSeries[0]->xsLength = xsLength;
+  free(settings->scatterPlotSeries[0]->ys);
+  settings->scatterPlotSeries[0]->ys = ys;
+  settings->scatterPlotSeries[0]->ysLength = ysLength;
+
+  DrawScatterPlotFromSettings(canvasReference, settings);
+}
+_Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings){
+  double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot;
+  double xPadding, yPadding, originXPixels, originYPixels;
+  double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
+  NumberReference *nextRectangle, *x1Ref, *y1Ref, *x2Ref, *y2Ref, *patternOffset;
+  _Bool prevSet, success;
+  RGBA *gridLabelColor;
+  RGBABitmapImage *canvas;
+  double *xs, *ys;
+  size_t xsLength, ysLength;
+  _Bool linearInterpolation;
+  ScatterPlotSeries *sp;
+  double *xGridPositions, *yGridPositions;
+  size_t xGridPositionsLength, yGridPositionsLength;
+  StringArrayReference *xLabels, *yLabels;
+  NumberArrayReference *xLabelPriorities, *yLabelPriorities;
+  Rectangle **occupied;
+  size_t occupiedLength;
+  _Bool *linePattern;
+  size_t linePatternLength;
+  _Bool originXInside, originYInside, textOnLeft, textOnBottom;
+  double originTextX, originTextY, originTextXPixels, originTextYPixels, side;
+
+  canvas = CreateImage(settings->width, settings->height, GetWhite());
+  patternOffset = CreateNumberReference(0.0);
+
+  success = ScatterPlotFromSettingsValid(settings);
+
+  if(success){
+
+    if(settings->scatterPlotSeriesLength >= 1.0){
+      xMin = GetMinimum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
+      xMax = GetMaximum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
+      yMin = GetMinimum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
+      yMax = GetMaximum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
+    }else{
+      xMin =  -10.0;
+      xMax = 10.0;
+      yMin =  -10.0;
+      yMax = 10.0;
+    }
+
+    if( !settings->autoBoundaries ){
+      xMin = settings->xMin;
+      xMax = settings->xMax;
+      yMin = settings->yMin;
+      yMax = settings->yMax;
+    }else{
+      for(plot = 1.0; plot < settings->scatterPlotSeriesLength; plot = plot + 1.0){
+        sp = settings->scatterPlotSeries[(int)(plot)];
+
+        xMin = fmin(xMin, GetMinimum(sp->xs, sp->xsLength));
+        xMax = fmax(xMax, GetMaximum(sp->xs, sp->xsLength));
+        yMin = fmin(yMin, GetMinimum(sp->ys, sp->ysLength));
+        yMax = fmax(yMax, GetMaximum(sp->ys, sp->ysLength));
+      }
+    }
+
+    xLength = xMax - xMin;
+    yLength = yMax - yMin;
+
+    if(settings->autoPadding){
+      xPadding = floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
+      yPadding = floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+    }else{
+      xPadding = settings->xPadding;
+      yPadding = settings->yPadding;
+    }
+
+    /* Draw title */
+    DrawText(canvas, floor(ImageWidth(canvas)/2.0 - GetTextWidth(settings->title, settings->titleLength)/2.0), floor(yPadding/3.0), settings->title, settings->titleLength, GetBlack());
+
+    /* Draw grid */
+    xPixelMin = xPadding;
+    yPixelMin = yPadding;
+    xPixelMax = ImageWidth(canvas) - xPadding;
+    yPixelMax = ImageHeight(canvas) - yPadding;
+    xLengthPixels = xPixelMax - xPixelMin;
+    yLengthPixels = yPixelMax - yPixelMin;
+    DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings->gridColor);
+
+    gridLabelColor = GetGray(0.5);
+
+    xLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
+    xLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+    yLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
+    yLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+    xGridPositions = ComputeGridLinePositions(&xGridPositionsLength, xMin, xMax, xLabels, xLabelPriorities);
+    yGridPositions = ComputeGridLinePositions(&yGridPositionsLength, yMin, yMax, yLabels, yLabelPriorities);
+
+    if(settings->showGrid){
+      /* X-grid */
+      for(i = 0.0; i < xGridPositionsLength; i = i + 1.0){
+        x = xGridPositions[(int)(i)];
+        px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+        DrawLine1px(canvas, px, yPixelMin, px, yPixelMax, settings->gridColor);
+      }
+
+      /* Y-grid */
+      for(i = 0.0; i < yGridPositionsLength; i = i + 1.0){
+        y = yGridPositions[(int)(i)];
+        py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+        DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings->gridColor);
+      }
+    }
+
+    /* Compute origin information. */
+    originYInside = yMin < 0.0 && yMax > 0.0;
+    originY = 0.0;
+    if(settings->xAxisAuto){
+      if(originYInside){
+        originY = 0.0;
+      }else{
+        originY = yMin;
+      }
+    }else{
+if(settings->xAxisTop){
+        originY = yMax;
+      }
+      if(settings->xAxisBottom){
+        originY = yMin;
+      }
+    }
+    originYPixels = MapYCoordinate(originY, yMin, yMax, yPixelMin, yPixelMax);
+
+    originXInside = xMin < 0.0 && xMax > 0.0;
+    originX = 0.0;
+    if(settings->yAxisAuto){
+      if(originXInside){
+        originX = 0.0;
+      }else{
+        originX = xMin;
+      }
+    }else{
+if(settings->yAxisLeft){
+        originX = xMin;
+      }
+      if(settings->yAxisRight){
+        originX = xMax;
+      }
+    }
+    originXPixels = MapXCoordinate(originX, xMin, xMax, xPixelMin, xPixelMax);
+
+    if(originYInside){
+      originTextY = 0.0;
+    }else{
+      originTextY = yMin + yLength/2.0;
+    }
+    originTextYPixels = MapYCoordinate(originTextY, yMin, yMax, yPixelMin, yPixelMax);
+
+    if(originXInside){
+      originTextX = 0.0;
+    }else{
+      originTextX = xMin + xLength/2.0;
+    }
+    originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax);
+
+    /* Labels */
+    occupied = (Rectangle**)malloc(sizeof(Rectangle) * xLabels->stringArrayLength + yLabels->stringArrayLength);
+    occupiedLength = xLabels->stringArrayLength + yLabels->stringArrayLength;
+    for(i = 0.0; i < occupiedLength; i = i + 1.0){
+      occupied[(int)(i)] = CreateRectangle(0.0, 0.0, 0.0, 0.0);
+    }
+    nextRectangle = CreateNumberReference(0.0);
+
+    /* x labels */
+    for(i = 1.0; i <= 5.0; i = i + 1.0){
+      textOnBottom = true;
+      if( !settings->xAxisAuto  && settings->xAxisTop){
+        textOnBottom = false;
+      }
+      DrawXLabelsForPriority(i, xMin, originYPixels, xMax, xPixelMin, xPixelMax, nextRectangle, gridLabelColor, canvas, xGridPositions, xGridPositionsLength, xLabels, xLabelPriorities, occupied, occupiedLength, textOnBottom);
+    }
+
+    /* y labels */
+    for(i = 1.0; i <= 5.0; i = i + 1.0){
+      textOnLeft = true;
+      if( !settings->yAxisAuto  && settings->yAxisRight){
+        textOnLeft = false;
+      }
+      DrawYLabelsForPriority(i, yMin, originXPixels, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yGridPositionsLength, yLabels, yLabelPriorities, occupied, occupiedLength, textOnLeft);
+    }
+
+    /* Draw origin line axis titles. */
+    axisLabelPadding = 20.0;
+
+    /* x origin line */
+    if(originYInside){
+      DrawLine1px(canvas, Round(xPixelMin), Round(originYPixels), Round(xPixelMax), Round(originYPixels), GetBlack());
+    }
+
+    /* y origin line */
+    if(originXInside){
+      DrawLine1px(canvas, Round(originXPixels), Round(yPixelMin), Round(originXPixels), Round(yPixelMax), GetBlack());
+    }
+
+    /* Draw origin axis titles. */
+    DrawTextUpwards(canvas, 10.0, floor(originTextYPixels - GetTextWidth(settings->xLabel, settings->xLabelLength)/2.0), settings->xLabel, settings->xLabelLength, GetBlack());
+    DrawText(canvas, floor(originTextXPixels - GetTextWidth(settings->yLabel, settings->yLabelLength)/2.0), yPixelMax + axisLabelPadding, settings->yLabel, settings->yLabelLength, GetBlack());
+
+    /* X-grid-markers */
+    for(i = 0.0; i < xGridPositionsLength; i = i + 1.0){
+      x = xGridPositions[(int)(i)];
+      px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+      p = xLabelPriorities->numberArray[(int)(i)];
+      l = 1.0;
+      if(p == 1.0){
+        l = 8.0;
+      }else if(p == 2.0){
+        l = 3.0;
+      }
+      side =  -1.0;
+      if( !settings->xAxisAuto  && settings->xAxisTop){
+        side = 1.0;
+      }
+      DrawLine1px(canvas, px, originYPixels, px, originYPixels + side*l, GetBlack());
+    }
+
+    /* Y-grid-markers */
+    for(i = 0.0; i < yGridPositionsLength; i = i + 1.0){
+      y = yGridPositions[(int)(i)];
+      py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+      p = yLabelPriorities->numberArray[(int)(i)];
+      l = 1.0;
+      if(p == 1.0){
+        l = 8.0;
+      }else if(p == 2.0){
+        l = 3.0;
+      }
+      side = 1.0;
+      if( !settings->yAxisAuto  && settings->yAxisRight){
+        side =  -1.0;
+      }
+      DrawLine1px(canvas, originXPixels, py, originXPixels + side*l, py, GetBlack());
+    }
+
+    /* Draw points */
+    for(plot = 0.0; plot < settings->scatterPlotSeriesLength; plot = plot + 1.0){
+      sp = settings->scatterPlotSeries[(int)(plot)];
+
+      xs = sp->xs;
+      xsLength = sp->xsLength;
+      ys = sp->ys;
+      ysLength = sp->ysLength;
+      linearInterpolation = sp->linearInterpolation;
+
+      x1Ref = (NumberReference *)malloc(sizeof(NumberReference));
+      y1Ref = (NumberReference *)malloc(sizeof(NumberReference));
+      x2Ref = (NumberReference *)malloc(sizeof(NumberReference));
+      y2Ref = (NumberReference *)malloc(sizeof(NumberReference));
+      if(linearInterpolation){
+        prevSet = false;
+        xPrev = 0.0;
+        yPrev = 0.0;
+        for(i = 0.0; i < xsLength; i = i + 1.0){
+          x = xs[(int)(i)];
+          y = ys[(int)(i)];
+
+          if(prevSet){
+            x1Ref->numberValue = xPrev;
+            y1Ref->numberValue = yPrev;
+            x2Ref->numberValue = x;
+            y2Ref->numberValue = y;
+
+            success = CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax);
+
+            if(success){
+              pxPrev = floor(MapXCoordinate(x1Ref->numberValue, xMin, xMax, xPixelMin, xPixelMax));
+              pyPrev = floor(MapYCoordinate(y1Ref->numberValue, yMin, yMax, yPixelMin, yPixelMax));
+              px = floor(MapXCoordinate(x2Ref->numberValue, xMin, xMax, xPixelMin, xPixelMax));
+              py = floor(MapYCoordinate(y2Ref->numberValue, yMin, yMax, yPixelMin, yPixelMax));
+
+              if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"solid")) && sp->lineThickness == 1.0){
+                DrawLine1px(canvas, pxPrev, pyPrev, px, py, sp->color);
+              }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"solid"))){
+                DrawLine(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, sp->color);
+              }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"dashed"))){
+                linePattern = GetLinePattern1(&linePatternLength);
+                DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
+              }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"dotted"))){
+                linePattern = GetLinePattern2(&linePatternLength);
+                DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
+              }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"dotdash"))){
+                linePattern = GetLinePattern3(&linePatternLength);
+                DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
+              }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"longdash"))){
+                linePattern = GetLinePattern4(&linePatternLength);
+                DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
+              }else if(aStringsEqual(sp->lineType, sp->lineTypeLength, strparam(L"twodash"))){
+                linePattern = GetLinePattern5(&linePatternLength);
+                DrawLineBresenhamsAlgorithmThickPatterned(canvas, pxPrev, pyPrev, px, py, sp->lineThickness, linePattern, linePatternLength, patternOffset, sp->color);
+              }
+            }
+          }
+
+          prevSet = true;
+          xPrev = x;
+          yPrev = y;
+        }
+      }else{
+        for(i = 0.0; i < xsLength; i = i + 1.0){
+          x = xs[(int)(i)];
+          y = ys[(int)(i)];
+
+          if(x > xMin && x < xMax && y > yMin && y < yMax){
+
+            x = floor(MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax));
+            y = floor(MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax));
+
+            if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"crosses"))){
+              DrawPixel(canvas, x, y, sp->color);
+              DrawPixel(canvas, x + 1.0, y, sp->color);
+              DrawPixel(canvas, x + 2.0, y, sp->color);
+              DrawPixel(canvas, x - 1.0, y, sp->color);
+              DrawPixel(canvas, x - 2.0, y, sp->color);
+              DrawPixel(canvas, x, y + 1.0, sp->color);
+              DrawPixel(canvas, x, y + 2.0, sp->color);
+              DrawPixel(canvas, x, y - 1.0, sp->color);
+              DrawPixel(canvas, x, y - 2.0, sp->color);
+            }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"circles"))){
+              DrawCircle(canvas, x, y, 3.0, sp->color);
+            }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"dots"))){
+              DrawFilledCircle(canvas, x, y, 3.0, sp->color);
+            }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"triangles"))){
+              DrawTriangle(canvas, x, y, 3.0, sp->color);
+            }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"filled triangles"))){
+              DrawFilledTriangle(canvas, x, y, 3.0, sp->color);
+            }else if(aStringsEqual(sp->pointType, sp->pointTypeLength, strparam(L"pixels"))){
+              DrawPixel(canvas, x, y, sp->color);
+            }
+          }
+        }
+      }
+    }
+
+    DeleteImage(canvasReference->image);
+    canvasReference->image = canvas;
+  }
+
+  return success;
+}
+_Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings){
+  _Bool success, found;
+  ScatterPlotSeries *series;
+  double i;
+
+  success = true;
+
+  /* Check axis placement. */
+  if( !settings->xAxisAuto ){
+    if(settings->xAxisTop && settings->xAxisBottom){
+      success = false;
+    }
+    if( !settings->xAxisTop  &&  !settings->xAxisBottom ){
+      success = false;
+    }
+  }
+
+  if( !settings->yAxisAuto ){
+    if(settings->yAxisLeft && settings->yAxisRight){
+      success = false;
+    }
+    if( !settings->yAxisLeft  &&  !settings->yAxisRight ){
+      success = false;
+    }
+  }
+
+  /* Check series lengths. */
+  for(i = 0.0; i < settings->scatterPlotSeriesLength; i = i + 1.0){
+    series = settings->scatterPlotSeries[(int)(i)];
+    if(series->xsLength != series->ysLength){
+      success = false;
+    }
+    if(series->xsLength == 0.0){
+      success = false;
+    }
+    if(series->linearInterpolation && series->xsLength == 1.0){
+      success = false;
+    }
+  }
+
+  /* Check bounds. */
+  if( !settings->autoBoundaries ){
+    if(settings->xMin >= settings->xMax){
+      success = false;
+    }
+    if(settings->yMin >= settings->yMax){
+      success = false;
+    }
+  }
+
+  /* Check padding. */
+  if( !settings->autoPadding ){
+    if(2.0*settings->xPadding >= settings->width){
+      success = false;
+    }
+    if(2.0*settings->yPadding >= settings->height){
+      success = false;
+    }
+  }
+
+  /* Check width and height. */
+  if(settings->width < 0.0){
+    success = false;
+  }
+  if(settings->height < 0.0){
+    success = false;
+  }
+
+  /* Check point types. */
+  for(i = 0.0; i < settings->scatterPlotSeriesLength; i = i + 1.0){
+    series = settings->scatterPlotSeries[(int)(i)];
+
+    if(series->lineThickness < 0.0){
+      success = false;
+    }
+
+    if( !series->linearInterpolation ){
+      /* Point type. */
+      found = false;
+      if(aStringsEqual(series->pointType, series->pointTypeLength, strparam(L"crosses"))){
+        found = true;
+      }else if(aStringsEqual(series->pointType, series->pointTypeLength, strparam(L"circles"))){
+        found = true;
+      }else if(aStringsEqual(series->pointType, series->pointTypeLength, strparam(L"dots"))){
+        found = true;
+      }else if(aStringsEqual(series->pointType, series->pointTypeLength, strparam(L"triangles"))){
+        found = true;
+      }else if(aStringsEqual(series->pointType, series->pointTypeLength, strparam(L"filled triangles"))){
+        found = true;
+      }else if(aStringsEqual(series->pointType, series->pointTypeLength, strparam(L"pixels"))){
+        found = true;
+      }
+      if( !found ){
+        success = false;
+      }
+    }else{
+      /* Line type. */
+      found = false;
+      if(aStringsEqual(series->lineType, series->lineTypeLength, strparam(L"solid"))){
+        found = true;
+      }else if(aStringsEqual(series->lineType, series->lineTypeLength, strparam(L"dashed"))){
+        found = true;
+      }else if(aStringsEqual(series->lineType, series->lineTypeLength, strparam(L"dotted"))){
+        found = true;
+      }else if(aStringsEqual(series->lineType, series->lineTypeLength, strparam(L"dotdash"))){
+        found = true;
+      }else if(aStringsEqual(series->lineType, series->lineTypeLength, strparam(L"longdash"))){
+        found = true;
+      }else if(aStringsEqual(series->lineType, series->lineTypeLength, strparam(L"twodash"))){
+        found = true;
+      }
+
+      if( !found ){
+        success = false;
+      }
+    }
+  }
+
+  return success;
+}
+BarPlotSettings *GetDefaultBarPlotSettings(){
+  BarPlotSettings *settings;
+
+  settings = (BarPlotSettings *)malloc(sizeof(BarPlotSettings));
+
+  settings->width = 800.0;
+  settings->height = 600.0;
+  settings->autoBoundaries = true;
+  settings->yMax = 0.0;
+  settings->yMin = 0.0;
+  settings->autoPadding = true;
+  settings->xPadding = 0.0;
+  settings->yPadding = 0.0;
+  settings->title = L"";
+  settings->titleLength = wcslen(settings->title);
+  settings->yLabel = L"";
+  settings->yLabelLength = wcslen(settings->yLabel);
+  settings->barPlotSeries = (BarPlotSeries**)malloc(sizeof(BarPlotSeries) * 0.0);
+  settings->barPlotSeriesLength = 0.0;
+  settings->showGrid = true;
+  settings->gridColor = GetGray(0.1);
+  settings->autoColor = true;
+  settings->grayscaleAutoColor = false;
+  settings->autoSpacing = true;
+  settings->groupSeparation = 0.0;
+  settings->barSeparation = 0.0;
+  settings->autoLabels = true;
+  settings->xLabels = (StringReference**)malloc(sizeof(StringReference) * 0.0);
+  settings->xLabelsLength = 0.0;
+  /*settings.autoLabels = false;
+        settings.xLabels = new StringReference [5];
+        settings.xLabels[0] = CreateStringReference("may 20".toCharArray());
+        settings.xLabels[1] = CreateStringReference("jun 20".toCharArray());
+        settings.xLabels[2] = CreateStringReference("jul 20".toCharArray());
+        settings.xLabels[3] = CreateStringReference("aug 20".toCharArray());
+        settings.xLabels[4] = CreateStringReference("sep 20".toCharArray()); */
+  settings->barBorder = false;
+
+  return settings;
+}
+BarPlotSeries *GetDefaultBarPlotSeriesSettings(){
+  BarPlotSeries *series;
+
+  series = (BarPlotSeries *)malloc(sizeof(BarPlotSeries));
+
+  series->ys = (double*)malloc(sizeof(double) * (0.0));
+  series->ysLength = 0.0;
+  series->color = GetBlack();
+
+  return series;
+}
+RGBABitmapImage *DrawBarPlot(double width, double height, double *ys, size_t ysLength){
+  BarPlotSettings *settings;
+  RGBABitmapImageReference *canvasReference;
+
+  settings = GetDefaultBarPlotSettings();
+
+  settings->barPlotSeries = (BarPlotSeries**)malloc(sizeof(BarPlotSeries) * 1.0);
+  settings->barPlotSeriesLength = 1.0;
+  settings->barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
+  free(settings->barPlotSeries[0]->ys);
+  settings->barPlotSeries[0]->ys = ys;
+  settings->barPlotSeries[0]->ysLength = ysLength;
+  canvasReference = (RGBABitmapImageReference *)malloc(sizeof(RGBABitmapImageReference));
+  settings->width = width;
+  settings->height = height;
+
+  DrawBarPlotFromSettings(canvasReference, settings);
+
+  return canvasReference->image;
+}
+_Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings){
+  double xPadding, yPadding;
+  double xPixelMin, yPixelMin, yPixelMax, xPixelMax;
+  double xLengthPixels, yLengthPixels;
+  double s, n, y, x, w, h, yMin, yMax, b, i, py, yValue;
+  RGBA **colors;
+  size_t colorsLength;
+  double *ys, *yGridPositions;
+  size_t ysLength, yGridPositionsLength;
+  double yTop, yBottom, ss, bs, yLength;
+  double groupSeparation, barSeparation, barWidth, textwidth;
+  StringArrayReference *yLabels;
+  NumberArrayReference *yLabelPriorities;
+  Rectangle **occupied;
+  size_t occupiedLength;
+  NumberReference *nextRectangle;
+  RGBA *gridLabelColor, *barColor;
+  wchar_t *label;
+  size_t labelLength;
+  _Bool success;
+  RGBABitmapImage *canvas;
+
+  success = BarPlotSettingsIsValid(settings);
+
+  if(success){
+
+    canvas = CreateImage(settings->width, settings->height, GetWhite());
+
+    ss = settings->barPlotSeriesLength;
+    gridLabelColor = GetGray(0.5);
+
+    /* padding */
+    if(settings->autoPadding){
+      xPadding = floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
+      yPadding = floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+    }else{
+      xPadding = settings->xPadding;
+      yPadding = settings->yPadding;
+    }
+
+    /* Draw title */
+    DrawText(canvas, floor(ImageWidth(canvas)/2.0 - GetTextWidth(settings->title, settings->titleLength)/2.0), floor(yPadding/3.0), settings->title, settings->titleLength, GetBlack());
+    DrawTextUpwards(canvas, 10.0, floor(ImageHeight(canvas)/2.0 - GetTextWidth(settings->yLabel, settings->yLabelLength)/2.0), settings->yLabel, settings->yLabelLength, GetBlack());
+
+    /* min and max */
+    if(settings->autoBoundaries){
+      if(ss >= 1.0){
+        yMax = GetMaximum(settings->barPlotSeries[0]->ys, settings->barPlotSeries[0]->ysLength);
+        yMin = fmin(0.0, GetMinimum(settings->barPlotSeries[0]->ys, settings->barPlotSeries[0]->ysLength));
+
+        for(s = 0.0; s < ss; s = s + 1.0){
+          yMax = fmax(yMax, GetMaximum(settings->barPlotSeries[(int)(s)]->ys, settings->barPlotSeries[(int)(s)]->ysLength));
+          yMin = fmin(yMin, GetMinimum(settings->barPlotSeries[(int)(s)]->ys, settings->barPlotSeries[(int)(s)]->ysLength));
+        }
+      }else{
+        yMax = 10.0;
+        yMin = 0.0;
+      }
+    }else{
+      yMin = settings->yMin;
+      yMax = settings->yMax;
+    }
+    yLength = yMax - yMin;
+
+    /* boundaries */
+    xPixelMin = xPadding;
+    yPixelMin = yPadding;
+    xPixelMax = ImageWidth(canvas) - xPadding;
+    yPixelMax = ImageHeight(canvas) - yPadding;
+    xLengthPixels = xPixelMax - xPixelMin;
+    yLengthPixels = yPixelMax - yPixelMin;
+
+    /* Draw boundary. */
+    DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings->gridColor);
+
+    /* Draw grid lines. */
+    yLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
+    yLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+    yGridPositions = ComputeGridLinePositions(&yGridPositionsLength, yMin, yMax, yLabels, yLabelPriorities);
+
+    if(settings->showGrid){
+      /* Y-grid */
+      for(i = 0.0; i < yGridPositionsLength; i = i + 1.0){
+        y = yGridPositions[(int)(i)];
+        py = MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
+        DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings->gridColor);
+      }
+    }
+
+    /* Draw origin. */
+    if(yMin < 0.0 && yMax > 0.0){
+      py = MapYCoordinate(0.0, yMin, yMax, yPixelMin, yPixelMax);
+      DrawLine1px(canvas, xPixelMin, py, xPixelMax, py, settings->gridColor);
+    }
+
+    /* Labels */
+    occupied = (Rectangle**)malloc(sizeof(Rectangle) * yLabels->stringArrayLength);
+    occupiedLength = yLabels->stringArrayLength;
+    for(i = 0.0; i < occupiedLength; i = i + 1.0){
+      occupied[(int)(i)] = CreateRectangle(0.0, 0.0, 0.0, 0.0);
+    }
+    nextRectangle = CreateNumberReference(0.0);
+
+    for(i = 1.0; i <= 5.0; i = i + 1.0){
+      DrawYLabelsForPriority(i, yMin, xPixelMin, yMax, yPixelMin, yPixelMax, nextRectangle, gridLabelColor, canvas, yGridPositions, yGridPositionsLength, yLabels, yLabelPriorities, occupied, occupiedLength, true);
+    }
+
+    /* Draw bars. */
+    if(settings->autoColor){
+      if( !settings->grayscaleAutoColor ){
+        colors = Get8HighContrastColors(&colorsLength);
+      }else{
+        colors = (RGBA**)malloc(sizeof(RGBA) * ss);
+        colorsLength = ss;
+        if(ss > 1.0){
+          for(i = 0.0; i < ss; i = i + 1.0){
+            colors[(int)(i)] = GetGray(0.7 - (i/ss)*0.7);
+          }
+        }else{
+          colors[0] = GetGray(0.5);
+        }
+      }
+    }else{
+      colors = (RGBA**)malloc(sizeof(RGBA) * 0.0);
+      colorsLength = 0.0;
+    }
+
+    /* distances */
+    bs = settings->barPlotSeries[0]->ysLength;
+
+    if(settings->autoSpacing){
+      groupSeparation = ImageWidth(canvas)*0.05;
+      barSeparation = ImageWidth(canvas)*0.005;
+    }else{
+      groupSeparation = settings->groupSeparation;
+      barSeparation = settings->barSeparation;
+    }
+
+    barWidth = (xLengthPixels - groupSeparation*(bs - 1.0) - barSeparation*(bs*(ss - 1.0)))/(bs*ss);
+
+    /* Draw bars. */
+    b = 0.0;
+    for(n = 0.0; n < bs; n = n + 1.0){
+      for(s = 0.0; s < ss; s = s + 1.0){
+        ys = settings->barPlotSeries[(int)(s)]->ys;
+        ysLength = settings->barPlotSeries[(int)(s)]->ysLength;
+
+        yValue = ys[(int)(n)];
+
+        yBottom = MapYCoordinate(yValue, yMin, yMax, yPixelMin, yPixelMax);
+        yTop = MapYCoordinate(0.0, yMin, yMax, yPixelMin, yPixelMax);
+
+        x = xPixelMin + n*(groupSeparation + ss*barWidth) + s*(barWidth) + b*barSeparation;
+        w = barWidth;
+
+        if(yValue >= 0.0){
+          y = yBottom;
+          h = yTop - y;
+        }else{
+          y = yTop;
+          h = yBottom - yTop;
+        }
+
+        /* Cut at boundaries. */
+        if(y < yPixelMin && y + h > yPixelMax){
+          y = yPixelMin;
+          h = yPixelMax - yPixelMin;
+        }else if(y < yPixelMin){
+          y = yPixelMin;
+          if(yValue >= 0.0){
+            h = yTop - y;
+          }else{
+            h = yBottom - y;
+          }
+        }else if(y + h > yPixelMax){
+          h = yPixelMax - y;
+        }
+
+        /* Get color */
+        if(settings->autoColor){
+          barColor = colors[(int)(s)];
+        }else{
+          barColor = settings->barPlotSeries[(int)(s)]->color;
+        }
+
+        /* Draw */
+        if(settings->barBorder){
+          DrawFilledRectangleWithBorder(canvas, Round(x), Round(y), Round(w), Round(h), GetBlack(), barColor);
+        }else{
+          DrawFilledRectangle(canvas, Round(x), Round(y), Round(w), Round(h), barColor);
+        }
+
+        b = b + 1.0;
+      }
+      b = b - 1.0;
+    }
+
+    /* x-labels */
+    for(n = 0.0; n < bs; n = n + 1.0){
+      if(settings->autoLabels){
+        label = CreateStringDecimalFromNumber(&labelLength, n + 1.0);
+      }else{
+        label = settings->xLabels[(int)(n)]->string;
+        labelLength = settings->xLabels[(int)(n)]->stringLength;
+      }
+
+      textwidth = GetTextWidth(label, labelLength);
+
+      x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1.0)*barSeparation) + n*groupSeparation - textwidth/2.0;
+
+      DrawText(canvas, floor(x), ImageHeight(canvas) - yPadding + 20.0, label, labelLength, gridLabelColor);
+
+      b = b + 1.0;
+    }
+
+    canvasReference->image = canvas;
+  }
+
+  return success;
+}
+_Bool BarPlotSettingsIsValid(BarPlotSettings *settings){
+  _Bool success, lengthSet;
+  BarPlotSeries *series;
+  double i, width, height, length;
+
+  success = true;
+
+  /* Check series lengths. */
+  lengthSet = false;
+  length = 0.0;
+  for(i = 0.0; i < settings->barPlotSeriesLength; i = i + 1.0){
+    series = settings->barPlotSeries[(int)(i)];
+
+    if( !lengthSet ){
+      length = series->ysLength;
+      lengthSet = true;
+    }else if(length != series->ysLength){
+      success = false;
+    }
+  }
+
+  /* Check bounds. */
+  if( !settings->autoBoundaries ){
+    if(settings->yMin >= settings->yMax){
+      success = false;
+    }
+  }
+
+  /* Check padding. */
+  if( !settings->autoPadding ){
+    if(2.0*settings->xPadding >= settings->width){
+      success = false;
+    }
+    if(2.0*settings->yPadding >= settings->height){
+      success = false;
+    }
+  }
+
+  /* Check width and height. */
+  if(settings->width < 0.0){
+    success = false;
+  }
+  if(settings->height < 0.0){
+    success = false;
+  }
+
+  /* Check spacing */
+  if( !settings->autoSpacing ){
+    if(settings->groupSeparation < 0.0){
+      success = false;
+    }
+    if(settings->barSeparation < 0.0){
+      success = false;
+    }
+  }
+
+  return success;
 }
 double GetMinimum(double *data, size_t dataLength){
   double i, minimum;
@@ -1417,6 +2126,9 @@ double GetMaximum(double *data, size_t dataLength){
 
   return maximum;
 }
+double RoundToDigits(double element, double digitsAfterPoint){
+  return Round(element*pow(10.0, digitsAfterPoint))/pow(10.0, digitsAfterPoint);
+}
 double test(){
   ScatterPlotSettings *scatterPlotSettings;
   double z;
@@ -1425,8 +2137,13 @@ double test(){
   NumberReference *failures;
   StringArrayReference *labels;
   NumberArrayReference *labelPriorities;
+  RGBABitmapImageReference *imageReference;
+  double *xs, *ys;
+  size_t xsLength, ysLength;
 
   failures = CreateNumberReference(0.0);
+
+  imageReference = CreateRGBABitmapImageReference();
 
   scatterPlotSettings = GetDefaultScatterPlotSettings();
 
@@ -1468,6 +2185,24 @@ double test(){
   z = 2.0;
   gridlines = ComputeGridLinePositions(&gridlinesLength,  -z/2.0, z/2.0, labels, labelPriorities);
   AssertEquals(gridlinesLength, 21.0, failures);
+
+  xs = (double*)malloc(sizeof(double) * (5.0));
+  xsLength = 5.0;
+  xs[0] =  -2.0;
+  xs[1] =  -1.0;
+  xs[2] = 0.0;
+  xs[3] = 1.0;
+  xs[4] = 2.0;
+  ys = (double*)malloc(sizeof(double) * (5.0));
+  ysLength = 5.0;
+  ys[0] = 2.0;
+  ys[1] =  -1.0;
+  ys[2] =  -2.0;
+  ys[3] =  -1.0;
+  ys[4] = 2.0;
+  DrawScatterPlot(imageReference, 800.0, 600.0, xs, xsLength, ys, ysLength);
+
+  imageReference->image = DrawBarPlot(800.0, 600.0, ys, ysLength);
 
   return failures->numberValue;
 }
