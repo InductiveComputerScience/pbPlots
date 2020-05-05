@@ -1,5 +1,4 @@
-#include <stdlib.h>
-#include <stdio.h>
+#include "supportLib.h"
 
 unsigned char *DoubleArrayToByteArray(double *data, size_t length){
 	unsigned char *out;

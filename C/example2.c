@@ -1,9 +1,7 @@
-#include "pbPlots.c"
-#include "supportLib.c"
+#include "pbPlots.h"
+#include "supportLib.h"
 
 int main(){
-	size_t length;
-
 	double xs [] = {-2, -1, 0, 1, 2};
 	double ys [] = {2, -1, -2, -1, 2};
 
@@ -36,6 +34,7 @@ int main(){
 	RGBABitmapImageReference *canvasReference = CreateRGBABitmapImageReference();
 	DrawScatterPlotFromSettings(canvasReference, settings);
 
+	size_t length;
 	double *pngdata = ConvertToPNG(&length, canvasReference->image);
 	WriteToFile(pngdata, length, "example2.png");
 	DeleteImage(canvasReference->image);
