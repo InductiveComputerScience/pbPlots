@@ -17,8 +17,9 @@ int main(){
 
 	size_t length;
 	double *pngdata = ConvertToPNG(&length, imageRef->image);
-	WriteToFile(pngdata, length, "example3.png");
 	DeleteImage(imageRef->image);
+
+	WriteToFile(pngdata, length, "example3.png");
 
 	return 0;
 }

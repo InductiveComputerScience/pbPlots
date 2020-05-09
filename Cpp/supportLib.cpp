@@ -1,13 +1,10 @@
-#include <cstdio>
-#include <vector>
-
-using namespace std;
+#include "supportLib.hpp"
 
 unsigned char *DoubleArrayToByteArray(vector<double> *data){
 	unsigned char *out;
 	size_t i;
 
-	out = (unsigned char *)malloc(sizeof(unsigned char) * data->size());
+	out = new unsigned char[data->size()];
 
 	for(i = 0; i < data->size(); i++){
 		out[i] = data->at(i);
@@ -16,15 +13,16 @@ unsigned char *DoubleArrayToByteArray(vector<double> *data){
 	return out;
 }
 
-void WriteToFile(vector<double> *data, char *filename){
+void WriteToFile(vector<double> *data, string filename){
 	unsigned char *bytes;
 
 	bytes = DoubleArrayToByteArray(data);
 
-	FILE* file = fopen(filename, "wb");
-	fwrite(bytes, 1, data->size(), file);
+	ofstream file(filename.c_str(), ios::binary);
+	file.write(reinterpret_cast<char *>(bytes), data->size());
+	file.close();
 
-	free(bytes);
+	delete bytes;
 }
 
 vector<double> *ByteArrayToDoubleArray(vector<unsigned char> *data){
