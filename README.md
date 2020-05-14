@@ -71,7 +71,7 @@ Complete example available in the following languages:
 [PHP](PHP/example2.php) | 
 [C#](CS/Example2.cs) | 
 [Python](Python/example2.py) | 
-[Visual Basic](VisualBasic/Example2.vb) | 
+[Visual Basic](VisualBasic/example2.vb) |
 [Ruby](Ruby/example2.rb)
 
 ```
