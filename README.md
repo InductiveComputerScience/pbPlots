@@ -43,7 +43,7 @@ Complete example available in the following languages:
 [PHP](PHP/example1.php) | 
 [C#](CS/Example1.cs) | 
 [Python](Python/example1.py) | 
-[Visual Basic](VisualBasic/Example1.vb) | 
+[Visual Basic](VisualBasic/example1.vb) |
 [Ruby](Ruby/example1.rb)
 
 ```
