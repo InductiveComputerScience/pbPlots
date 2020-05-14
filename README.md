@@ -13,9 +13,9 @@ The library is developed using [progsbase](https://www.progsbase.com), a technol
 
 ## Download
 
- * [Java - Java 5+](Java/pbPlots/)
- * [C - C99+ (C89 also exists)](C/)
- * [C++ - C++98+](Cpp/)
+ * [Java - 5+](Java/pbPlots/)
+ * [C - 99+](C/) | [Video Tutorial](https://www.youtube.com/watch?v=I_xFjVfmRWE)
+ * [C++ - 98+](Cpp/) | [Video Tutorial](https://www.youtube.com/watch?v=RNKVHQzvaRM)
  * [JavaScript - 5+](JavaScript/)
  * [TypeScript](TypeScript/)
  * [PHP - 5+](PHP/)

@@ -1,0 +1,22 @@
+{
+  "name": "Plots",
+  "version": "0.1.7",
+  "organization namespace": "no.inductive.libraries",
+  "scientific namespace": "mathematics.dataanalysis.plots",
+  "imports": [
+    ["", "no.inductive.idea10.programs", "Graphics2D", "0.2.23"],
+    ["", "no.inductive.idea10.programs", "numbers", "0.1.20"],
+    ["", "no.inductive.idea10.programs", "math", "0.1.18"],
+    ["a", "no.inductive.idea10.programs", "arrays", "0.9.7"],
+    ["", "no.inductive.idea10.programs", "RGBABitmapImage", "1.0.1"],
+    ["", "no.inductive.idea10.programs", "references", "0.1.5"],
+    ["", "no.inductive.idea10.programs", "BasicPixelFont", "0.1.8"]
+  ],
+  "development imports": [
+    ["", "no.inductive.idea10.programs", "testing", "0.1.8"],
+    ["", "no.inductive.libraries", "PNG", "0.1.21"]
+  ],
+  "reprefix": [
+  ],
+  "ownerCustomerId": "Inductive AS"
+}
