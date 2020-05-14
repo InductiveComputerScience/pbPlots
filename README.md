@@ -1,7 +1,7 @@
 # pbPlots
 A plotting library available in many programming languages. Goals of this library are to 
 
-1) Have a single library for plotting that is stable accross programming languagues and over time.
+1) Have a single library for plotting that is stable accross programming languages and over time.
 2) Is easy to build in any programming language and to include in any project.
 3) Is easy to use.
 
