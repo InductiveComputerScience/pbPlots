@@ -1,4 +1,4 @@
-Download pbPlots.cpp, pbPlots.hpp, supportLib.cpp, supportLib.hpp from version [pbPlots 0.1.7.3](https://github.com/InductiveComputerScience/pbPlots/tree/v0.1.7.2).
+Download pbPlots.cpp, pbPlots.hpp, supportLib.cpp, supportLib.hpp from version [pbPlots 0.1.7.3](https://github.com/InductiveComputerScience/pbPlots/tree/v0.1.7.3).
 
 Right-click on the project name and press "Open folder in file explorer".
 
