@@ -29,8 +29,8 @@ class ScatterPlotSettings
 	attr_accessor :autoPadding
 	attr_accessor :xPadding
 	attr_accessor :yPadding
-	attr_accessor :yLabel
 	attr_accessor :xLabel
+	attr_accessor :yLabel
 	attr_accessor :title
 	attr_accessor :showGrid
 	attr_accessor :gridColor
@@ -629,12 +629,52 @@ end
 
 
 def MapXCoordinateAutoSettings(x, image, xs)
-	return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth(image))
+	return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth(image))
 end
 
 
 def MapYCoordinateAutoSettings(y, image, ys)
 	return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1.0 - GetDefaultPaddingPercentage())*ImageHeight(image))
+end
+
+
+def MapXCoordinateBasedOnSettings(x, settings)
+
+	boundaries = Rectangle.new
+	ComputeBoundariesBasedOnSettings(settings, boundaries)
+	xMin = boundaries.x1
+	xMax = boundaries.x2
+
+	if settings.autoPadding
+		xPadding = (GetDefaultPaddingPercentage()*settings.width).floor
+	else
+		xPadding = settings.xPadding
+	end
+
+	xPixelMin = xPadding
+	xPixelMax = settings.width - xPadding
+
+	return MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+end
+
+
+def MapYCoordinateBasedOnSettings(y, settings)
+
+	boundaries = Rectangle.new
+	ComputeBoundariesBasedOnSettings(settings, boundaries)
+	yMin = boundaries.y1
+	yMax = boundaries.y2
+
+	if settings.autoPadding
+		yPadding = (GetDefaultPaddingPercentage()*settings.height).floor
+	else
+		yPadding = settings.yPadding
+	end
+
+	yPixelMin = yPadding
+	yPixelMax = settings.height - yPadding
+
+	return MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 end
 
 
@@ -680,8 +720,8 @@ def GetDefaultScatterPlotSettings()
 	settings.xPadding = 0.0
 	settings.yPadding = 0.0
 	settings.title = "".split("")
-	settings.yLabel = "".split("")
 	settings.xLabel = "".split("")
+	settings.yLabel = "".split("")
 	settings.scatterPlotSeries = Array.new(0)
 	settings.showGrid = true
 	settings.gridColor = GetGray(0.1)
@@ -738,55 +778,32 @@ def DrawScatterPlotFromSettings(canvasReference, settings)
 
 	if success
 
-		if settings.scatterPlotSeries.length >= 1.0
-			xMin = GetMinimum(settings.scatterPlotSeries[0].xs)
-			xMax = GetMaximum(settings.scatterPlotSeries[0].xs)
-			yMin = GetMinimum(settings.scatterPlotSeries[0].ys)
-			yMax = GetMaximum(settings.scatterPlotSeries[0].ys)
-		else
-			xMin = -10.0
-			xMax = 10.0
-			yMin = -10.0
-			yMax = 10.0
-		end
-
-		if !settings.autoBoundaries
-			xMin = settings.xMin
-			xMax = settings.xMax
-			yMin = settings.yMin
-			yMax = settings.yMax
-		else
-			plot = 1.0
-			while(plot < settings.scatterPlotSeries.length)
-				sp = settings.scatterPlotSeries[plot]
-
-				xMin = [xMin, GetMinimum(sp.xs)].min
-				xMax = [xMax, GetMaximum(sp.xs)].max
-				yMin = [yMin, GetMinimum(sp.ys)].min
-				yMax = [yMax, GetMaximum(sp.ys)].max
-				plot = plot + 1.0
-			end
-		end
+		boundaries = Rectangle.new
+		ComputeBoundariesBasedOnSettings(settings, boundaries)
+		xMin = boundaries.x1
+		yMin = boundaries.y1
+		xMax = boundaries.x2
+		yMax = boundaries.y2
 
 		xLength = xMax - xMin
 		yLength = yMax - yMin
 
 		if settings.autoPadding
-			xPadding = (GetDefaultPaddingPercentage()*ImageWidth(canvas)).floor
-			yPadding = (GetDefaultPaddingPercentage()*ImageHeight(canvas)).floor
+			xPadding = (GetDefaultPaddingPercentage()*settings.width).floor
+			yPadding = (GetDefaultPaddingPercentage()*settings.height).floor
 		else
 			xPadding = settings.xPadding
 			yPadding = settings.yPadding
 		end
 
 		# Draw title
-		DrawText(canvas, (ImageWidth(canvas) / 2.0 - GetTextWidth(settings.title) / 2.0).floor, (yPadding / 3.0).floor, settings.title, GetBlack())
+		DrawText(canvas, (settings.width / 2.0 - GetTextWidth(settings.title) / 2.0).floor, (yPadding / 3.0).floor, settings.title, GetBlack())
 
 		# Draw grid
 		xPixelMin = xPadding
 		yPixelMin = yPadding
-		xPixelMax = ImageWidth(canvas) - xPadding
-		yPixelMax = ImageHeight(canvas) - yPadding
+		xPixelMax = settings.width - xPadding
+		yPixelMax = settings.height - yPadding
 		xLengthPixels = xPixelMax - xPixelMin
 		yLengthPixels = yPixelMax - yPixelMin
 		DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
@@ -916,8 +933,8 @@ if settings.yAxisLeft
 		end
 
 		# Draw origin axis titles.
-		DrawTextUpwards(canvas, 10.0, (originTextYPixels - GetTextWidth(settings.xLabel) / 2.0).floor, settings.xLabel, GetBlack())
-		DrawText(canvas, (originTextXPixels - GetTextWidth(settings.yLabel) / 2.0).floor, yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
+		DrawTextUpwards(canvas, 10.0, (originTextYPixels - GetTextWidth(settings.yLabel) / 2.0).floor, settings.yLabel, GetBlack())
+		DrawText(canvas, (originTextXPixels - GetTextWidth(settings.xLabel) / 2.0).floor, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
 
 		# X-grid-markers
 		i = 0.0
@@ -1067,6 +1084,45 @@ if settings.yAxisLeft
 	end
 
 	return success
+end
+
+
+def ComputeBoundariesBasedOnSettings(settings, boundaries)
+
+	if settings.scatterPlotSeries.length >= 1.0
+		xMin = GetMinimum(settings.scatterPlotSeries[0].xs)
+		xMax = GetMaximum(settings.scatterPlotSeries[0].xs)
+		yMin = GetMinimum(settings.scatterPlotSeries[0].ys)
+		yMax = GetMaximum(settings.scatterPlotSeries[0].ys)
+	else
+		xMin = -10.0
+		xMax = 10.0
+		yMin = -10.0
+		yMax = 10.0
+	end
+
+	if !settings.autoBoundaries
+		xMin = settings.xMin
+		xMax = settings.xMax
+		yMin = settings.yMin
+		yMax = settings.yMax
+	else
+		plot = 1.0
+		while(plot < settings.scatterPlotSeries.length)
+			sp = settings.scatterPlotSeries[plot]
+
+			xMin = [xMin, GetMinimum(sp.xs)].min
+			xMax = [xMax, GetMaximum(sp.xs)].max
+			yMin = [yMin, GetMinimum(sp.ys)].min
+			yMax = [yMax, GetMaximum(sp.ys)].max
+			plot = plot + 1.0
+		end
+	end
+
+	boundaries.x1 = xMin
+	boundaries.y1 = yMin
+	boundaries.x2 = xMax
+	boundaries.y2 = yMax
 end
 
 
@@ -1571,8 +1627,6 @@ def test()
 
 	imageReference = CreateRGBABitmapImageReference()
 
-	scatterPlotSettings = GetDefaultScatterPlotSettings()
-
 	labels = StringArrayReference.new
 	labelPriorities = NumberArrayReference.new
 
@@ -1628,7 +1682,124 @@ def test()
 
 	imageReference.image = DrawBarPlot(800.0, 600.0, ys)
 
+	TestMapping(failures)
+	TestMapping2(failures)
+
 	return failures.numberValue
+end
+
+
+def TestMapping(failures)
+
+	series = GetDefaultScatterPlotSeriesSettings()
+
+	series.xs = Array.new(5)
+	series.xs[0] = -2.0
+	series.xs[1] = -1.0
+	series.xs[2] = 0.0
+	series.xs[3] = 1.0
+	series.xs[4] = 2.0
+	series.ys = Array.new(5)
+	series.ys[0] = -2.0
+	series.ys[1] = -1.0
+	series.ys[2] = -2.0
+	series.ys[3] = -1.0
+	series.ys[4] = 2.0
+	series.linearInterpolation = true
+	series.lineType = "dashed".split("")
+	series.lineThickness = 2.0
+	series.color = GetGray(0.3)
+
+	settings = GetDefaultScatterPlotSettings()
+	settings.width = 600.0
+	settings.height = 400.0
+	settings.autoBoundaries = true
+	settings.autoPadding = true
+	settings.title = "x^2 - 2".split("")
+	settings.xLabel = "X axis".split("")
+	settings.yLabel = "Y axis".split("")
+	settings.scatterPlotSeries = Array.new(1)
+	settings.scatterPlotSeries[0] = series
+
+	imageReference = CreateRGBABitmapImageReference()
+	DrawScatterPlotFromSettings(imageReference, settings)
+
+	x1 = MapXCoordinateAutoSettings(-1.0, imageReference.image, series.xs)
+	y1 = MapYCoordinateAutoSettings(-1.0, imageReference.image, series.ys)
+
+	AssertEquals(x1, 180.0, failures)
+	AssertEquals(y1, 280.0, failures)
+end
+
+
+def TestMapping2(failures)
+
+	points = 300.0
+	w = 600.0*2.0
+	h = 300.0*2.0
+	xMin = 0.0
+	xMax = 150.0
+	yMin = 0.0
+	yMax = 1.0
+
+	xs = Array.new(points)
+	ys = Array.new(points)
+	xs2 = Array.new(points)
+	ys2 = Array.new(points)
+
+	i = 0.0
+	while(i < points)
+		x = xMin + (xMax - xMin) / (points - 1.0)*i
+		# points - 1d is to ensure both extremeties are included.
+		y = x / (x + 7.0)
+
+		xs[i] = x
+		ys[i] = y
+
+		y = 1.4*x / (x + 7.0)*(1.0 - (Math.atan((x / 1.5 - 30.0) / 5.0) / 1.6 + 1.0) / 2.0)
+
+		xs2[i] = x
+		ys2[i] = y
+		i = i + 1.0
+	end
+
+	settings = GetDefaultScatterPlotSettings()
+
+	settings.scatterPlotSeries = Array.new(2)
+	settings.scatterPlotSeries[0] = ScatterPlotSeries.new
+	settings.scatterPlotSeries[0].xs = xs
+	settings.scatterPlotSeries[0].ys = ys
+	settings.scatterPlotSeries[0].linearInterpolation = true
+	settings.scatterPlotSeries[0].lineType = "solid".split("")
+	settings.scatterPlotSeries[0].lineThickness = 3.0
+	settings.scatterPlotSeries[0].color = CreateRGBColor(1.0, 0.0, 0.0)
+	settings.scatterPlotSeries[1] = ScatterPlotSeries.new
+	settings.scatterPlotSeries[1].xs = xs2
+	settings.scatterPlotSeries[1].ys = ys2
+	settings.scatterPlotSeries[1].linearInterpolation = true
+	settings.scatterPlotSeries[1].lineType = "solid".split("")
+	settings.scatterPlotSeries[1].lineThickness = 3.0
+	settings.scatterPlotSeries[1].color = CreateRGBColor(0.0, 0.0, 1.0)
+	settings.autoBoundaries = false
+	settings.xMin = xMin
+	settings.xMax = xMax
+	settings.yMin = yMin
+	settings.yMax = yMax
+	settings.yLabel = "".split("")
+	settings.xLabel = "Features".split("")
+	settings.title = "".split("")
+	settings.width = w
+	settings.height = h
+
+	canvasReference = CreateRGBABitmapImageReference()
+
+	DrawScatterPlotFromSettings(canvasReference, settings)
+
+	x1 = MapXCoordinateBasedOnSettings(27.0, settings)
+	y1 = MapYCoordinateBasedOnSettings(1.0, settings)
+
+	AssertEquals((x1).floor, 292.0, failures)
+	AssertEquals(y1, 60.0, failures)
 end
 
 

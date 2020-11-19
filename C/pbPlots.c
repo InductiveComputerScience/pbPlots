@@ -460,10 +460,50 @@ double MapXCoordinate(double x, double xMin, double xMax, double xPixelMin, doub
   return x;
 }
 double MapXCoordinateAutoSettings(double x, RGBABitmapImage *image, double *xs, size_t xsLength){
-  return MapXCoordinate(x, GetMinimum(xs, xsLength), GetMaximum(xs, xsLength) - GetMinimum(xs, xsLength), GetDefaultPaddingPercentage()*ImageWidth(image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth(image));
+  return MapXCoordinate(x, GetMinimum(xs, xsLength), GetMaximum(xs, xsLength), GetDefaultPaddingPercentage()*ImageWidth(image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth(image));
 }
 double MapYCoordinateAutoSettings(double y, RGBABitmapImage *image, double *ys, size_t ysLength){
   return MapYCoordinate(y, GetMinimum(ys, ysLength), GetMaximum(ys, ysLength), GetDefaultPaddingPercentage()*ImageHeight(image), (1.0 - GetDefaultPaddingPercentage())*ImageHeight(image));
+}
+double MapXCoordinateBasedOnSettings(double x, ScatterPlotSettings *settings){
+  double xMin, xMax, xPadding, xPixelMin, xPixelMax;
+  Rectangle *boundaries;
+
+  boundaries = (Rectangle *)malloc(sizeof(Rectangle));
+  ComputeBoundariesBasedOnSettings(settings, boundaries);
+  xMin = boundaries->x1;
+  xMax = boundaries->x2;
+
+  if(settings->autoPadding){
+    xPadding = floor(GetDefaultPaddingPercentage()*settings->width);
+  }else{
+    xPadding = settings->xPadding;
+  }
+
+  xPixelMin = xPadding;
+  xPixelMax = settings->width - xPadding;
+
+  return MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+}
+double MapYCoordinateBasedOnSettings(double y, ScatterPlotSettings *settings){
+  double yMin, yMax, yPadding, yPixelMin, yPixelMax;
+  Rectangle *boundaries;
+
+  boundaries = (Rectangle *)malloc(sizeof(Rectangle));
+  ComputeBoundariesBasedOnSettings(settings, boundaries);
+  yMin = boundaries->y1;
+  yMax = boundaries->y2;
+
+  if(settings->autoPadding){
+    yPadding = floor(GetDefaultPaddingPercentage()*settings->height);
+  }else{
+    yPadding = settings->yPadding;
+  }
+
+  yPixelMin = yPadding;
+  yPixelMax = settings->height - yPadding;
+
+  return MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 }
 double GetDefaultPaddingPercentage(){
   return 0.10;
@@ -503,10 +543,10 @@ ScatterPlotSettings *GetDefaultScatterPlotSettings(){
   settings->yPadding = 0.0;
   settings->title = L"";
   settings->titleLength = wcslen(settings->title);
-  settings->yLabel = L"";
-  settings->yLabelLength = wcslen(settings->yLabel);
   settings->xLabel = L"";
   settings->xLabelLength = wcslen(settings->xLabel);
+  settings->yLabel = L"";
+  settings->yLabelLength = wcslen(settings->yLabel);
   settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 0.0);
   settings->scatterPlotSeriesLength = 0.0;
   settings->showGrid = true;
@@ -560,6 +600,7 @@ void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, do
 }
 _Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings){
   double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot;
+  Rectangle *boundaries;
   double xPadding, yPadding, originXPixels, originYPixels;
   double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
   NumberReference *nextRectangle, *x1Ref, *y1Ref, *x2Ref, *y2Ref, *patternOffset;
@@ -588,53 +629,32 @@ _Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, Sca
 
   if(success){
 
-    if(settings->scatterPlotSeriesLength >= 1.0){
-      xMin = GetMinimum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
-      xMax = GetMaximum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
-      yMin = GetMinimum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
-      yMax = GetMaximum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
-    }else{
-      xMin =  -10.0;
-      xMax = 10.0;
-      yMin =  -10.0;
-      yMax = 10.0;
-    }
-
-    if( !settings->autoBoundaries ){
-      xMin = settings->xMin;
-      xMax = settings->xMax;
-      yMin = settings->yMin;
-      yMax = settings->yMax;
-    }else{
-      for(plot = 1.0; plot < settings->scatterPlotSeriesLength; plot = plot + 1.0){
-        sp = settings->scatterPlotSeries[(int)(plot)];
-
-        xMin = fmin(xMin, GetMinimum(sp->xs, sp->xsLength));
-        xMax = fmax(xMax, GetMaximum(sp->xs, sp->xsLength));
-        yMin = fmin(yMin, GetMinimum(sp->ys, sp->ysLength));
-        yMax = fmax(yMax, GetMaximum(sp->ys, sp->ysLength));
-      }
-    }
+    boundaries = (Rectangle *)malloc(sizeof(Rectangle));
+    ComputeBoundariesBasedOnSettings(settings, boundaries);
+    xMin = boundaries->x1;
+    yMin = boundaries->y1;
+    xMax = boundaries->x2;
+    yMax = boundaries->y2;
 
     xLength = xMax - xMin;
     yLength = yMax - yMin;
 
     if(settings->autoPadding){
-      xPadding = floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
-      yPadding = floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+      xPadding = floor(GetDefaultPaddingPercentage()*settings->width);
+      yPadding = floor(GetDefaultPaddingPercentage()*settings->height);
     }else{
       xPadding = settings->xPadding;
       yPadding = settings->yPadding;
     }
 
     /* Draw title */
-    DrawText(canvas, floor(ImageWidth(canvas)/2.0 - GetTextWidth(settings->title, settings->titleLength)/2.0), floor(yPadding/3.0), settings->title, settings->titleLength, GetBlack());
+    DrawText(canvas, floor(settings->width/2.0 - GetTextWidth(settings->title, settings->titleLength)/2.0), floor(yPadding/3.0), settings->title, settings->titleLength, GetBlack());
 
     /* Draw grid */
     xPixelMin = xPadding;
     yPixelMin = yPadding;
-    xPixelMax = ImageWidth(canvas) - xPadding;
-    yPixelMax = ImageHeight(canvas) - yPadding;
+    xPixelMax = settings->width - xPadding;
+    yPixelMax = settings->height - yPadding;
     xLengthPixels = xPixelMax - xPixelMin;
     yLengthPixels = yPixelMax - yPixelMin;
     DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings->gridColor);
@@ -755,8 +775,8 @@ if(settings->yAxisLeft){
     }
 
     /* Draw origin axis titles. */
-    DrawTextUpwards(canvas, 10.0, floor(originTextYPixels - GetTextWidth(settings->xLabel, settings->xLabelLength)/2.0), settings->xLabel, settings->xLabelLength, GetBlack());
-    DrawText(canvas, floor(originTextXPixels - GetTextWidth(settings->yLabel, settings->yLabelLength)/2.0), yPixelMax + axisLabelPadding, settings->yLabel, settings->yLabelLength, GetBlack());
+    DrawTextUpwards(canvas, 10.0, floor(originTextYPixels - GetTextWidth(settings->yLabel, settings->yLabelLength)/2.0), settings->yLabel, settings->yLabelLength, GetBlack());
+    DrawText(canvas, floor(originTextXPixels - GetTextWidth(settings->xLabel, settings->xLabelLength)/2.0), yPixelMax + axisLabelPadding, settings->xLabel, settings->xLabelLength, GetBlack());
 
     /* X-grid-markers */
     for(i = 0.0; i < xGridPositionsLength; i = i + 1.0){
@@ -898,6 +918,43 @@ if(settings->yAxisLeft){
   }
 
   return success;
+}
+void ComputeBoundariesBasedOnSettings(ScatterPlotSettings *settings, Rectangle *boundaries){
+  ScatterPlotSeries *sp;
+  double plot, xMin, xMax, yMin, yMax;
+
+  if(settings->scatterPlotSeriesLength >= 1.0){
+    xMin = GetMinimum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
+    xMax = GetMaximum(settings->scatterPlotSeries[0]->xs, settings->scatterPlotSeries[0]->xsLength);
+    yMin = GetMinimum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
+    yMax = GetMaximum(settings->scatterPlotSeries[0]->ys, settings->scatterPlotSeries[0]->ysLength);
+  }else{
+    xMin =  -10.0;
+    xMax = 10.0;
+    yMin =  -10.0;
+    yMax = 10.0;
+  }
+
+  if( !settings->autoBoundaries ){
+    xMin = settings->xMin;
+    xMax = settings->xMax;
+    yMin = settings->yMin;
+    yMax = settings->yMax;
+  }else{
+    for(plot = 1.0; plot < settings->scatterPlotSeriesLength; plot = plot + 1.0){
+      sp = settings->scatterPlotSeries[(int)(plot)];
+
+      xMin = fmin(xMin, GetMinimum(sp->xs, sp->xsLength));
+      xMax = fmax(xMax, GetMaximum(sp->xs, sp->xsLength));
+      yMin = fmin(yMin, GetMinimum(sp->ys, sp->ysLength));
+      yMax = fmax(yMax, GetMaximum(sp->ys, sp->ysLength));
+    }
+  }
+
+  boundaries->x1 = xMin;
+  boundaries->y1 = yMin;
+  boundaries->x2 = xMax;
+  boundaries->y2 = yMax;
 }
 _Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings){
   _Bool success, found;
@@ -1392,7 +1449,6 @@ double RoundToDigits(double element, double digitsAfterPoint){
   return Round(element*pow(10.0, digitsAfterPoint))/pow(10.0, digitsAfterPoint);
 }
 double test(){
-  ScatterPlotSettings *scatterPlotSettings;
   double z;
   double *gridlines;
   size_t gridlinesLength;
@@ -1406,8 +1462,6 @@ double test(){
   failures = CreateNumberReference(0.0);
 
   imageReference = CreateRGBABitmapImageReference();
-
-  scatterPlotSettings = GetDefaultScatterPlotSettings();
 
   labels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
   labelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
@@ -1466,7 +1520,150 @@ double test(){
 
   imageReference->image = DrawBarPlot(800.0, 600.0, ys, ysLength);
 
+  TestMapping(failures);
+  TestMapping2(failures);
+
   return failures->numberValue;
+}
+void TestMapping(NumberReference *failures){
+  ScatterPlotSeries *series;
+  ScatterPlotSettings *settings;
+  RGBABitmapImageReference *imageReference;
+  double x1, y1;
+
+  series = GetDefaultScatterPlotSeriesSettings();
+
+  series->xs = (double*)malloc(sizeof(double) * (5.0));
+  series->xsLength = 5.0;
+  series->xs[0] = -2.0;
+  series->xs[1] = -1.0;
+  series->xs[2] = 0.0;
+  series->xs[3] = 1.0;
+  series->xs[4] = 2.0;
+  series->ys = (double*)malloc(sizeof(double) * (5.0));
+  series->ysLength = 5.0;
+  series->ys[0] = -2.0;
+  series->ys[1] = -1.0;
+  series->ys[2] = -2.0;
+  series->ys[3] = -1.0;
+  series->ys[4] = 2.0;
+  series->linearInterpolation = true;
+  series->lineType = L"dashed";
+  series->lineTypeLength = wcslen(series->lineType);
+  series->lineThickness = 2.0;
+  series->color = GetGray(0.3);
+
+  settings = GetDefaultScatterPlotSettings();
+  settings->width = 600.0;
+  settings->height = 400.0;
+  settings->autoBoundaries = true;
+  settings->autoPadding = true;
+  settings->title = L"x^2 - 2";
+  settings->titleLength = wcslen(settings->title);
+  settings->xLabel = L"X axis";
+  settings->xLabelLength = wcslen(settings->xLabel);
+  settings->yLabel = L"Y axis";
+  settings->yLabelLength = wcslen(settings->yLabel);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 1.0);
+  settings->scatterPlotSeriesLength = 1.0;
+  settings->scatterPlotSeries[0] = series;
+
+  imageReference = CreateRGBABitmapImageReference();
+  DrawScatterPlotFromSettings(imageReference, settings);
+
+  x1 = MapXCoordinateAutoSettings( -1.0, imageReference->image, series->xs, series->xsLength);
+  y1 = MapYCoordinateAutoSettings( -1.0, imageReference->image, series->ys, series->ysLength);
+
+  AssertEquals(x1, 180.0, failures);
+  AssertEquals(y1, 280.0, failures);
+}
+void TestMapping2(NumberReference *failures){
+  double *xs, *ys, *xs2, *ys2;
+  size_t xsLength, ysLength, xs2Length, ys2Length;
+  double i, x, y, w, h, xMin, xMax, yMin, yMax;
+  RGBABitmapImageReference *canvasReference;
+  ScatterPlotSettings *settings;
+  double points;
+  double x1, y1;
+
+  points = 300.0;
+  w = 600.0*2.0;
+  h = 300.0*2.0;
+  xMin = 0.0;
+  xMax = 150.0;
+  yMin = 0.0;
+  yMax = 1.0;
+
+  xs = (double*)malloc(sizeof(double) * (points));
+  xsLength = points;
+  ys = (double*)malloc(sizeof(double) * (points));
+  ysLength = points;
+  xs2 = (double*)malloc(sizeof(double) * (points));
+  xs2Length = points;
+  ys2 = (double*)malloc(sizeof(double) * (points));
+  ys2Length = points;
+
+  for(i = 0.0; i < points; i = i + 1.0){
+    x = xMin + (xMax - xMin)/(points - 1.0)*i;
+    /* points - 1d is to ensure both extremeties are included. */
+    y = x/(x + 7.0);
+
+    xs[(int)(i)] = x;
+    ys[(int)(i)] = y;
+
+    y = 1.4*x/(x + 7.0)*(1.0 - (atan((x/1.5 - 30.0)/5.0)/1.6 + 1.0)/2.0);
+
+    xs2[(int)(i)] = x;
+    ys2[(int)(i)] = y;
+  }
+
+  settings = GetDefaultScatterPlotSettings();
+
+  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 2.0);
+  settings->scatterPlotSeriesLength = 2.0;
+  settings->scatterPlotSeries[0] = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  settings->scatterPlotSeries[0]->xs = xs;
+  settings->scatterPlotSeries[0]->xsLength = xsLength;
+  settings->scatterPlotSeries[0]->ys = ys;
+  settings->scatterPlotSeries[0]->ysLength = ysLength;
+  settings->scatterPlotSeries[0]->linearInterpolation = true;
+  settings->scatterPlotSeries[0]->lineType = L"solid";
+  settings->scatterPlotSeries[0]->lineTypeLength = wcslen(settings->scatterPlotSeries[0]->lineType);
+  settings->scatterPlotSeries[0]->lineThickness = 3.0;
+  settings->scatterPlotSeries[0]->color = CreateRGBColor(1.0, 0.0, 0.0);
+  settings->scatterPlotSeries[1] = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  settings->scatterPlotSeries[1]->xs = xs2;
+  settings->scatterPlotSeries[1]->xsLength = xs2Length;
+  settings->scatterPlotSeries[1]->ys = ys2;
+  settings->scatterPlotSeries[1]->ysLength = ys2Length;
+  settings->scatterPlotSeries[1]->linearInterpolation = true;
+  settings->scatterPlotSeries[1]->lineType = L"solid";
+  settings->scatterPlotSeries[1]->lineTypeLength = wcslen(settings->scatterPlotSeries[1]->lineType);
+  settings->scatterPlotSeries[1]->lineThickness = 3.0;
+  settings->scatterPlotSeries[1]->color = CreateRGBColor(0.0, 0.0, 1.0);
+  settings->autoBoundaries = false;
+  settings->xMin = xMin;
+  settings->xMax = xMax;
+  settings->yMin = yMin;
+  settings->yMax = yMax;
+  settings->yLabel = L"";
+  settings->yLabelLength = wcslen(settings->yLabel);
+  settings->xLabel = L"Features";
+  settings->xLabelLength = wcslen(settings->xLabel);
+  settings->title = L"";
+  settings->titleLength = wcslen(settings->title);
+  settings->width = w;
+  settings->height = h;
+
+  canvasReference = CreateRGBABitmapImageReference();
+
+  DrawScatterPlotFromSettings(canvasReference, settings);
+
+  x1 = MapXCoordinateBasedOnSettings(27.0, settings);
+  y1 = MapYCoordinateBasedOnSettings(1.0, settings);
+
+  AssertEquals(floor(x1), 292.0, failures);
+  AssertEquals(y1, 60.0, failures);
 }
 RGBA *GetBlack(){
   RGBA *black;

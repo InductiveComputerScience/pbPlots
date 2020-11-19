@@ -33,8 +33,8 @@ Public Class ScatterPlotSettings
 	Public autoPadding As Boolean
 	Public xPadding As Double
 	Public yPadding As Double
-	Public yLabel As Char ()
 	Public xLabel As Char ()
+	Public yLabel As Char ()
 	Public title As Char ()
 	Public showGrid As Boolean
 	Public gridColor As RGBA
@@ -679,12 +679,56 @@ Module Plots
 
 
 	Public Function MapXCoordinateAutoSettings(x As Double, ByRef image As RGBABitmapImage, ByRef xs As Double ()) As Double
-		Return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1 - GetDefaultPaddingPercentage())*ImageWidth(image))
+		Return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1 - GetDefaultPaddingPercentage())*ImageWidth(image))
 	End Function
 
 
 	Public Function MapYCoordinateAutoSettings(y As Double, ByRef image As RGBABitmapImage, ByRef ys As Double ()) As Double
 		Return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1 - GetDefaultPaddingPercentage())*ImageHeight(image))
+	End Function
+
+
+	Public Function MapXCoordinateBasedOnSettings(x As Double, ByRef settings As ScatterPlotSettings) As Double
+		Dim xMin, xMax, xPadding, xPixelMin, xPixelMax As Double
+		Dim boundaries As Rectangle
+
+		boundaries = New Rectangle()
+		Call ComputeBoundariesBasedOnSettings(settings, boundaries)
+		xMin = boundaries.x1
+		xMax = boundaries.x2
+
+		If settings.autoPadding
+			xPadding = Floor(GetDefaultPaddingPercentage()*settings.width)
+		Else
+			xPadding = settings.xPadding
+		End If
+
+		xPixelMin = xPadding
+		xPixelMax = settings.width - xPadding
+
+		Return MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
+	End Function
+
+
+	Public Function MapYCoordinateBasedOnSettings(y As Double, ByRef settings As ScatterPlotSettings) As Double
+		Dim yMin, yMax, yPadding, yPixelMin, yPixelMax As Double
+		Dim boundaries As Rectangle
+
+		boundaries = New Rectangle()
+		Call ComputeBoundariesBasedOnSettings(settings, boundaries)
+		yMin = boundaries.y1
+		yMax = boundaries.y2
+
+		If settings.autoPadding
+			yPadding = Floor(GetDefaultPaddingPercentage()*settings.height)
+		Else
+			yPadding = settings.yPadding
+		End If
+
+		yPixelMin = yPadding
+		yPixelMax = settings.height - yPadding
+
+		Return MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 	End Function
 
 
@@ -733,8 +777,8 @@ Module Plots
 		settings.xPadding = 0
 		settings.yPadding = 0
 		settings.title = "".ToCharArray()
-		settings.yLabel = "".ToCharArray()
 		settings.xLabel = "".ToCharArray()
+		settings.yLabel = "".ToCharArray()
 		settings.scatterPlotSeries = New ScatterPlotSeries (0 - 1){}
 		settings.showGrid = true
 		settings.gridColor = GetGray(0.1)
@@ -786,6 +830,7 @@ Module Plots
 
 	Public Function DrawScatterPlotFromSettings(ByRef canvasReference As RGBABitmapImageReference, ByRef settings As ScatterPlotSettings) As Boolean
 		Dim xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot As Double
+		Dim boundaries As Rectangle
 		Dim xPadding, yPadding, originXPixels, originYPixels As Double
 		Dim xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding As Double
 		Dim nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset As NumberReference
@@ -810,55 +855,32 @@ Module Plots
 
 		If success
 
-			If settings.scatterPlotSeries.Length >= 1
-				xMin = GetMinimum(settings.scatterPlotSeries(0).xs)
-				xMax = GetMaximum(settings.scatterPlotSeries(0).xs)
-				yMin = GetMinimum(settings.scatterPlotSeries(0).ys)
-				yMax = GetMaximum(settings.scatterPlotSeries(0).ys)
-			Else
-				xMin = -10
-				xMax = 10
-				yMin = -10
-				yMax = 10
-			End If
-
-			If Not settings.autoBoundaries
-				xMin = settings.xMin
-				xMax = settings.xMax
-				yMin = settings.yMin
-				yMax = settings.yMax
-			Else
-				plot = 1
-				While plot < settings.scatterPlotSeries.Length
-					sp = settings.scatterPlotSeries(plot)
-
-					xMin = Min(xMin, GetMinimum(sp.xs))
-					xMax = Max(xMax, GetMaximum(sp.xs))
-					yMin = Min(yMin, GetMinimum(sp.ys))
-					yMax = Max(yMax, GetMaximum(sp.ys))
-					plot = plot + 1
-				End While
-			End If
+			boundaries = New Rectangle()
+			Call ComputeBoundariesBasedOnSettings(settings, boundaries)
+			xMin = boundaries.x1
+			yMin = boundaries.y1
+			xMax = boundaries.x2
+			yMax = boundaries.y2
 
 			xLength = xMax - xMin
 			yLength = yMax - yMin
 
 			If settings.autoPadding
-				xPadding = Floor(GetDefaultPaddingPercentage()*ImageWidth(canvas))
-				yPadding = Floor(GetDefaultPaddingPercentage()*ImageHeight(canvas))
+				xPadding = Floor(GetDefaultPaddingPercentage()*settings.width)
+				yPadding = Floor(GetDefaultPaddingPercentage()*settings.height)
 			Else
 				xPadding = settings.xPadding
 				yPadding = settings.yPadding
 			End If
 
 			' Draw title
-			Call DrawText(canvas, Floor(ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2), Floor(yPadding/3), settings.title, GetBlack())
+			Call DrawText(canvas, Floor(settings.width/2 - GetTextWidth(settings.title)/2), Floor(yPadding/3), settings.title, GetBlack())
 
 			' Draw grid
 			xPixelMin = xPadding
 			yPixelMin = yPadding
-			xPixelMax = ImageWidth(canvas) - xPadding
-			yPixelMax = ImageHeight(canvas) - yPadding
+			xPixelMax = settings.width - xPadding
+			yPixelMax = settings.height - yPadding
 			xLengthPixels = xPixelMax - xPixelMin
 			yLengthPixels = yPixelMax - yPixelMin
 			Call DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor)
@@ -988,8 +1010,8 @@ Module Plots
 			End If
 
 			' Draw origin axis titles.
-			Call DrawTextUpwards(canvas, 10, Floor(originTextYPixels - GetTextWidth(settings.xLabel)/2), settings.xLabel, GetBlack())
-			Call DrawText(canvas, Floor(originTextXPixels - GetTextWidth(settings.yLabel)/2), yPixelMax + axisLabelPadding, settings.yLabel, GetBlack())
+			Call DrawTextUpwards(canvas, 10, Floor(originTextYPixels - GetTextWidth(settings.yLabel)/2), settings.yLabel, GetBlack())
+			Call DrawText(canvas, Floor(originTextXPixels - GetTextWidth(settings.xLabel)/2), yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
 
 			' X-grid-markers
 			i = 0
@@ -1140,6 +1162,47 @@ Module Plots
 
 		Return success
 	End Function
+
+
+	Public Sub ComputeBoundariesBasedOnSettings(ByRef settings As ScatterPlotSettings, ByRef boundaries As Rectangle)
+		Dim sp As ScatterPlotSeries
+		Dim plot, xMin, xMax, yMin, yMax As Double
+
+		If settings.scatterPlotSeries.Length >= 1
+			xMin = GetMinimum(settings.scatterPlotSeries(0).xs)
+			xMax = GetMaximum(settings.scatterPlotSeries(0).xs)
+			yMin = GetMinimum(settings.scatterPlotSeries(0).ys)
+			yMax = GetMaximum(settings.scatterPlotSeries(0).ys)
+		Else
+			xMin = -10
+			xMax = 10
+			yMin = -10
+			yMax = 10
+		End If
+
+		If Not settings.autoBoundaries
+			xMin = settings.xMin
+			xMax = settings.xMax
+			yMin = settings.yMin
+			yMax = settings.yMax
+		Else
+			plot = 1
+			While plot < settings.scatterPlotSeries.Length
+				sp = settings.scatterPlotSeries(plot)
+
+				xMin = Min(xMin, GetMinimum(sp.xs))
+				xMax = Max(xMax, GetMaximum(sp.xs))
+				yMin = Min(yMin, GetMinimum(sp.ys))
+				yMax = Max(yMax, GetMaximum(sp.ys))
+				plot = plot + 1
+			End While
+		End If
+
+		boundaries.x1 = xMin
+		boundaries.y1 = yMin
+		boundaries.x2 = xMax
+		boundaries.y2 = yMax
+	End Sub
 
 
 	Public Function ScatterPlotFromSettingsValid(ByRef settings As ScatterPlotSettings) As Boolean
@@ -1663,7 +1726,6 @@ Module Plots
 
 
 	Public Function test() As Double
-		Dim scatterPlotSettings As ScatterPlotSettings
 		Dim z As Double
 		Dim gridlines As Double ()
 		Dim failures As NumberReference
@@ -1675,8 +1737,6 @@ Module Plots
 		failures = CreateNumberReference(0)
 
 		imageReference = CreateRGBABitmapImageReference()
-
-		scatterPlotSettings = GetDefaultScatterPlotSettings()
 
 		labels = New StringArrayReference()
 		labelPriorities = New NumberArrayReference()
@@ -1733,8 +1793,135 @@ Module Plots
 
 		imageReference.image = DrawBarPlot(800, 600, ys)
 
+		Call TestMapping(failures)
+		Call TestMapping2(failures)
+
 		Return failures.numberValue
 	End Function
+
+
+	Public Sub TestMapping(ByRef failures As NumberReference)
+		Dim series As ScatterPlotSeries
+		Dim settings As ScatterPlotSettings
+		Dim imageReference As RGBABitmapImageReference
+		Dim x1, y1 As Double
+
+		series = GetDefaultScatterPlotSeriesSettings()
+
+		series.xs = New Double (5 - 1){}
+		series.xs(0) = -2
+		series.xs(1) = -1
+		series.xs(2) = 0
+		series.xs(3) = 1
+		series.xs(4) = 2
+		series.ys = New Double (5 - 1){}
+		series.ys(0) = -2
+		series.ys(1) = -1
+		series.ys(2) = -2
+		series.ys(3) = -1
+		series.ys(4) = 2
+		series.linearInterpolation = true
+		series.lineType = "dashed".ToCharArray()
+		series.lineThickness = 2
+		series.color = GetGray(0.3)
+
+		settings = GetDefaultScatterPlotSettings()
+		settings.width = 600
+		settings.height = 400
+		settings.autoBoundaries = true
+		settings.autoPadding = true
+		settings.title = "x^2 - 2".ToCharArray()
+		settings.xLabel = "X axis".ToCharArray()
+		settings.yLabel = "Y axis".ToCharArray()
+		settings.scatterPlotSeries = New ScatterPlotSeries (1 - 1){}
+		settings.scatterPlotSeries(0) = series
+
+		imageReference = CreateRGBABitmapImageReference()
+		DrawScatterPlotFromSettings(imageReference, settings)
+
+		x1 = MapXCoordinateAutoSettings(-1, imageReference.image, series.xs)
+		y1 = MapYCoordinateAutoSettings(-1, imageReference.image, series.ys)
+
+		Call AssertEquals(x1, 180, failures)
+		Call AssertEquals(y1, 280, failures)
+	End Sub
+
+
+	Public Sub TestMapping2(ByRef failures As NumberReference)
+		Dim xs, ys, xs2, ys2 As Double ()
+		Dim i, x, y, w, h, xMin, xMax, yMin, yMax As Double
+		Dim canvasReference As RGBABitmapImageReference
+		Dim settings As ScatterPlotSettings
+		Dim points As Double
+		Dim x1, y1 As Double
+
+		points = 300
+		w = 600*2
+		h = 300*2
+		xMin = 0
+		xMax = 150
+		yMin = 0
+		yMax = 1
+
+		xs = New Double (points - 1){}
+		ys = New Double (points - 1){}
+		xs2 = New Double (points - 1){}
+		ys2 = New Double (points - 1){}
+
+		i = 0
+		While i < points
+			x = xMin + (xMax - xMin)/(points - 1)*i
+			' points - 1d is to ensure both extremeties are included.
+			y = x/(x + 7)
+
+			xs(i) = x
+			ys(i) = y
+
+			y = 1.4*x/(x + 7)*(1 - (Atan((x/1.5 - 30)/5)/1.6 + 1)/2)
+
+			xs2(i) = x
+			ys2(i) = y
+			i = i + 1
+		End While
+
+		settings = GetDefaultScatterPlotSettings()
+
+		settings.scatterPlotSeries = New ScatterPlotSeries (2 - 1){}
+		settings.scatterPlotSeries(0) = New ScatterPlotSeries()
+		settings.scatterPlotSeries(0).xs = xs
+		settings.scatterPlotSeries(0).ys = ys
+		settings.scatterPlotSeries(0).linearInterpolation = true
+		settings.scatterPlotSeries(0).lineType = "solid".ToCharArray()
+		settings.scatterPlotSeries(0).lineThickness = 3
+		settings.scatterPlotSeries(0).color = CreateRGBColor(1, 0, 0)
+		settings.scatterPlotSeries(1) = New ScatterPlotSeries()
+		settings.scatterPlotSeries(1).xs = xs2
+		settings.scatterPlotSeries(1).ys = ys2
+		settings.scatterPlotSeries(1).linearInterpolation = true
+		settings.scatterPlotSeries(1).lineType = "solid".ToCharArray()
+		settings.scatterPlotSeries(1).lineThickness = 3
+		settings.scatterPlotSeries(1).color = CreateRGBColor(0, 0, 1)
+		settings.autoBoundaries = false
+		settings.xMin = xMin
+		settings.xMax = xMax
+		settings.yMin = yMin
+		settings.yMax = yMax
+		settings.yLabel = "".ToCharArray()
+		settings.xLabel = "Features".ToCharArray()
+		settings.title = "".ToCharArray()
+		settings.width = w
+		settings.height = h
+
+		canvasReference = CreateRGBABitmapImageReference()
+
+		DrawScatterPlotFromSettings(canvasReference, settings)
+
+		x1 = MapXCoordinateBasedOnSettings(27, settings)
+		y1 = MapYCoordinateBasedOnSettings(1, settings)
+
+		Call AssertEquals(Floor(x1), 292, failures)
+		Call AssertEquals(y1, 60, failures)
+	End Sub
 
 
 	Public Function GetBlack() As RGBA

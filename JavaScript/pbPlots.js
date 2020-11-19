@@ -442,10 +442,50 @@ function MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax){
   return x;
 }
 function MapXCoordinateAutoSettings(x, image, xs){
-  return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1 - GetDefaultPaddingPercentage())*ImageWidth(image));
+  return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs), GetDefaultPaddingPercentage()*ImageWidth(image), (1 - GetDefaultPaddingPercentage())*ImageWidth(image));
 }
 function MapYCoordinateAutoSettings(y, image, ys){
   return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage()*ImageHeight(image), (1 - GetDefaultPaddingPercentage())*ImageHeight(image));
+}
+function MapXCoordinateBasedOnSettings(x, settings){
+  var xMin, xMax, xPadding, xPixelMin, xPixelMax;
+  var boundaries;
+
+  boundaries = {};
+  ComputeBoundariesBasedOnSettings(settings, boundaries);
+  xMin = boundaries.x1;
+  xMax = boundaries.x2;
+
+  if(settings.autoPadding){
+    xPadding = Math.floor(GetDefaultPaddingPercentage()*settings.width);
+  }else{
+    xPadding = settings.xPadding;
+  }
+
+  xPixelMin = xPadding;
+  xPixelMax = settings.width - xPadding;
+
+  return MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+}
+function MapYCoordinateBasedOnSettings(y, settings){
+  var yMin, yMax, yPadding, yPixelMin, yPixelMax;
+  var boundaries;
+
+  boundaries = {};
+  ComputeBoundariesBasedOnSettings(settings, boundaries);
+  yMin = boundaries.y1;
+  yMax = boundaries.y2;
+
+  if(settings.autoPadding){
+    yPadding = Math.floor(GetDefaultPaddingPercentage()*settings.height);
+  }else{
+    yPadding = settings.yPadding;
+  }
+
+  yPixelMin = yPadding;
+  yPixelMax = settings.height - yPadding;
+
+  return MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
 }
 function GetDefaultPaddingPercentage(){
   return 0.10;
@@ -484,8 +524,8 @@ function GetDefaultScatterPlotSettings(){
   settings.xPadding = 0;
   settings.yPadding = 0;
   settings.title = "".split('');
-  settings.yLabel = "".split('');
   settings.xLabel = "".split('');
+  settings.yLabel = "".split('');
   settings.scatterPlotSeries = [];
   settings.scatterPlotSeries.length = 0;
   settings.showGrid = true;
@@ -535,6 +575,7 @@ function DrawScatterPlot(canvasReference, width, height, xs, ys){
 }
 function DrawScatterPlotFromSettings(canvasReference, settings){
   var xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot;
+  var boundaries;
   var xPadding, yPadding, originXPixels, originYPixels;
   var xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
   var nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset;
@@ -559,53 +600,32 @@ function DrawScatterPlotFromSettings(canvasReference, settings){
 
   if(success){
 
-    if(settings.scatterPlotSeries.length >= 1){
-      xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
-      xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
-      yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
-      yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
-    }else{
-      xMin =  -10;
-      xMax = 10;
-      yMin =  -10;
-      yMax = 10;
-    }
-
-    if( !settings.autoBoundaries ){
-      xMin = settings.xMin;
-      xMax = settings.xMax;
-      yMin = settings.yMin;
-      yMax = settings.yMax;
-    }else{
-      for(plot = 1; plot < settings.scatterPlotSeries.length; plot = plot + 1){
-        sp = settings.scatterPlotSeries[plot];
-
-        xMin = Math.min(xMin, GetMinimum(sp.xs));
-        xMax = Math.max(xMax, GetMaximum(sp.xs));
-        yMin = Math.min(yMin, GetMinimum(sp.ys));
-        yMax = Math.max(yMax, GetMaximum(sp.ys));
-      }
-    }
+    boundaries = {};
+    ComputeBoundariesBasedOnSettings(settings, boundaries);
+    xMin = boundaries.x1;
+    yMin = boundaries.y1;
+    xMax = boundaries.x2;
+    yMax = boundaries.y2;
 
     xLength = xMax - xMin;
     yLength = yMax - yMin;
 
     if(settings.autoPadding){
-      xPadding = Math.floor(GetDefaultPaddingPercentage()*ImageWidth(canvas));
-      yPadding = Math.floor(GetDefaultPaddingPercentage()*ImageHeight(canvas));
+      xPadding = Math.floor(GetDefaultPaddingPercentage()*settings.width);
+      yPadding = Math.floor(GetDefaultPaddingPercentage()*settings.height);
     }else{
       xPadding = settings.xPadding;
       yPadding = settings.yPadding;
     }
 
     /* Draw title */
-    DrawText(canvas, Math.floor(ImageWidth(canvas)/2 - GetTextWidth(settings.title)/2), Math.floor(yPadding/3), settings.title, GetBlack());
+    DrawText(canvas, Math.floor(settings.width/2 - GetTextWidth(settings.title)/2), Math.floor(yPadding/3), settings.title, GetBlack());
 
     /* Draw grid */
     xPixelMin = xPadding;
     yPixelMin = yPadding;
-    xPixelMax = ImageWidth(canvas) - xPadding;
-    yPixelMax = ImageHeight(canvas) - yPadding;
+    xPixelMax = settings.width - xPadding;
+    yPixelMax = settings.height - yPadding;
     xLengthPixels = xPixelMax - xPixelMin;
     yLengthPixels = yPixelMax - yPixelMin;
     DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
@@ -726,8 +746,8 @@ if(settings.yAxisLeft){
     }
 
     /* Draw origin axis titles. */
-    DrawTextUpwards(canvas, 10, Math.floor(originTextYPixels - GetTextWidth(settings.xLabel)/2), settings.xLabel, GetBlack());
-    DrawText(canvas, Math.floor(originTextXPixels - GetTextWidth(settings.yLabel)/2), yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
+    DrawTextUpwards(canvas, 10, Math.floor(originTextYPixels - GetTextWidth(settings.yLabel)/2), settings.yLabel, GetBlack());
+    DrawText(canvas, Math.floor(originTextXPixels - GetTextWidth(settings.xLabel)/2), yPixelMax + axisLabelPadding, settings.xLabel, GetBlack());
 
     /* X-grid-markers */
     for(i = 0; i < xGridPositions.length; i = i + 1){
@@ -867,6 +887,43 @@ if(settings.yAxisLeft){
   }
 
   return success;
+}
+function ComputeBoundariesBasedOnSettings(settings, boundaries){
+  var sp;
+  var plot, xMin, xMax, yMin, yMax;
+
+  if(settings.scatterPlotSeries.length >= 1){
+    xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
+    xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
+    yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
+    yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
+  }else{
+    xMin =  -10;
+    xMax = 10;
+    yMin =  -10;
+    yMax = 10;
+  }
+
+  if( !settings.autoBoundaries ){
+    xMin = settings.xMin;
+    xMax = settings.xMax;
+    yMin = settings.yMin;
+    yMax = settings.yMax;
+  }else{
+    for(plot = 1; plot < settings.scatterPlotSeries.length; plot = plot + 1){
+      sp = settings.scatterPlotSeries[plot];
+
+      xMin = Math.min(xMin, GetMinimum(sp.xs));
+      xMax = Math.max(xMax, GetMaximum(sp.xs));
+      yMin = Math.min(yMin, GetMinimum(sp.ys));
+      yMax = Math.max(yMax, GetMaximum(sp.ys));
+    }
+  }
+
+  boundaries.x1 = xMin;
+  boundaries.y1 = yMin;
+  boundaries.x2 = xMax;
+  boundaries.y2 = yMax;
 }
 function ScatterPlotFromSettingsValid(settings){
   var success, found;
@@ -1352,7 +1409,6 @@ function RoundToDigits(element, digitsAfterPoint){
   return Round(element*Math.pow(10, digitsAfterPoint))/Math.pow(10, digitsAfterPoint);
 }
 function test(){
-  var scatterPlotSettings;
   var z;
   var gridlines;
   var failures;
@@ -1364,8 +1420,6 @@ function test(){
   failures = CreateNumberReference(0);
 
   imageReference = CreateRGBABitmapImageReference();
-
-  scatterPlotSettings = GetDefaultScatterPlotSettings();
 
   labels = {};
   labelPriorities = {};
@@ -1424,7 +1478,136 @@ function test(){
 
   imageReference.image = DrawBarPlot(800, 600, ys);
 
+  TestMapping(failures);
+  TestMapping2(failures);
+
   return failures.numberValue;
+}
+function TestMapping(failures){
+  var series;
+  var settings;
+  var imageReference;
+  var x1, y1;
+
+  series = GetDefaultScatterPlotSeriesSettings();
+
+  series.xs = [];
+  series.xs.length = 5;
+  series.xs[0] = -2;
+  series.xs[1] = -1;
+  series.xs[2] = 0;
+  series.xs[3] = 1;
+  series.xs[4] = 2;
+  series.ys = [];
+  series.ys.length = 5;
+  series.ys[0] = -2;
+  series.ys[1] = -1;
+  series.ys[2] = -2;
+  series.ys[3] = -1;
+  series.ys[4] = 2;
+  series.linearInterpolation = true;
+  series.lineType = "dashed".split('');
+  series.lineThickness = 2;
+  series.color = GetGray(0.3);
+
+  settings = GetDefaultScatterPlotSettings();
+  settings.width = 600;
+  settings.height = 400;
+  settings.autoBoundaries = true;
+  settings.autoPadding = true;
+  settings.title = "x^2 - 2".split('');
+  settings.xLabel = "X axis".split('');
+  settings.yLabel = "Y axis".split('');
+  settings.scatterPlotSeries = [];
+  settings.scatterPlotSeries.length = 1;
+  settings.scatterPlotSeries[0] = series;
+
+  imageReference = CreateRGBABitmapImageReference();
+  DrawScatterPlotFromSettings(imageReference, settings);
+
+  x1 = MapXCoordinateAutoSettings( -1, imageReference.image, series.xs);
+  y1 = MapYCoordinateAutoSettings( -1, imageReference.image, series.ys);
+
+  AssertEquals(x1, 180, failures);
+  AssertEquals(y1, 280, failures);
+}
+function TestMapping2(failures){
+  var xs, ys, xs2, ys2;
+  var i, x, y, w, h, xMin, xMax, yMin, yMax;
+  var canvasReference;
+  var settings;
+  var points;
+  var x1, y1;
+
+  points = 300;
+  w = 600*2;
+  h = 300*2;
+  xMin = 0;
+  xMax = 150;
+  yMin = 0;
+  yMax = 1;
+
+  xs = [];
+  xs.length = points;
+  ys = [];
+  ys.length = points;
+  xs2 = [];
+  xs2.length = points;
+  ys2 = [];
+  ys2.length = points;
+
+  for(i = 0; i < points; i = i + 1){
+    x = xMin + (xMax - xMin)/(points - 1)*i;
+    /* points - 1d is to ensure both extremeties are included. */
+    y = x/(x + 7);
+
+    xs[i] = x;
+    ys[i] = y;
+
+    y = 1.4*x/(x + 7)*(1 - (Math.atan((x/1.5 - 30)/5)/1.6 + 1)/2);
+
+    xs2[i] = x;
+    ys2[i] = y;
+  }
+
+  settings = GetDefaultScatterPlotSettings();
+
+  settings.scatterPlotSeries = [];
+  settings.scatterPlotSeries.length = 2;
+  settings.scatterPlotSeries[0] = {};
+  settings.scatterPlotSeries[0].xs = xs;
+  settings.scatterPlotSeries[0].ys = ys;
+  settings.scatterPlotSeries[0].linearInterpolation = true;
+  settings.scatterPlotSeries[0].lineType = "solid".split('');
+  settings.scatterPlotSeries[0].lineThickness = 3;
+  settings.scatterPlotSeries[0].color = CreateRGBColor(1, 0, 0);
+  settings.scatterPlotSeries[1] = {};
+  settings.scatterPlotSeries[1].xs = xs2;
+  settings.scatterPlotSeries[1].ys = ys2;
+  settings.scatterPlotSeries[1].linearInterpolation = true;
+  settings.scatterPlotSeries[1].lineType = "solid".split('');
+  settings.scatterPlotSeries[1].lineThickness = 3;
+  settings.scatterPlotSeries[1].color = CreateRGBColor(0, 0, 1);
+  settings.autoBoundaries = false;
+  settings.xMin = xMin;
+  settings.xMax = xMax;
+  settings.yMin = yMin;
+  settings.yMax = yMax;
+  settings.yLabel = "".split('');
+  settings.xLabel = "Features".split('');
+  settings.title = "".split('');
+  settings.width = w;
+  settings.height = h;
+
+  canvasReference = CreateRGBABitmapImageReference();
+
+  DrawScatterPlotFromSettings(canvasReference, settings);
+
+  x1 = MapXCoordinateBasedOnSettings(27, settings);
+  y1 = MapYCoordinateBasedOnSettings(1, settings);
+
+  AssertEquals(Math.floor(x1), 292, failures);
+  AssertEquals(y1, 60, failures);
 }
 function GetBlack(){
   var black;

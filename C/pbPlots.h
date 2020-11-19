@@ -124,10 +124,10 @@ struct ScatterPlotSettings{
   _Bool autoPadding;
   double xPadding;
   double yPadding;
-  wchar_t *yLabel;
-  size_t yLabelLength;
   wchar_t *xLabel;
   size_t xLabelLength;
+  wchar_t *yLabel;
+  size_t yLabelLength;
   wchar_t *title;
   size_t titleLength;
   _Bool showGrid;
@@ -330,6 +330,8 @@ double MapYCoordinate(double y, double yMin, double yMax, double yPixelMin, doub
 double MapXCoordinate(double x, double xMin, double xMax, double xPixelMin, double xPixelMax);
 double MapXCoordinateAutoSettings(double x, RGBABitmapImage *image, double *xs, size_t xsLength);
 double MapYCoordinateAutoSettings(double y, RGBABitmapImage *image, double *ys, size_t ysLength);
+double MapXCoordinateBasedOnSettings(double x, ScatterPlotSettings *settings);
+double MapYCoordinateBasedOnSettings(double y, ScatterPlotSettings *settings);
 double GetDefaultPaddingPercentage();
 
 void DrawText(RGBABitmapImage *canvas, double x, double y, wchar_t *text, size_t textLength, RGBA *color);
@@ -339,6 +341,7 @@ ScatterPlotSettings *GetDefaultScatterPlotSettings();
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings();
 void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, double *xs, size_t xsLength, double *ys, size_t ysLength);
 _Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings);
+void ComputeBoundariesBasedOnSettings(ScatterPlotSettings *settings, Rectangle *boundaries);
 _Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings);
 
 BarPlotSettings *GetDefaultBarPlotSettings();
@@ -353,6 +356,8 @@ double GetMaximum(double *data, size_t dataLength);
 double RoundToDigits(double element, double digitsAfterPoint);
 
 double test();
+void TestMapping(NumberReference *failures);
+void TestMapping2(NumberReference *failures);
 
 RGBA *GetBlack();
 RGBA *GetWhite();

@@ -426,10 +426,46 @@ function MapXCoordinate($x, $xMin, $xMax, $xPixelMin, $xPixelMax){
   return $x;
 }
 function MapXCoordinateAutoSettings($x, $image, &$xs){
-  return MapXCoordinate($x, GetMinimum($xs), GetMaximum($xs) - GetMinimum($xs), GetDefaultPaddingPercentage()*ImageWidth($image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth($image));
+  return MapXCoordinate($x, GetMinimum($xs), GetMaximum($xs), GetDefaultPaddingPercentage()*ImageWidth($image), (1.0 - GetDefaultPaddingPercentage())*ImageWidth($image));
 }
 function MapYCoordinateAutoSettings($y, $image, &$ys){
   return MapYCoordinate($y, GetMinimum($ys), GetMaximum($ys), GetDefaultPaddingPercentage()*ImageHeight($image), (1.0 - GetDefaultPaddingPercentage())*ImageHeight($image));
+}
+function MapXCoordinateBasedOnSettings($x, $settings){
+
+  $boundaries = new stdClass();
+  ComputeBoundariesBasedOnSettings($settings, $boundaries);
+  $xMin = $boundaries->x1;
+  $xMax = $boundaries->x2;
+
+  if($settings->autoPadding){
+    $xPadding = floor(GetDefaultPaddingPercentage()*$settings->width);
+  }else{
+    $xPadding = $settings->xPadding;
+  }
+
+  $xPixelMin = $xPadding;
+  $xPixelMax = $settings->width - $xPadding;
+
+  return MapXCoordinate($x, $xMin, $xMax, $xPixelMin, $xPixelMax);
+}
+function MapYCoordinateBasedOnSettings($y, $settings){
+
+  $boundaries = new stdClass();
+  ComputeBoundariesBasedOnSettings($settings, $boundaries);
+  $yMin = $boundaries->y1;
+  $yMax = $boundaries->y2;
+
+  if($settings->autoPadding){
+    $yPadding = floor(GetDefaultPaddingPercentage()*$settings->height);
+  }else{
+    $yPadding = $settings->yPadding;
+  }
+
+  $yPixelMin = $yPadding;
+  $yPixelMax = $settings->height - $yPadding;
+
+  return MapYCoordinate($y, $yMin, $yMax, $yPixelMin, $yPixelMax);
 }
 function GetDefaultPaddingPercentage(){
   return 0.10;
@@ -465,8 +501,8 @@ function GetDefaultScatterPlotSettings(){
   $settings->xPadding = 0.0;
   $settings->yPadding = 0.0;
   $settings->title = array();
-  $settings->yLabel = array();
   $settings->xLabel = array();
+  $settings->yLabel = array();
   $settings->scatterPlotSeries = array_fill(0, 0.0, 0);
   $settings->showGrid = true;
   $settings->gridColor = GetGray(0.1);
@@ -517,53 +553,32 @@ function DrawScatterPlotFromSettings($canvasReference, $settings){
 
   if($success){
 
-    if(count($settings->scatterPlotSeries) >= 1.0){
-      $xMin = GetMinimum($settings->scatterPlotSeries[0.0]->xs);
-      $xMax = GetMaximum($settings->scatterPlotSeries[0.0]->xs);
-      $yMin = GetMinimum($settings->scatterPlotSeries[0.0]->ys);
-      $yMax = GetMaximum($settings->scatterPlotSeries[0.0]->ys);
-    }else{
-      $xMin = -10.0;
-      $xMax = 10.0;
-      $yMin = -10.0;
-      $yMax = 10.0;
-    }
-
-    if( !$settings->autoBoundaries ){
-      $xMin = $settings->xMin;
-      $xMax = $settings->xMax;
-      $yMin = $settings->yMin;
-      $yMax = $settings->yMax;
-    }else{
-      for($plot = 1.0; $plot < count($settings->scatterPlotSeries); $plot = $plot + 1.0){
-        $sp = $settings->scatterPlotSeries[$plot];
-
-        $xMin = min($xMin, GetMinimum($sp->xs));
-        $xMax = max($xMax, GetMaximum($sp->xs));
-        $yMin = min($yMin, GetMinimum($sp->ys));
-        $yMax = max($yMax, GetMaximum($sp->ys));
-      }
-    }
+    $boundaries = new stdClass();
+    ComputeBoundariesBasedOnSettings($settings, $boundaries);
+    $xMin = $boundaries->x1;
+    $yMin = $boundaries->y1;
+    $xMax = $boundaries->x2;
+    $yMax = $boundaries->y2;
 
     $xLength = $xMax - $xMin;
     $yLength = $yMax - $yMin;
 
     if($settings->autoPadding){
-      $xPadding = floor(GetDefaultPaddingPercentage()*ImageWidth($canvas));
-      $yPadding = floor(GetDefaultPaddingPercentage()*ImageHeight($canvas));
+      $xPadding = floor(GetDefaultPaddingPercentage()*$settings->width);
+      $yPadding = floor(GetDefaultPaddingPercentage()*$settings->height);
     }else{
       $xPadding = $settings->xPadding;
       $yPadding = $settings->yPadding;
     }
 
     /* Draw title */
-    DrawText($canvas, floor(ImageWidth($canvas)/2.0 - GetTextWidth($settings->title)/2.0), floor($yPadding/3.0), $settings->title, GetBlack());
+    DrawText($canvas, floor($settings->width/2.0 - GetTextWidth($settings->title)/2.0), floor($yPadding/3.0), $settings->title, GetBlack());
 
     /* Draw grid */
     $xPixelMin = $xPadding;
     $yPixelMin = $yPadding;
-    $xPixelMax = ImageWidth($canvas) - $xPadding;
-    $yPixelMax = ImageHeight($canvas) - $yPadding;
+    $xPixelMax = $settings->width - $xPadding;
+    $yPixelMax = $settings->height - $yPadding;
     $xLengthPixels = $xPixelMax - $xPixelMin;
     $yLengthPixels = $yPixelMax - $yPixelMin;
     DrawRectangle1px($canvas, $xPixelMin, $yPixelMin, $xLengthPixels, $yLengthPixels, $settings->gridColor);
@@ -683,8 +698,8 @@ if($settings->yAxisLeft){
     }
 
     /* Draw origin axis titles. */
-    DrawTextUpwards($canvas, 10.0, floor($originTextYPixels - GetTextWidth($settings->xLabel)/2.0), $settings->xLabel, GetBlack());
-    DrawText($canvas, floor($originTextXPixels - GetTextWidth($settings->yLabel)/2.0), $yPixelMax + $axisLabelPadding, $settings->yLabel, GetBlack());
+    DrawTextUpwards($canvas, 10.0, floor($originTextYPixels - GetTextWidth($settings->yLabel)/2.0), $settings->yLabel, GetBlack());
+    DrawText($canvas, floor($originTextXPixels - GetTextWidth($settings->xLabel)/2.0), $yPixelMax + $axisLabelPadding, $settings->xLabel, GetBlack());
 
     /* X-grid-markers */
     for($i = 0.0; $i < count($xGridPositions); $i = $i + 1.0){
@@ -824,6 +839,41 @@ if($settings->yAxisLeft){
   }
 
   return $success;
+}
+function ComputeBoundariesBasedOnSettings($settings, $boundaries){
+
+  if(count($settings->scatterPlotSeries) >= 1.0){
+    $xMin = GetMinimum($settings->scatterPlotSeries[0.0]->xs);
+    $xMax = GetMaximum($settings->scatterPlotSeries[0.0]->xs);
+    $yMin = GetMinimum($settings->scatterPlotSeries[0.0]->ys);
+    $yMax = GetMaximum($settings->scatterPlotSeries[0.0]->ys);
+  }else{
+    $xMin = -10.0;
+    $xMax = 10.0;
+    $yMin = -10.0;
+    $yMax = 10.0;
+  }
+
+  if( !$settings->autoBoundaries ){
+    $xMin = $settings->xMin;
+    $xMax = $settings->xMax;
+    $yMin = $settings->yMin;
+    $yMax = $settings->yMax;
+  }else{
+    for($plot = 1.0; $plot < count($settings->scatterPlotSeries); $plot = $plot + 1.0){
+      $sp = $settings->scatterPlotSeries[$plot];
+
+      $xMin = min($xMin, GetMinimum($sp->xs));
+      $xMax = max($xMax, GetMaximum($sp->xs));
+      $yMin = min($yMin, GetMinimum($sp->ys));
+      $yMax = max($yMax, GetMaximum($sp->ys));
+    }
+  }
+
+  $boundaries->x1 = $xMin;
+  $boundaries->y1 = $yMin;
+  $boundaries->x2 = $xMax;
+  $boundaries->y2 = $yMax;
 }
 function ScatterPlotFromSettingsValid($settings){
 
@@ -1279,8 +1329,6 @@ function test(){
 
   $imageReference = CreateRGBABitmapImageReference();
 
-  $scatterPlotSettings = GetDefaultScatterPlotSettings();
-
   $labels = new stdClass();
   $labelPriorities = new stdClass();
 
@@ -1336,7 +1384,118 @@ function test(){
 
   $imageReference->image = DrawBarPlot(800.0, 600.0, $ys);
 
+  TestMapping($failures);
+  TestMapping2($failures);
+
   return $failures->numberValue;
+}
+function TestMapping($failures){
+
+  $series = GetDefaultScatterPlotSeriesSettings();
+
+  $series->xs = array_fill(0, 5.0, 0);
+  $series->xs[0.0] = -2.0;
+  $series->xs[1.0] = -1.0;
+  $series->xs[2.0] = 0.0;
+  $series->xs[3.0] = 1.0;
+  $series->xs[4.0] = 2.0;
+  $series->ys = array_fill(0, 5.0, 0);
+  $series->ys[0.0] = -2.0;
+  $series->ys[1.0] = -1.0;
+  $series->ys[2.0] = -2.0;
+  $series->ys[3.0] = -1.0;
+  $series->ys[4.0] = 2.0;
+  $series->linearInterpolation = true;
+  $series->lineType = str_split("dashed");
+  $series->lineThickness = 2.0;
+  $series->color = GetGray(0.3);
+
+  $settings = GetDefaultScatterPlotSettings();
+  $settings->width = 600.0;
+  $settings->height = 400.0;
+  $settings->autoBoundaries = true;
+  $settings->autoPadding = true;
+  $settings->title = str_split("x^2 - 2");
+  $settings->xLabel = str_split("X axis");
+  $settings->yLabel = str_split("Y axis");
+  $settings->scatterPlotSeries = array_fill(0, 1.0, 0);
+  $settings->scatterPlotSeries[0.0] = $series;
+
+  $imageReference = CreateRGBABitmapImageReference();
+  DrawScatterPlotFromSettings($imageReference, $settings);
+
+  $x1 = MapXCoordinateAutoSettings(-1.0, $imageReference->image, $series->xs);
+  $y1 = MapYCoordinateAutoSettings(-1.0, $imageReference->image, $series->ys);
+
+  AssertEquals($x1, 180.0, $failures);
+  AssertEquals($y1, 280.0, $failures);
+}
+function TestMapping2($failures){
+
+  $points = 300.0;
+  $w = 600.0*2.0;
+  $h = 300.0*2.0;
+  $xMin = 0.0;
+  $xMax = 150.0;
+  $yMin = 0.0;
+  $yMax = 1.0;
+
+  $xs = array_fill(0, $points, 0);
+  $ys = array_fill(0, $points, 0);
+  $xs2 = array_fill(0, $points, 0);
+  $ys2 = array_fill(0, $points, 0);
+
+  for($i = 0.0; $i < $points; $i = $i + 1.0){
+    $x = $xMin + ($xMax - $xMin)/($points - 1.0)*$i;
+    /* points - 1d is to ensure both extremeties are included. */
+    $y = $x/($x + 7.0);
+
+    $xs[$i] = $x;
+    $ys[$i] = $y;
+
+    $y = 1.4*$x/($x + 7.0)*(1.0 - (atan(($x/1.5 - 30.0)/5.0)/1.6 + 1.0)/2.0);
+
+    $xs2[$i] = $x;
+    $ys2[$i] = $y;
+  }
+
+  $settings = GetDefaultScatterPlotSettings();
+
+  $settings->scatterPlotSeries = array_fill(0, 2.0, 0);
+  $settings->scatterPlotSeries[0.0] = new stdClass();
+  $settings->scatterPlotSeries[0.0]->xs = $xs;
+  $settings->scatterPlotSeries[0.0]->ys = $ys;
+  $settings->scatterPlotSeries[0.0]->linearInterpolation = true;
+  $settings->scatterPlotSeries[0.0]->lineType = str_split("solid");
+  $settings->scatterPlotSeries[0.0]->lineThickness = 3.0;
+  $settings->scatterPlotSeries[0.0]->color = CreateRGBColor(1.0, 0.0, 0.0);
+  $settings->scatterPlotSeries[1.0] = new stdClass();
+  $settings->scatterPlotSeries[1.0]->xs = $xs2;
+  $settings->scatterPlotSeries[1.0]->ys = $ys2;
+  $settings->scatterPlotSeries[1.0]->linearInterpolation = true;
+  $settings->scatterPlotSeries[1.0]->lineType = str_split("solid");
+  $settings->scatterPlotSeries[1.0]->lineThickness = 3.0;
+  $settings->scatterPlotSeries[1.0]->color = CreateRGBColor(0.0, 0.0, 1.0);
+  $settings->autoBoundaries = false;
+  $settings->xMin = $xMin;
+  $settings->xMax = $xMax;
+  $settings->yMin = $yMin;
+  $settings->yMax = $yMax;
+  $settings->yLabel = array();
+  $settings->xLabel = str_split("Features");
+  $settings->title = array();
+  $settings->width = $w;
+  $settings->height = $h;
+
+  $canvasReference = CreateRGBABitmapImageReference();
+
+  DrawScatterPlotFromSettings($canvasReference, $settings);
+
+  $x1 = MapXCoordinateBasedOnSettings(27.0, $settings);
+  $y1 = MapYCoordinateBasedOnSettings(1.0, $settings);
+
+  AssertEquals(floor($x1), 292.0, $failures);
+  AssertEquals($y1, 60.0, $failures);
 }
 function GetBlack(){
   $black = new stdClass();
