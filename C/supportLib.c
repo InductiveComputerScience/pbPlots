@@ -20,6 +20,7 @@ void WriteToFile(double *data, size_t dataLength, char *filename){
 
 	FILE* file = fopen(filename, "wb");
 	fwrite(bytes, 1, dataLength, file);
+	fclose(file);
 
 	free(bytes);
 }
