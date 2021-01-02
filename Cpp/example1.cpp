@@ -1,6 +1,8 @@
 #include "pbPlots.hpp"
 #include "supportLib.hpp"
 
+using namespace std;
+
 int main(){
 	RGBABitmapImageReference *imageReference = CreateRGBABitmapImageReference();
 

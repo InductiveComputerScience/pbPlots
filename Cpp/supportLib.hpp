@@ -3,8 +3,6 @@
 #include <iostream>
 #include <fstream>
 
-using namespace std;
-
-unsigned char *DoubleArrayToByteArray(vector<double> *data);
-void WriteToFile(vector<double> *data, string filename);
-vector<double> *ByteArrayToDoubleArray(vector<unsigned char> *data);
+unsigned char *DoubleArrayToByteArray(std::vector<double> *data);
+void WriteToFile(std::vector<double> *data, std::string filename);
+std::vector<double> *ByteArrayToDoubleArray(std::vector<unsigned char> *data);

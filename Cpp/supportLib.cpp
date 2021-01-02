@@ -1,5 +1,7 @@
 #include "supportLib.hpp"
 
+using namespace std;
+
 unsigned char *DoubleArrayToByteArray(vector<double> *data){
 	unsigned char *out;
 	size_t i;

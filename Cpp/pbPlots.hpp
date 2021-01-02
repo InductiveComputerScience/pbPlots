@@ -1,11 +1,11 @@
+// Downloaded from https://repo.progsbase.com - Code Developed Using progsbase.
+
 #include <cmath>
 #include <cstring>
 #include <vector>
 #include <cwchar>
 
-using namespace std;
-
-#define toVector(s) (new vector<wchar_t> ((s), (s) + wcslen(s)))
+#define toVector(s) (new std::vector<wchar_t> ((s), (s) + wcslen(s)))
 
 struct RGBABitmapImageReference;
 
@@ -76,16 +76,16 @@ struct Rectangle{
 
 struct ScatterPlotSeries{
   bool linearInterpolation;
-  vector<wchar_t> *pointType;
-  vector<wchar_t> *lineType;
+  std::vector<wchar_t> *pointType;
+  std::vector<wchar_t> *lineType;
   double lineThickness;
-  vector<double> *xs;
-  vector<double> *ys;
+  std::vector<double> *xs;
+  std::vector<double> *ys;
   RGBA *color;
 };
 
 struct ScatterPlotSettings{
-  vector<ScatterPlotSeries*> *scatterPlotSeries;
+  std::vector<ScatterPlotSeries*> *scatterPlotSeries;
   bool autoBoundaries;
   double xMax;
   double xMin;
@@ -94,9 +94,9 @@ struct ScatterPlotSettings{
   bool autoPadding;
   double xPadding;
   double yPadding;
-  vector<wchar_t> *xLabel;
-  vector<wchar_t> *yLabel;
-  vector<wchar_t> *title;
+  std::vector<wchar_t> *xLabel;
+  std::vector<wchar_t> *yLabel;
+  std::vector<wchar_t> *title;
   bool showGrid;
   RGBA *gridColor;
   bool xAxisAuto;
@@ -110,7 +110,7 @@ struct ScatterPlotSettings{
 };
 
 struct BarPlotSeries{
-  vector<double> *ys;
+  std::vector<double> *ys;
   RGBA *color;
 };
 
@@ -123,18 +123,18 @@ struct BarPlotSettings{
   bool autoPadding;
   double xPadding;
   double yPadding;
-  vector<wchar_t> *title;
+  std::vector<wchar_t> *title;
   bool showGrid;
   RGBA *gridColor;
-  vector<BarPlotSeries*> *barPlotSeries;
-  vector<wchar_t> *yLabel;
+  std::vector<BarPlotSeries*> *barPlotSeries;
+  std::vector<wchar_t> *yLabel;
   bool autoColor;
   bool grayscaleAutoColor;
   bool autoSpacing;
   double groupSeparation;
   double barSeparation;
   bool autoLabels;
-  vector<StringReference*> *xLabels;
+  std::vector<StringReference*> *xLabels;
   bool barBorder;
 };
 
@@ -146,15 +146,15 @@ struct RGBA{
 };
 
 struct RGBABitmap{
-  vector<RGBA*> *y;
+  std::vector<RGBA*> *y;
 };
 
 struct RGBABitmapImage{
-  vector<RGBABitmap*> *x;
+  std::vector<RGBABitmap*> *x;
 };
 
 struct BooleanArrayReference{
-  vector<bool> *booleanArray;
+  std::vector<bool> *booleanArray;
 };
 
 struct BooleanReference{
@@ -166,7 +166,7 @@ struct CharacterReference{
 };
 
 struct NumberArrayReference{
-  vector<double> *numberArray;
+  std::vector<double> *numberArray;
 };
 
 struct NumberReference{
@@ -174,17 +174,17 @@ struct NumberReference{
 };
 
 struct StringArrayReference{
-  vector<StringReference*> *stringArray;
+  std::vector<StringReference*> *stringArray;
 };
 
 struct StringReference{
-  vector<wchar_t> *string;
+  std::vector<wchar_t> *string;
 };
 
 struct Chunk{
   double length;
-  vector<wchar_t> *type;
-  vector<double> *data;
+  std::vector<wchar_t> *type;
+  std::vector<double> *data;
   double crc;
 };
 
@@ -203,7 +203,7 @@ struct PHYS{
 };
 
 struct PNGImage{
-  vector<double> *signature;
+  std::vector<double> *signature;
   IHDR *ihdr;
   ZLIBStruct *zlibStruct;
   bool physPresent;
@@ -218,13 +218,13 @@ struct ZLIBStruct{
   double FCHECK;
   double FDICT;
   double FLEVEL;
-  vector<double> *CompressedDataBlocks;
+  std::vector<double> *CompressedDataBlocks;
   double Adler32CheckValue;
 };
 
 struct LinkedListNodeStrings{
   bool end;
-  vector<wchar_t> *value;
+  std::vector<wchar_t> *value;
   LinkedListNodeStrings *next;
 };
 
@@ -256,7 +256,7 @@ struct LinkedListNodeCharacters{
 };
 
 struct DynamicArrayNumbers{
-  vector<double> *array;
+  std::vector<double> *array;
   double length;
 };
 
@@ -264,7 +264,7 @@ bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, Numb
 double IncrementFromCoordinates(double x1, double y1, double x2, double y2);
 double InterceptFromCoordinates(double x1, double y1, double x2, double y2);
 
-vector<RGBA*> *Get8HighContrastColors();
+std::vector<RGBA*> *Get8HighContrastColors();
 
 void DrawFilledRectangleWithBorder(RGBABitmapImage *image, double x, double y, double w, double h, RGBA *borderColor, RGBA *fillColor);
 RGBABitmapImageReference *CreateRGBABitmapImageReference();
@@ -273,35 +273,35 @@ bool RectanglesOverlap(Rectangle *r1, Rectangle *r2);
 Rectangle *CreateRectangle(double x1, double y1, double x2, double y2);
 void CopyRectangleValues(Rectangle *rd, Rectangle *rs);
 
-void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, double xPixelMin, double xPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, vector<double> *xGridPositions, StringArrayReference *xLabels, NumberArrayReference *xLabelPriorities, vector<Rectangle*> *occupied, bool textOnBottom);
-void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, double yPixelMin, double yPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, vector<double> *yGridPositions, StringArrayReference *yLabels, NumberArrayReference *yLabelPriorities, vector<Rectangle*> *occupied, bool textOnLeft);
-vector<double> *ComputeGridLinePositions(double cMin, double cMax, StringArrayReference *labels, NumberArrayReference *priorities);
+void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, double xPixelMin, double xPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, std::vector<double> *xGridPositions, StringArrayReference *xLabels, NumberArrayReference *xLabelPriorities, std::vector<Rectangle*> *occupied, bool textOnBottom);
+void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, double yPixelMin, double yPixelMax, NumberReference *nextRectangle, RGBA *gridLabelColor, RGBABitmapImage *canvas, std::vector<double> *yGridPositions, StringArrayReference *yLabels, NumberArrayReference *yLabelPriorities, std::vector<Rectangle*> *occupied, bool textOnLeft);
+std::vector<double> *ComputeGridLinePositions(double cMin, double cMax, StringArrayReference *labels, NumberArrayReference *priorities);
 double MapYCoordinate(double y, double yMin, double yMax, double yPixelMin, double yPixelMax);
 double MapXCoordinate(double x, double xMin, double xMax, double xPixelMin, double xPixelMax);
-double MapXCoordinateAutoSettings(double x, RGBABitmapImage *image, vector<double> *xs);
-double MapYCoordinateAutoSettings(double y, RGBABitmapImage *image, vector<double> *ys);
+double MapXCoordinateAutoSettings(double x, RGBABitmapImage *image, std::vector<double> *xs);
+double MapYCoordinateAutoSettings(double y, RGBABitmapImage *image, std::vector<double> *ys);
 double MapXCoordinateBasedOnSettings(double x, ScatterPlotSettings *settings);
 double MapYCoordinateBasedOnSettings(double y, ScatterPlotSettings *settings);
 double GetDefaultPaddingPercentage();
 
-void DrawText(RGBABitmapImage *canvas, double x, double y, vector<wchar_t> *text, RGBA *color);
-void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, vector<wchar_t> *text, RGBA *color);
+void DrawText(RGBABitmapImage *canvas, double x, double y, std::vector<wchar_t> *text, RGBA *color);
+void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, std::vector<wchar_t> *text, RGBA *color);
 
 ScatterPlotSettings *GetDefaultScatterPlotSettings();
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings();
-void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, vector<double> *xs, vector<double> *ys);
+void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, std::vector<double> *xs, std::vector<double> *ys);
 bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings);
 void ComputeBoundariesBasedOnSettings(ScatterPlotSettings *settings, Rectangle *boundaries);
 bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings);
 
 BarPlotSettings *GetDefaultBarPlotSettings();
 BarPlotSeries *GetDefaultBarPlotSeriesSettings();
-RGBABitmapImage *DrawBarPlot(double width, double height, vector<double> *ys);
+RGBABitmapImage *DrawBarPlot(double width, double height, std::vector<double> *ys);
 bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings);
 bool BarPlotSettingsIsValid(BarPlotSettings *settings);
 
-double GetMinimum(vector<double> *data);
-double GetMaximum(vector<double> *data);
+double GetMinimum(std::vector<double> *data);
+double GetMaximum(std::vector<double> *data);
 
 double RoundToDigits(double element, double digitsAfterPoint);
 
@@ -354,37 +354,37 @@ void DrawFilledTriangle(RGBABitmapImage *canvas, double xCenter, double yCenter,
 void DrawLine(RGBABitmapImage *canvas, double x1, double y1, double x2, double y2, double thickness, RGBA *color);
 void DrawLineBresenhamsAlgorithmThick(RGBABitmapImage *canvas, double x1, double y1, double x2, double y2, double thickness, RGBA *color);
 void DrawLineBresenhamsAlgorithm(RGBABitmapImage *canvas, double x1, double y1, double x2, double y2, RGBA *color);
-void DrawLineBresenhamsAlgorithmThickPatterned(RGBABitmapImage *canvas, double x1, double y1, double x2, double y2, double thickness, vector<bool> *pattern, NumberReference *offset, RGBA *color);
+void DrawLineBresenhamsAlgorithmThickPatterned(RGBABitmapImage *canvas, double x1, double y1, double x2, double y2, double thickness, std::vector<bool> *pattern, NumberReference *offset, RGBA *color);
 
-vector<bool> *GetLinePattern5();
-vector<bool> *GetLinePattern4();
-vector<bool> *GetLinePattern3();
-vector<bool> *GetLinePattern2();
-vector<bool> *GetLinePattern1();
+std::vector<bool> *GetLinePattern5();
+std::vector<bool> *GetLinePattern4();
+std::vector<bool> *GetLinePattern3();
+std::vector<bool> *GetLinePattern2();
+std::vector<bool> *GetLinePattern1();
 
 RGBABitmapImage *Blur(RGBABitmapImage *src, double pixels);
 RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels);
 
-vector<wchar_t> *CreateStringScientificNotationDecimalFromNumber(double decimal);
-vector<wchar_t> *CreateStringDecimalFromNumber(double decimal);
+std::vector<wchar_t> *CreateStringScientificNotationDecimalFromNumber(double decimal);
+std::vector<wchar_t> *CreateStringDecimalFromNumber(double decimal);
 bool CreateStringFromNumberWithCheck(double decimal, double base, StringReference *stringReference);
 double GetMaximumDigitsForBase(double base);
 double GetFirstDigitPosition(double decimal, double base);
 bool GetSingleDigitCharacterFromNumberWithCheck(double c, double base, CharacterReference *characterReference);
-vector<wchar_t> *GetDigitCharacterTable();
+std::vector<wchar_t> *GetDigitCharacterTable();
 
-bool CreateNumberFromDecimalStringWithCheck(vector<wchar_t> *string, NumberReference *decimalReference, StringReference *errorMessage);
-double CreateNumberFromDecimalString(vector<wchar_t> *string);
-bool CreateNumberFromStringWithCheck(vector<wchar_t> *string, double base, NumberReference *numberReference, StringReference *errorMessage);
-double CreateNumberFromParts(double base, bool numberIsPositive, vector<double> *beforePoint, vector<double> *afterPoint, bool exponentIsPositive, vector<double> *exponent);
-bool ExtractPartsFromNumberString(vector<wchar_t> *n, double base, BooleanReference *numberIsPositive, NumberArrayReference *beforePoint, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
-bool ExtractPartsFromNumberStringFromSign(vector<wchar_t> *n, double base, double i, NumberArrayReference *beforePoint, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
-bool ExtractPartsFromNumberStringFromPointOrExponent(vector<wchar_t> *n, double base, double i, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
-bool ExtractPartsFromNumberStringFromExponent(vector<wchar_t> *n, double base, double i, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
+bool CreateNumberFromDecimalStringWithCheck(std::vector<wchar_t> *string, NumberReference *decimalReference, StringReference *errorMessage);
+double CreateNumberFromDecimalString(std::vector<wchar_t> *string);
+bool CreateNumberFromStringWithCheck(std::vector<wchar_t> *string, double base, NumberReference *numberReference, StringReference *errorMessage);
+double CreateNumberFromParts(double base, bool numberIsPositive, std::vector<double> *beforePoint, std::vector<double> *afterPoint, bool exponentIsPositive, std::vector<double> *exponent);
+bool ExtractPartsFromNumberString(std::vector<wchar_t> *n, double base, BooleanReference *numberIsPositive, NumberArrayReference *beforePoint, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
+bool ExtractPartsFromNumberStringFromSign(std::vector<wchar_t> *n, double base, double i, NumberArrayReference *beforePoint, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
+bool ExtractPartsFromNumberStringFromPointOrExponent(std::vector<wchar_t> *n, double base, double i, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
+bool ExtractPartsFromNumberStringFromExponent(std::vector<wchar_t> *n, double base, double i, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
 double GetNumberFromNumberCharacterForBase(wchar_t c, double base);
 bool CharacterIsNumberCharacterInBase(wchar_t c, double base);
-vector<double> *StringToNumberArray(vector<wchar_t> *str);
-bool StringToNumberArrayWithCheck(vector<wchar_t> *str, NumberArrayReference *numberArrayReference, StringReference *errorMessage);
+std::vector<double> *StringToNumberArray(std::vector<wchar_t> *str);
+bool StringToNumberArrayWithCheck(std::vector<wchar_t> *str, NumberArrayReference *numberArrayReference, StringReference *errorMessage);
 
 double Negate(double x);
 double Positive(double x);
@@ -441,158 +441,158 @@ double HypergeometricDirect(double a, double b, double c, double z, double maxIt
 double BernouilliNumber(double n);
 double AkiyamaTanigawaAlgorithm(double n);
 
-vector<double> *aStringToNumberArray(vector<wchar_t> *string);
-vector<wchar_t> *aNumberArrayToString(vector<double> *array);
-bool aNumberArraysEqual(vector<double> *a, vector<double> *b);
-bool aBooleanArraysEqual(vector<bool> *a, vector<bool> *b);
-bool aStringsEqual(vector<wchar_t> *a, vector<wchar_t> *b);
-void aFillNumberArray(vector<double> *a, double value);
-void aFillString(vector<wchar_t> *a, wchar_t value);
-void aFillBooleanArray(vector<bool> *a, bool value);
-bool aFillNumberArrayRange(vector<double> *a, double value, double from, double to);
-bool aFillBooleanArrayRange(vector<bool> *a, bool value, double from, double to);
-bool aFillStringRange(vector<wchar_t> *a, wchar_t value, double from, double to);
-vector<double> *aCopyNumberArray(vector<double> *a);
-vector<bool> *aCopyBooleanArray(vector<bool> *a);
-vector<wchar_t> *aCopyString(vector<wchar_t> *a);
-bool aCopyNumberArrayRange(vector<double> *a, double from, double to, NumberArrayReference *copyReference);
-bool aCopyBooleanArrayRange(vector<bool> *a, double from, double to, BooleanArrayReference *copyReference);
-bool aCopyStringRange(vector<wchar_t> *a, double from, double to, StringReference *copyReference);
+std::vector<double> *aStringToNumberArray(std::vector<wchar_t> *string);
+std::vector<wchar_t> *aNumberArrayToString(std::vector<double> *array);
+bool aNumberArraysEqual(std::vector<double> *a, std::vector<double> *b);
+bool aBooleanArraysEqual(std::vector<bool> *a, std::vector<bool> *b);
+bool aStringsEqual(std::vector<wchar_t> *a, std::vector<wchar_t> *b);
+void aFillNumberArray(std::vector<double> *a, double value);
+void aFillString(std::vector<wchar_t> *a, wchar_t value);
+void aFillBooleanArray(std::vector<bool> *a, bool value);
+bool aFillNumberArrayRange(std::vector<double> *a, double value, double from, double to);
+bool aFillBooleanArrayRange(std::vector<bool> *a, bool value, double from, double to);
+bool aFillStringRange(std::vector<wchar_t> *a, wchar_t value, double from, double to);
+std::vector<double> *aCopyNumberArray(std::vector<double> *a);
+std::vector<bool> *aCopyBooleanArray(std::vector<bool> *a);
+std::vector<wchar_t> *aCopyString(std::vector<wchar_t> *a);
+bool aCopyNumberArrayRange(std::vector<double> *a, double from, double to, NumberArrayReference *copyReference);
+bool aCopyBooleanArrayRange(std::vector<bool> *a, double from, double to, BooleanArrayReference *copyReference);
+bool aCopyStringRange(std::vector<wchar_t> *a, double from, double to, StringReference *copyReference);
 bool aIsLastElement(double length, double index);
-vector<double> *aCreateNumberArray(double length, double value);
-vector<bool> *aCreateBooleanArray(double length, bool value);
-vector<wchar_t> *aCreateString(double length, wchar_t value);
-void aSwapElementsOfNumberArray(vector<double> *A, double ai, double bi);
+std::vector<double> *aCreateNumberArray(double length, double value);
+std::vector<bool> *aCreateBooleanArray(double length, bool value);
+std::vector<wchar_t> *aCreateString(double length, wchar_t value);
+void aSwapElementsOfNumberArray(std::vector<double> *A, double ai, double bi);
 void aSwapElementsOfStringArray(StringArrayReference *A, double ai, double bi);
-void aReverseNumberArray(vector<double> *array);
+void aReverseNumberArray(std::vector<double> *array);
 
 
 BooleanReference *CreateBooleanReference(bool value);
-BooleanArrayReference *CreateBooleanArrayReference(vector<bool> *value);
+BooleanArrayReference *CreateBooleanArrayReference(std::vector<bool> *value);
 BooleanArrayReference *CreateBooleanArrayReferenceLengthValue(double length, bool value);
 void FreeBooleanArrayReference(BooleanArrayReference *booleanArrayReference);
 CharacterReference *CreateCharacterReference(wchar_t value);
 NumberReference *CreateNumberReference(double value);
-NumberArrayReference *CreateNumberArrayReference(vector<double> *value);
+NumberArrayReference *CreateNumberArrayReference(std::vector<double> *value);
 NumberArrayReference *CreateNumberArrayReferenceLengthValue(double length, double value);
 void FreeNumberArrayReference(NumberArrayReference *numberArrayReference);
-StringReference *CreateStringReference(vector<wchar_t> *value);
+StringReference *CreateStringReference(std::vector<wchar_t> *value);
 StringReference *CreateStringReferenceLengthValue(double length, wchar_t value);
 void FreeStringReference(StringReference *stringReference);
-StringArrayReference *CreateStringArrayReference(vector<StringReference*> *strings);
-StringArrayReference *CreateStringArrayReferenceLengthValue(double length, vector<wchar_t> *value);
+StringArrayReference *CreateStringArrayReference(std::vector<StringReference*> *strings);
+StringArrayReference *CreateStringArrayReferenceLengthValue(double length, std::vector<wchar_t> *value);
 void FreeStringArrayReference(StringArrayReference *stringArrayReference);
 
-vector<wchar_t> *DigitDataBase16();
+std::vector<wchar_t> *DigitDataBase16();
 void DrawDigitCharacter(RGBABitmapImage *image, double topx, double topy, double digit);
 
-vector<wchar_t> *GetPixelFontData();
+std::vector<wchar_t> *GetPixelFontData();
 void DrawAsciiCharacter(RGBABitmapImage *image, double topx, double topy, wchar_t a, RGBA *color);
-double GetTextWidth(vector<wchar_t> *text);
-double GetTextHeight(vector<wchar_t> *text);
+double GetTextWidth(std::vector<wchar_t> *text);
+double GetTextHeight(std::vector<wchar_t> *text);
 
 void AssertFalse(bool b, NumberReference *failures);
 void AssertTrue(bool b, NumberReference *failures);
 void AssertEquals(double a, double b, NumberReference *failures);
 void AssertBooleansEqual(bool a, bool b, NumberReference *failures);
 void AssertCharactersEqual(wchar_t a, wchar_t b, NumberReference *failures);
-void AssertStringEquals(vector<wchar_t> *a, vector<wchar_t> *b, NumberReference *failures);
-void AssertNumberArraysEqual(vector<double> *a, vector<double> *b, NumberReference *failures);
-void AssertBooleanArraysEqual(vector<bool> *a, vector<bool> *b, NumberReference *failures);
-void AssertStringArraysEqual(vector<StringReference*> *a, vector<StringReference*> *b, NumberReference *failures);
+void AssertStringEquals(std::vector<wchar_t> *a, std::vector<wchar_t> *b, NumberReference *failures);
+void AssertNumberArraysEqual(std::vector<double> *a, std::vector<double> *b, NumberReference *failures);
+void AssertBooleanArraysEqual(std::vector<bool> *a, std::vector<bool> *b, NumberReference *failures);
+void AssertStringArraysEqual(std::vector<StringReference*> *a, std::vector<StringReference*> *b, NumberReference *failures);
 
-vector<double> *ConvertToPNG(RGBABitmapImage *image);
-vector<double> *ConvertToPNGGrayscale(RGBABitmapImage *image);
+std::vector<double> *ConvertToPNG(RGBABitmapImage *image);
+std::vector<double> *ConvertToPNGGrayscale(RGBABitmapImage *image);
 PHYS *PysicsHeader(double pixelsPerMeter);
-vector<double> *ConvertToPNGWithOptions(RGBABitmapImage *image, double colorType, bool setPhys, double pixelsPerMeter, double compressionLevel);
-vector<double> *PNGSerializeChunks(PNGImage *png);
+std::vector<double> *ConvertToPNGWithOptions(RGBABitmapImage *image, double colorType, bool setPhys, double pixelsPerMeter, double compressionLevel);
+std::vector<double> *PNGSerializeChunks(PNGImage *png);
 double PNGIDATLength(PNGImage *png);
 double PNGHeaderLength();
-vector<double> *GetPNGColorData(RGBABitmapImage *image);
-vector<double> *GetPNGColorDataGreyscale(RGBABitmapImage *image);
+std::vector<double> *GetPNGColorData(RGBABitmapImage *image);
+std::vector<double> *GetPNGColorDataGreyscale(RGBABitmapImage *image);
 IHDR *PNGHeader(RGBABitmapImage *image, double colortype);
-vector<double> *PNGSignature();
-vector<double> *PNGReadDataChunks(vector<Chunk*> *cs);
-bool PNGReadHeader(RGBABitmapImage *image, vector<Chunk*> *cs, StringReference *errorMessages);
-vector<Chunk*> *PNGReadChunks(vector<double> *data, NumberReference *position);
-Chunk *PNGReadChunk(vector<double> *data, NumberReference *position);
+std::vector<double> *PNGSignature();
+std::vector<double> *PNGReadDataChunks(std::vector<Chunk*> *cs);
+bool PNGReadHeader(RGBABitmapImage *image, std::vector<Chunk*> *cs, StringReference *errorMessages);
+std::vector<Chunk*> *PNGReadChunks(std::vector<double> *data, NumberReference *position);
+Chunk *PNGReadChunk(std::vector<double> *data, NumberReference *position);
 
-void WriteStringToStingStream(vector<wchar_t> *stream, NumberReference *index, vector<wchar_t> *src);
-void WriteCharacterToStingStream(vector<wchar_t> *stream, NumberReference *index, wchar_t src);
-void WriteBooleanToStingStream(vector<wchar_t> *stream, NumberReference *index, bool src);
+void WriteStringToStingStream(std::vector<wchar_t> *stream, NumberReference *index, std::vector<wchar_t> *src);
+void WriteCharacterToStingStream(std::vector<wchar_t> *stream, NumberReference *index, wchar_t src);
+void WriteBooleanToStingStream(std::vector<wchar_t> *stream, NumberReference *index, bool src);
 
-bool SubstringWithCheck(vector<wchar_t> *string, double from, double to, StringReference *stringReference);
-vector<wchar_t> *Substring(vector<wchar_t> *string, double from, double to);
-vector<wchar_t> *AppendString(vector<wchar_t> *s1, vector<wchar_t> *s2);
-vector<wchar_t> *ConcatenateString(vector<wchar_t> *s1, vector<wchar_t> *s2);
-vector<wchar_t> *AppendCharacter(vector<wchar_t> *string, wchar_t c);
-vector<wchar_t> *ConcatenateCharacter(vector<wchar_t> *string, wchar_t c);
-vector<StringReference*> *SplitByCharacter(vector<wchar_t> *toSplit, wchar_t splitBy);
-bool IndexOfCharacter(vector<wchar_t> *string, wchar_t character, NumberReference *indexReference);
-bool SubstringEqualsWithCheck(vector<wchar_t> *string, double from, vector<wchar_t> *substring, BooleanReference *equalsReference);
-bool SubstringEquals(vector<wchar_t> *string, double from, vector<wchar_t> *substring);
-bool IndexOfString(vector<wchar_t> *string, vector<wchar_t> *substring, NumberReference *indexReference);
-bool ContainsCharacter(vector<wchar_t> *string, wchar_t character);
-bool ContainsString(vector<wchar_t> *string, vector<wchar_t> *substring);
-void ToUpperCase(vector<wchar_t> *string);
-void ToLowerCase(vector<wchar_t> *string);
-bool EqualsIgnoreCase(vector<wchar_t> *a, vector<wchar_t> *b);
-vector<wchar_t> *ReplaceString(vector<wchar_t> *string, vector<wchar_t> *toReplace, vector<wchar_t> *replaceWith);
-vector<wchar_t> *ReplaceCharacter(vector<wchar_t> *string, wchar_t toReplace, wchar_t replaceWith);
-vector<wchar_t> *Trim(vector<wchar_t> *string);
-bool StartsWith(vector<wchar_t> *string, vector<wchar_t> *start);
-bool EndsWith(vector<wchar_t> *string, vector<wchar_t> *end);
-vector<StringReference*> *SplitByString(vector<wchar_t> *toSplit, vector<wchar_t> *splitBy);
-bool StringIsBefore(vector<wchar_t> *a, vector<wchar_t> *b);
+bool SubstringWithCheck(std::vector<wchar_t> *string, double from, double to, StringReference *stringReference);
+std::vector<wchar_t> *Substring(std::vector<wchar_t> *string, double from, double to);
+std::vector<wchar_t> *AppendString(std::vector<wchar_t> *s1, std::vector<wchar_t> *s2);
+std::vector<wchar_t> *ConcatenateString(std::vector<wchar_t> *s1, std::vector<wchar_t> *s2);
+std::vector<wchar_t> *AppendCharacter(std::vector<wchar_t> *string, wchar_t c);
+std::vector<wchar_t> *ConcatenateCharacter(std::vector<wchar_t> *string, wchar_t c);
+std::vector<StringReference*> *SplitByCharacter(std::vector<wchar_t> *toSplit, wchar_t splitBy);
+bool IndexOfCharacter(std::vector<wchar_t> *string, wchar_t character, NumberReference *indexReference);
+bool SubstringEqualsWithCheck(std::vector<wchar_t> *string, double from, std::vector<wchar_t> *substring, BooleanReference *equalsReference);
+bool SubstringEquals(std::vector<wchar_t> *string, double from, std::vector<wchar_t> *substring);
+bool IndexOfString(std::vector<wchar_t> *string, std::vector<wchar_t> *substring, NumberReference *indexReference);
+bool ContainsCharacter(std::vector<wchar_t> *string, wchar_t character);
+bool ContainsString(std::vector<wchar_t> *string, std::vector<wchar_t> *substring);
+void ToUpperCase(std::vector<wchar_t> *string);
+void ToLowerCase(std::vector<wchar_t> *string);
+bool EqualsIgnoreCase(std::vector<wchar_t> *a, std::vector<wchar_t> *b);
+std::vector<wchar_t> *ReplaceString(std::vector<wchar_t> *string, std::vector<wchar_t> *toReplace, std::vector<wchar_t> *replaceWith);
+std::vector<wchar_t> *ReplaceCharacter(std::vector<wchar_t> *string, wchar_t toReplace, wchar_t replaceWith);
+std::vector<wchar_t> *Trim(std::vector<wchar_t> *string);
+bool StartsWith(std::vector<wchar_t> *string, std::vector<wchar_t> *start);
+bool EndsWith(std::vector<wchar_t> *string, std::vector<wchar_t> *end);
+std::vector<StringReference*> *SplitByString(std::vector<wchar_t> *toSplit, std::vector<wchar_t> *splitBy);
+bool StringIsBefore(std::vector<wchar_t> *a, std::vector<wchar_t> *b);
 
-vector<double> *ReadXbytes(vector<double> *data, NumberReference *position, double length);
-double Read4bytesBE(vector<double> *data, NumberReference *position);
-double Read2bytesBE(vector<double> *data, NumberReference *position);
-double ReadByte(vector<double> *data, NumberReference *position);
-double Read4bytesLE(vector<double> *data, NumberReference *position);
-void WriteByte(vector<double> *data, double b, NumberReference *position);
-void Write2BytesLE(vector<double> *data, double b, NumberReference *position);
-void Write4BytesLE(vector<double> *data, double b, NumberReference *position);
-void Write2BytesBE(vector<double> *data, double b, NumberReference *position);
-void Write4BytesBE(vector<double> *data, double b, NumberReference *position);
-void WriteStringBytes(vector<double> *data, vector<wchar_t> *cs, NumberReference *position);
+std::vector<double> *ReadXbytes(std::vector<double> *data, NumberReference *position, double length);
+double Read4bytesBE(std::vector<double> *data, NumberReference *position);
+double Read2bytesBE(std::vector<double> *data, NumberReference *position);
+double ReadByte(std::vector<double> *data, NumberReference *position);
+double Read4bytesLE(std::vector<double> *data, NumberReference *position);
+void WriteByte(std::vector<double> *data, double b, NumberReference *position);
+void Write2BytesLE(std::vector<double> *data, double b, NumberReference *position);
+void Write4BytesLE(std::vector<double> *data, double b, NumberReference *position);
+void Write2BytesBE(std::vector<double> *data, double b, NumberReference *position);
+void Write4BytesBE(std::vector<double> *data, double b, NumberReference *position);
+void WriteStringBytes(std::vector<double> *data, std::vector<wchar_t> *cs, NumberReference *position);
 
-vector<double> *MakeCRC32Table();
-double UpdateCRC32(double crc, vector<double> *buf, vector<double> *crc_table);
-double CalculateCRC32(vector<double> *buf);
-double CRC32OfInterval(vector<double> *data, double from, double length);
+std::vector<double> *MakeCRC32Table();
+double UpdateCRC32(double crc, std::vector<double> *buf, std::vector<double> *crc_table);
+double CalculateCRC32(std::vector<double> *buf);
+double CRC32OfInterval(std::vector<double> *data, double from, double length);
 
-ZLIBStruct *ZLibCompressNoCompression(vector<double> *data);
-ZLIBStruct *ZLibCompressStaticHuffman(vector<double> *data, double level);
+ZLIBStruct *ZLibCompressNoCompression(std::vector<double> *data);
+ZLIBStruct *ZLibCompressStaticHuffman(std::vector<double> *data, double level);
 
-vector<double> *AddNumber(vector<double> *list, double a);
+std::vector<double> *AddNumber(std::vector<double> *list, double a);
 void AddNumberRef(NumberArrayReference *list, double i);
-vector<double> *RemoveNumber(vector<double> *list, double n);
+std::vector<double> *RemoveNumber(std::vector<double> *list, double n);
 double GetNumberRef(NumberArrayReference *list, double i);
 void RemoveNumberRef(NumberArrayReference *list, double i);
 
-vector<StringReference*> *AddString(vector<StringReference*> *list, StringReference *a);
+std::vector<StringReference*> *AddString(std::vector<StringReference*> *list, StringReference *a);
 void AddStringRef(StringArrayReference *list, StringReference *i);
-vector<StringReference*> *RemoveString(vector<StringReference*> *list, double n);
+std::vector<StringReference*> *RemoveString(std::vector<StringReference*> *list, double n);
 StringReference *GetStringRef(StringArrayReference *list, double i);
 void RemoveStringRef(StringArrayReference *list, double i);
 
-vector<bool> *AddBoolean(vector<bool> *list, bool a);
+std::vector<bool> *AddBoolean(std::vector<bool> *list, bool a);
 void AddBooleanRef(BooleanArrayReference *list, bool i);
-vector<bool> *RemoveBoolean(vector<bool> *list, double n);
+std::vector<bool> *RemoveBoolean(std::vector<bool> *list, double n);
 bool GetBooleanRef(BooleanArrayReference *list, double i);
 void RemoveDecimalRef(BooleanArrayReference *list, double i);
 
 
 LinkedListStrings *CreateLinkedListString();
-void LinkedListAddString(LinkedListStrings *ll, vector<wchar_t> *value);
-vector<StringReference*> *LinkedListStringsToArray(LinkedListStrings *ll);
+void LinkedListAddString(LinkedListStrings *ll, std::vector<wchar_t> *value);
+std::vector<StringReference*> *LinkedListStringsToArray(LinkedListStrings *ll);
 double LinkedListStringsLength(LinkedListStrings *ll);
 void FreeLinkedListString(LinkedListStrings *ll);
 
 
 LinkedListNumbers *CreateLinkedListNumbers();
-vector<LinkedListNumbers*> *CreateLinkedListNumbersArray(double length);
+std::vector<LinkedListNumbers*> *CreateLinkedListNumbersArray(double length);
 void LinkedListAddNumber(LinkedListNumbers *ll, double value);
 double LinkedListNumbersLength(LinkedListNumbers *ll);
 double LinkedListNumbersIndex(LinkedListNumbers *ll, double index);
@@ -600,14 +600,14 @@ void LinkedListInsertNumber(LinkedListNumbers *ll, double index, double value);
 void LinkedListSet(LinkedListNumbers *ll, double index, double value);
 void LinkedListRemoveNumber(LinkedListNumbers *ll, double index);
 void FreeLinkedListNumbers(LinkedListNumbers *ll);
-void FreeLinkedListNumbersArray(vector<LinkedListNumbers*> *lls);
-vector<double> *LinkedListNumbersToArray(LinkedListNumbers *ll);
-LinkedListNumbers *ArrayToLinkedListNumbers(vector<double> *array);
+void FreeLinkedListNumbersArray(std::vector<LinkedListNumbers*> *lls);
+std::vector<double> *LinkedListNumbersToArray(LinkedListNumbers *ll);
+LinkedListNumbers *ArrayToLinkedListNumbers(std::vector<double> *array);
 bool LinkedListNumbersEqual(LinkedListNumbers *a, LinkedListNumbers *b);
 
 LinkedListCharacters *CreateLinkedListCharacter();
 void LinkedListAddCharacter(LinkedListCharacters *ll, wchar_t value);
-vector<wchar_t> *LinkedListCharactersToArray(LinkedListCharacters *ll);
+std::vector<wchar_t> *LinkedListCharactersToArray(LinkedListCharacters *ll);
 double LinkedListCharactersLength(LinkedListCharacters *ll);
 void FreeLinkedListCharacter(LinkedListCharacters *ll);
 
@@ -625,16 +625,16 @@ void DynamicArrayInsertNumber(DynamicArrayNumbers *da, double index, double valu
 void DynamicArraySet(DynamicArrayNumbers *da, double index, double value);
 void DynamicArrayRemoveNumber(DynamicArrayNumbers *da, double index);
 void FreeDynamicArrayNumbers(DynamicArrayNumbers *da);
-vector<double> *DynamicArrayNumbersToArray(DynamicArrayNumbers *da);
-DynamicArrayNumbers *ArrayToDynamicArrayNumbersWithOptimalSize(vector<double> *array);
-DynamicArrayNumbers *ArrayToDynamicArrayNumbers(vector<double> *array);
+std::vector<double> *DynamicArrayNumbersToArray(DynamicArrayNumbers *da);
+DynamicArrayNumbers *ArrayToDynamicArrayNumbersWithOptimalSize(std::vector<double> *array);
+DynamicArrayNumbers *ArrayToDynamicArrayNumbers(std::vector<double> *array);
 bool DynamicArrayNumbersEqual(DynamicArrayNumbers *a, DynamicArrayNumbers *b);
 LinkedListNumbers *DynamicArrayNumbersToLinkedList(DynamicArrayNumbers *da);
 DynamicArrayNumbers *LinkedListToDynamicArrayNumbers(LinkedListNumbers *ll);
 
-vector<wchar_t> *AddCharacter(vector<wchar_t> *list, wchar_t a);
+std::vector<wchar_t> *AddCharacter(std::vector<wchar_t> *list, wchar_t a);
 void AddCharacterRef(StringReference *list, wchar_t i);
-vector<wchar_t> *RemoveCharacter(vector<wchar_t> *list, double n);
+std::vector<wchar_t> *RemoveCharacter(std::vector<wchar_t> *list, double n);
 wchar_t GetCharacterRef(StringReference *list, double i);
 void RemoveCharacterRef(StringReference *list, double i);
 
@@ -673,22 +673,22 @@ double ShiftRight2Byte(double b, double amount);
 double ShiftRightByte(double b, double amount);
 double ShiftRightBytes(double b, double amount, double length);
 
-double ReadNextBit(vector<double> *data, NumberReference *nextbit);
+double ReadNextBit(std::vector<double> *data, NumberReference *nextbit);
 double BitExtract(double b, double fromInc, double toInc);
-double ReadBitRange(vector<double> *data, NumberReference *nextbit, double length);
+double ReadBitRange(std::vector<double> *data, NumberReference *nextbit, double length);
 void SkipToBoundary(NumberReference *nextbit);
-double ReadNextByteBoundary(vector<double> *data, NumberReference *nextbit);
-double Read2bytesByteBoundary(vector<double> *data, NumberReference *nextbit);
+double ReadNextByteBoundary(std::vector<double> *data, NumberReference *nextbit);
+double Read2bytesByteBoundary(std::vector<double> *data, NumberReference *nextbit);
 
-double ComputeAdler32(vector<double> *data);
+double ComputeAdler32(std::vector<double> *data);
 
-vector<double> *DeflateDataStaticHuffman(vector<double> *data, double level);
-void FindMatch(vector<double> *data, double pos, NumberReference *distanceReference, NumberReference *lengthReference, BooleanReference *match, double level);
-vector<double> *GenerateBitReverseLookupTable(double bits);
+std::vector<double> *DeflateDataStaticHuffman(std::vector<double> *data, double level);
+void FindMatch(std::vector<double> *data, double pos, NumberReference *distanceReference, NumberReference *lengthReference, BooleanReference *match, double level);
+std::vector<double> *GenerateBitReverseLookupTable(double bits);
 double ReverseBits(double x, double bits);
-vector<double> *DeflateDataNoCompression(vector<double> *data);
-void GetDeflateStaticHuffmanCode(double b, NumberReference *code, NumberReference *length, vector<double> *bitReverseLookupTable);
+std::vector<double> *DeflateDataNoCompression(std::vector<double> *data);
+void GetDeflateStaticHuffmanCode(double b, NumberReference *code, NumberReference *length, std::vector<double> *bitReverseLookupTable);
 void GetDeflateLengthCode(double length, NumberReference *code, NumberReference *lengthAddition, NumberReference *lengthAdditionLength);
-void GetDeflateDistanceCode(double distance, NumberReference *code, NumberReference *distanceAdditionReference, NumberReference *distanceAdditionLengthReference, vector<double> *bitReverseLookupTable);
-void AppendBitsToBytesLeft(vector<double> *bytes, NumberReference *nextbit, double data, double length);
-void AppendBitsToBytesRight(vector<double> *bytes, NumberReference *nextbit, double data, double length);
+void GetDeflateDistanceCode(double distance, NumberReference *code, NumberReference *distanceAdditionReference, NumberReference *distanceAdditionLengthReference, std::vector<double> *bitReverseLookupTable);
+void AppendBitsToBytesLeft(std::vector<double> *bytes, NumberReference *nextbit, double data, double length);
+void AppendBitsToBytesRight(std::vector<double> *bytes, NumberReference *nextbit, double data, double length);
