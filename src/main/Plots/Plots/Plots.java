@@ -33,8 +33,8 @@ public class Plots {
         settings.xPadding = 0d;
         settings.yPadding = 0d;
         settings.title = "".toCharArray();
-        settings.yLabel = "".toCharArray();
         settings.xLabel = "".toCharArray();
+        settings.yLabel = "".toCharArray();
         settings.scatterPlotSeries = new ScatterPlotSeries[0];
         settings.showGrid = true;
         settings.gridColor = GetGray(0.1);
@@ -83,6 +83,7 @@ public class Plots {
 
     public static boolean DrawScatterPlotFromSettings(RGBABitmapImageReference canvasReference, ScatterPlotSettings settings){
         double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot;
+        Rectangle boundaries;
         double xPadding, yPadding, originXPixels, originYPixels;
         double xPixelMin, yPixelMin, xPixelMax, yPixelMax, xLengthPixels, yLengthPixels, axisLabelPadding;
         NumberReference nextRectangle, x1Ref, y1Ref, x2Ref, y2Ref, patternOffset;
@@ -107,53 +108,43 @@ public class Plots {
 
         if(success){
 
-        if(settings.scatterPlotSeries.length >= 1d) {
-            xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
-            xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
-            yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
-            yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
-        }else{
-            xMin = -10d;
-            xMax = 10d;
-            yMin = -10d;
-            yMax = 10d;
+        boundaries = new Rectangle();
+        ComputeBoundariesBasedOnSettings(settings, boundaries);
+        xMin = boundaries.x1;
+        yMin = boundaries.y1;
+        xMax = boundaries.x2;
+        yMax = boundaries.y2;
+
+        // If zero, set to defaults.
+        if(xMin - xMax == 0){
+            xMin = 0;
+            xMax = 10;
         }
 
-        if (!settings.autoBoundaries) {
-            xMin = settings.xMin;
-            xMax = settings.xMax;
-            yMin = settings.yMin;
-            yMax = settings.yMax;
-        }else{
-            for(plot = 1d; plot < settings.scatterPlotSeries.length; plot = plot + 1d) {
-                sp = settings.scatterPlotSeries[(int) plot];
-
-                xMin = min(xMin, GetMinimum(sp.xs));
-                xMax = max(xMax, GetMaximum(sp.xs));
-                yMin = min(yMin, GetMinimum(sp.ys));
-                yMax = max(yMax, GetMaximum(sp.ys));
-            }
+        if(yMin - yMax == 0){
+            yMin = 0;
+            yMax = 10;
         }
 
         xLength = xMax - xMin;
         yLength = yMax - yMin;
 
         if(settings.autoPadding) {
-            xPadding = floor(GetDefaultPaddingPercentage() * ImageWidth(canvas));
-            yPadding = floor(GetDefaultPaddingPercentage() * ImageHeight(canvas));
+            xPadding = floor(GetDefaultPaddingPercentage() * settings.width);
+            yPadding = floor(GetDefaultPaddingPercentage() * settings.height);
         }else{
             xPadding = settings.xPadding;
             yPadding = settings.yPadding;
         }
 
         // Draw title
-        DrawText(canvas, floor(ImageWidth(canvas)/2d - GetTextWidth(settings.title)/2d), floor(yPadding/3d), settings.title, GetBlack());
+        DrawText(canvas, floor(settings.width/2d - GetTextWidth(settings.title)/2d), floor(yPadding/3d), settings.title, GetBlack());
 
         // Draw grid
         xPixelMin = xPadding;
         yPixelMin = yPadding;
-        xPixelMax = ImageWidth(canvas) - xPadding;
-        yPixelMax = ImageHeight(canvas) - yPadding;
+        xPixelMax = settings.width - xPadding;
+        yPixelMax = settings.height - yPadding;
         xLengthPixels = xPixelMax - xPixelMin;
         yLengthPixels = yPixelMax - yPixelMin;
         DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings.gridColor);
@@ -273,8 +264,8 @@ public class Plots {
         }
 
         // Draw origin axis titles.
-        DrawTextUpwards(canvas, 10d, floor(originTextYPixels - GetTextWidth(settings.xLabel)/2d), settings.xLabel, GetBlack());
-        DrawText(canvas, floor(originTextXPixels - GetTextWidth(settings.yLabel)/2d), yPixelMax + axisLabelPadding, settings.yLabel, GetBlack());
+        DrawTextUpwards(canvas, 10d, floor(originTextYPixels - GetTextWidth(settings.yLabel)/2d), settings.yLabel, GetBlack());
+        DrawText(canvas, floor(originTextXPixels - GetTextWidth(settings.xLabel)/2d), yPixelMax + axisLabelPadding, settings.xLabel, GetBlack());
 
         // X-grid-markers
         for(i = 0d; i < xGridPositions.length; i = i + 1d){
@@ -409,12 +400,49 @@ public class Plots {
             }
         }
 
-        DeleteImage(canvasReference.image);
         canvasReference.image = canvas;
 
         }
 
         return success;
+    }
+
+    public static void ComputeBoundariesBasedOnSettings(ScatterPlotSettings settings, Rectangle boundaries){
+        ScatterPlotSeries sp;
+        double plot, xMin, xMax, yMin, yMax;
+
+        if(settings.scatterPlotSeries.length >= 1d) {
+            xMin = GetMinimum(settings.scatterPlotSeries[0].xs);
+            xMax = GetMaximum(settings.scatterPlotSeries[0].xs);
+            yMin = GetMinimum(settings.scatterPlotSeries[0].ys);
+            yMax = GetMaximum(settings.scatterPlotSeries[0].ys);
+        }else{
+            xMin = -10d;
+            xMax = 10d;
+            yMin = -10d;
+            yMax = 10d;
+        }
+
+        if (!settings.autoBoundaries) {
+            xMin = settings.xMin;
+            xMax = settings.xMax;
+            yMin = settings.yMin;
+            yMax = settings.yMax;
+        }else{
+            for(plot = 1d; plot < settings.scatterPlotSeries.length; plot = plot + 1d) {
+                sp = settings.scatterPlotSeries[(int) plot];
+
+                xMin = min(xMin, GetMinimum(sp.xs));
+                xMax = max(xMax, GetMaximum(sp.xs));
+                yMin = min(yMin, GetMinimum(sp.ys));
+                yMax = max(yMax, GetMaximum(sp.ys));
+            }
+        }
+
+        boundaries.x1 = xMin;
+        boundaries.y1 = yMin;
+        boundaries.x2 = xMax;
+        boundaries.y2 = yMax;
     }
 
     public static boolean ScatterPlotFromSettingsValid(ScatterPlotSettings settings) {

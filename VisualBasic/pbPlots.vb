@@ -862,6 +862,17 @@ Module Plots
 			xMax = boundaries.x2
 			yMax = boundaries.y2
 
+            ' If zero, set to defaults.
+            If xMin - xMax = 0
+                xMin = 0
+                xMax = 10
+            End If
+
+            If yMin - yMax = 0
+                yMin = 0
+                yMax = 10
+            End If
+
 			xLength = xMax - xMin
 			yLength = yMax - yMin
 

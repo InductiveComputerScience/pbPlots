@@ -601,6 +601,15 @@ def DrawScatterPlotFromSettings(canvasReference, settings):
     xMax = boundaries.x2
     yMax = boundaries.y2
 
+    # If zero, set to defaults.
+    if(xMin - xMax == 0):
+      xMin = 0
+      xMax = 10
+
+    if(yMin - yMax == 0):
+      yMin = 0
+      yMax = 10
+
     xLength = xMax - xMin
     yLength = yMax - yMin
 

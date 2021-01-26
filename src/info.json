@@ -1,6 +1,6 @@
 {
   "name": "Plots",
-  "version": "0.1.7",
+  "version": "0.1.9-SNAPSHOT",
   "organization namespace": "no.inductive.libraries",
   "scientific namespace": "mathematics.dataanalysis.plots",
   "imports": [

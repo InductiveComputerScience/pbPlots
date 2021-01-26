@@ -98,7 +98,7 @@ public class BarPlot {
         double s, n, y, x, w, h, yMin, yMax, b, i, py, yValue;
         RGBA [] colors;
         double [] ys, yGridPositions;
-        double yTop, yBottom, ss, bs, yLength;
+        double yTop, yBottom, ss, bs;
         double groupSeparation, barSeparation, barWidth, textwidth;
         StringArrayReference yLabels;
         NumberArrayReference yLabelPriorities;
@@ -149,7 +149,6 @@ public class BarPlot {
             yMin = settings.yMin;
             yMax = settings.yMax;
         }
-        yLength = yMax - yMin;
 
         // boundaries
         xPixelMin = xPadding;

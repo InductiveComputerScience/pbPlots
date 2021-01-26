@@ -8,6 +8,7 @@ import static BasicPixelFont.BasicPixelFont.BasicPixelFont.*;
 import static Graphics2D.Graphics2D.Graphics2D.*;
 import static Plots.Arrays.Arrays.*;
 import static Plots.Math.Math.*;
+import static Plots.Plots.Plots.ComputeBoundariesBasedOnSettings;
 import static Plots.Rectangles.Rectangles.*;
 import static Plots.TextDrawing.TextDrawing.*;
 import static java.lang.Math.*;
@@ -285,11 +286,53 @@ public class Common {
     }
 
     public static double MapXCoordinateAutoSettings(double x, RGBABitmapImage image, double[] xs) {
-        return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs) - GetMinimum(xs), GetDefaultPaddingPercentage() * ImageWidth(image), (1d - GetDefaultPaddingPercentage()) * ImageWidth(image));
+        return MapXCoordinate(x, GetMinimum(xs), GetMaximum(xs), GetDefaultPaddingPercentage() * ImageWidth(image), (1d - GetDefaultPaddingPercentage()) * ImageWidth(image));
     }
 
     public static double MapYCoordinateAutoSettings(double y, RGBABitmapImage image, double[] ys) {
         return MapYCoordinate(y, GetMinimum(ys), GetMaximum(ys), GetDefaultPaddingPercentage() * ImageHeight(image), (1d - GetDefaultPaddingPercentage())*ImageHeight(image));
+    }
+
+    public static double MapXCoordinateBasedOnSettings(double x, ScatterPlotSettings settings) {
+        double xMin, xMax, xPadding, xPixelMin, xPixelMax;
+        Rectangle boundaries;
+
+        boundaries = new Rectangle();
+        ComputeBoundariesBasedOnSettings(settings, boundaries);
+        xMin = boundaries.x1;
+        xMax = boundaries.x2;
+
+        if(settings.autoPadding) {
+            xPadding = floor(GetDefaultPaddingPercentage() * settings.width);
+        }else{
+            xPadding = settings.xPadding;
+        }
+
+        xPixelMin = xPadding;
+        xPixelMax = settings.width - xPadding;
+
+        return MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax);
+    }
+
+    public static double MapYCoordinateBasedOnSettings(double y, ScatterPlotSettings settings) {
+        double yMin, yMax, yPadding, yPixelMin, yPixelMax;
+        Rectangle boundaries;
+
+        boundaries = new Rectangle();
+        ComputeBoundariesBasedOnSettings(settings, boundaries);
+        yMin = boundaries.y1;
+        yMax = boundaries.y2;
+
+        if(settings.autoPadding) {
+            yPadding = floor(GetDefaultPaddingPercentage() * settings.height);
+        }else{
+            yPadding = settings.yPadding;
+        }
+
+        yPixelMin = yPadding;
+        yPixelMax = settings.height - yPadding;
+
+        return MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax);
     }
 
     public static double GetDefaultPaddingPercentage() {

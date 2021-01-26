@@ -9,8 +9,8 @@ public class ScatterPlotSettings {
     public boolean autoPadding;
     public double xPadding, yPadding;
 
-    public char [] yLabel;
     public char [] xLabel;
+    public char [] yLabel;
     public char [] title;
     public boolean showGrid;
     public RGBA gridColor;
