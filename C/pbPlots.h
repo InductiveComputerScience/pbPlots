@@ -533,7 +533,6 @@ StringArrayReference *CreateStringArrayReference(StringReference **strings, size
 StringArrayReference *CreateStringArrayReferenceLengthValue(double length, wchar_t *value, size_t valueLength);
 void FreeStringArrayReference(StringArrayReference *stringArrayReference);
 
-wchar_t *DigitDataBase16(size_t *returnArrayLength);
 void DrawDigitCharacter(RGBABitmapImage *image, double topx, double topy, double digit);
 
 wchar_t *GetPixelFontData(size_t *returnArrayLength);

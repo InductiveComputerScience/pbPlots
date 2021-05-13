@@ -483,7 +483,6 @@ StringArrayReference *CreateStringArrayReference(std::vector<StringReference*> *
 StringArrayReference *CreateStringArrayReferenceLengthValue(double length, std::vector<wchar_t> *value);
 void FreeStringArrayReference(StringArrayReference *stringArrayReference);
 
-std::vector<wchar_t> *DigitDataBase16();
 void DrawDigitCharacter(RGBABitmapImage *image, double topx, double topy, double digit);
 
 std::vector<wchar_t> *GetPixelFontData();
