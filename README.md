@@ -5,7 +5,7 @@ A plotting library available in many programming languages. Goals of this librar
 2) Is easy to build in any programming language and to include in any project.
 3) Is easy to use.
 
-The library is developed using [progsbase](https://www.progsbase.com), a technology for coding timeless code in many programming languages at once.
+The library is developed using [progsbase](https://www.progsbase.com), a technology for writing timeless code. As a consequence, it will be available in many programming languages.
 
 ![bar plot](barplot.png "Bar Plot Example")
 
@@ -50,11 +50,12 @@ Complete example available in the following languages:
 
 ```
 RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
+StringReference errorMessage = new StringReference();
 
 double [] xs = {-2, -1, 0, 1, 2};
 double [] ys = {2, -1, -2, -1, 2};
 
-DrawScatterPlot(imageReference, 600, 400, xs, ys);
+boolean success = DrawScatterPlot(imageReference, 600, 400, xs, ys, errorMessage);
 ```
 
 This code produces the following graph. The boundaries are automatically calculated. The plot is linearly interpolated and drawn in black, one pixel wide.
@@ -96,7 +97,9 @@ settings.yLabel = "Y axis".toCharArray();
 settings.scatterPlotSeries = new ScatterPlotSeries [] {series};
 
 RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
-DrawScatterPlotFromSettings(imageReference, settings);
+boolean success;
+StringReference errorMessage = new StringReference();
+success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 ```
 
 This code produces the following plot. In this plot the line is changed to dashed, 2 pixels wide, light gray. A title has been added and labels for each axis.
@@ -108,9 +111,11 @@ This code produces the following plot. In this plot the line is changed to dashe
 Convert to PNG and write to file:
 
 ```
-double[] pngdata = ConvertToPNG(imageReference.image);
-WriteToFile(pngdata, "plot.png");
-DeleteImage(imageReference.image);
+if(success){
+  double[] pngdata = ConvertToPNG(imageReference.image);
+  WriteToFile(pngdata, "plot.png");
+  DeleteImage(imageReference.image);
+}
 ```
 
 #### Line Patterns
@@ -153,7 +158,10 @@ ScatterPlotSeries
 #### Multiple Plots in Same Image
 
 ```
-RGBABitmapImageReference canvasReference = CreateRGBABitmapImageReference();
+RGBABitmapImageReference canvasReference1 = CreateRGBABitmapImageReference();
+RGBABitmapImageReference canvasReference2 = CreateRGBABitmapImageReference();
+RGBABitmapImageReference canvasReference3 = CreateRGBABitmapImageReference();
+RGBABitmapImageReference canvasReference4 = CreateRGBABitmapImageReference();
 RGBABitmapImage combined = CreateImage(250*2, 200*2, GetWhite());
 RGBABitmapImage image1, image2, image3, image4;
 
@@ -164,19 +172,23 @@ double [] ys2 = {-2, 1, 2, 1, -2};
 double [] ys3 = {0, 1, 2, 3, 4};
 double [] ys4 = {0, -1, -2, -3, -4};
 
-DrawScatterPlot(canvasReference, 250, 200, xs, ys1);
-image1 = canvasReference.image;
-DrawScatterPlot(canvasReference, 250, 200, xs, ys2);
-image2 = canvasReference.image;
-DrawScatterPlot(canvasReference, 250, 200, xs, ys3);
-image3 = canvasReference.image;
-DrawScatterPlot(canvasReference, 250, 200, xs, ys4);
-image4 = canvasReference.image;
+boolean success;
+success = DrawScatterPlot(canvasReference1, 250, 200, xs, ys1);
+success = success && DrawScatterPlot(canvasReference2, 250, 200, xs, ys2);
+success = success && DrawScatterPlot(canvasReference3, 250, 200, xs, ys3);
+success = success && DrawScatterPlot(canvasReference4, 250, 200, xs, ys4);
 
-DrawImageOnImage(combined, image1, 0, 0);
-DrawImageOnImage(combined, image2, 0, 200);
-DrawImageOnImage(combined, image3, 250, 0);
-DrawImageOnImage(combined, image4, 250, 200);
+if(success){
+	image1 = canvasReference1.image;
+	image2 = canvasReference2.image;
+	image3 = canvasReference3.image;
+	image4 = canvasReference4.image;
+
+	DrawImageOnImage(combined, image1, 0, 0);
+	DrawImageOnImage(combined, image2, 0, 200);
+	DrawImageOnImage(combined, image3, 250, 0);
+	DrawImageOnImage(combined, image4, 250, 200);
+}
 ```
 
 ![Multiple Plots on Same Image](multiplot.png "Multiple Plots on Same Image")
@@ -206,15 +218,19 @@ RGBABitmapImageReference canvasReference = CreateRGBABitmapImageReference();
 double [] xs = {-2, -1, 0, 1, 2};
 double [] ys = {-2, 1, 2, 1, -2};
 
-DrawScatterPlot(canvasReference, 600, 400, xs, ys);
+boolean success;
+StringReference errorMessage = new StringReference();
+success = DrawScatterPlot(canvasReference, 600, 400, xs, ys, errorMessage);
 
-double x1 = MapXCoordinateAutoSettings(0, canvasReference.image, xs);
-double y1 = MapYCoordinateAutoSettings(0, canvasReference.image, ys);
+if(success){
+  double x1 = MapXCoordinateAutoSettings(0, canvasReference.image, xs);
+  double y1 = MapYCoordinateAutoSettings(0, canvasReference.image, ys);
 
-double x2 = MapXCoordinateAutoSettings(1, canvasReference.image, xs);
-double y2 = MapYCoordinateAutoSettings(1, canvasReference.image, ys);
+  double x2 = MapXCoordinateAutoSettings(1, canvasReference.image, xs);
+  double y2 = MapYCoordinateAutoSettings(1, canvasReference.image, ys);
 
-DrawLine(canvasReference.image, x1, y1, x2, y2, 2, GetGray(0.3));
+  DrawLine(canvasReference.image, x1, y1, x2, y2, 2, GetGray(0.3));
+}
 ```
 
 This will produce the following plot.
