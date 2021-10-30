@@ -16,9 +16,9 @@ int main(){
         WriteToFile(pngdata, length, "example1.png");
         DeleteImage(canvasReference->image);
 	}else{
-	    fprintf(stderr, "Error: ", errorMessage.string);
-	    for(int i = 0; i < errorMessage.stringLength; i++){
-            fprintf(stderr, "%c", errorMessage.string[i]);
+	    fprintf(stderr, "Error: ");
+	    for(int i = 0; i < errorMessage->stringLength; i++){
+            fprintf(stderr, "%c", errorMessage->string[i]);
         }
         fprintf(stderr, "\n");
     }

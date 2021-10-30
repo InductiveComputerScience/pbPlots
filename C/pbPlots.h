@@ -4,6 +4,12 @@
 #include <string.h>
 #include <wchar.h>
 
+#define strparam(str) (str), wcslen(str)
+
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
 struct RGBABitmapImageReference;
 typedef struct RGBABitmapImageReference RGBABitmapImageReference;
 
@@ -339,16 +345,17 @@ void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, wchar_t *text,
 
 ScatterPlotSettings *GetDefaultScatterPlotSettings();
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings();
-void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, double *xs, size_t xsLength, double *ys, size_t ysLength);
-_Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings);
+_Bool DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, double *xs, size_t xsLength, double *ys, size_t ysLength, StringReference *errorMessage);
+_Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings, StringReference *errorMessage);
 void ComputeBoundariesBasedOnSettings(ScatterPlotSettings *settings, Rectangle *boundaries);
-_Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings);
+_Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings, StringReference *errorMessage);
 
 BarPlotSettings *GetDefaultBarPlotSettings();
 BarPlotSeries *GetDefaultBarPlotSeriesSettings();
-RGBABitmapImage *DrawBarPlot(double width, double height, double *ys, size_t ysLength);
-_Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings);
-_Bool BarPlotSettingsIsValid(BarPlotSettings *settings);
+RGBABitmapImage *DrawBarPlotNoErrorCheck(double width, double height, double *ys, size_t ysLength);
+_Bool DrawBarPlot(RGBABitmapImageReference *canvasReference, double width, double height, double *ys, size_t ysLength, StringReference *errorMessage);
+_Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings, StringReference *errorMessage);
+_Bool BarPlotSettingsIsValid(BarPlotSettings *settings, StringReference *errorMessage);
 
 double GetMinimum(double *data, size_t dataLength);
 double GetMaximum(double *data, size_t dataLength);
@@ -358,6 +365,8 @@ double RoundToDigits(double element, double digitsAfterPoint);
 double test();
 void TestMapping(NumberReference *failures);
 void TestMapping2(NumberReference *failures);
+void ExampleRegression(RGBABitmapImageReference *image);
+void BarPlotExample(RGBABitmapImageReference *imageReference);
 
 RGBA *GetBlack();
 RGBA *GetWhite();
@@ -416,6 +425,8 @@ RGBABitmapImage *Blur(RGBABitmapImage *src, double pixels);
 RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels);
 
 wchar_t *CreateStringScientificNotationDecimalFromNumber(size_t *returnArrayLength, double decimal);
+wchar_t *CreateStringScientificNotationDecimalFromNumber15d2e(size_t *returnArrayLength, double decimal);
+wchar_t *CreateStringScientificNotationDecimalFromNumberAllOptions(size_t *returnArrayLength, double decimal, _Bool complete);
 wchar_t *CreateStringDecimalFromNumber(size_t *returnArrayLength, double decimal);
 _Bool CreateStringFromNumberWithCheck(double decimal, double base, StringReference *stringReference);
 double GetMaximumDigitsForBase(double base);
@@ -533,6 +544,7 @@ StringArrayReference *CreateStringArrayReference(StringReference **strings, size
 StringArrayReference *CreateStringArrayReferenceLengthValue(double length, wchar_t *value, size_t valueLength);
 void FreeStringArrayReference(StringArrayReference *stringArrayReference);
 
+wchar_t *DigitDataBase16(size_t *returnArrayLength);
 void DrawDigitCharacter(RGBABitmapImage *image, double topx, double topy, double digit);
 
 wchar_t *GetPixelFontData(size_t *returnArrayLength);

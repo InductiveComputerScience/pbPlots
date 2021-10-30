@@ -27,8 +27,8 @@ The library is developed using [progsbase](https://www.progsbase.com), a technol
  * [Ruby - 2+](Ruby/)
  
  ## Try the Library Online:
- * [Scatter Plot](https://repo.progsbase.com/repoviewer/no.inductive.libraries/Plots/latest///DrawScatterPlotFromSettings/online/)
- * [Bar Plot](https://repo.progsbase.com/repoviewer/no.inductive.libraries/Plots/latest///DrawBarPlotFromSettings/online/)
+ * [Scatter Plot](https://repo.progsbase.com/repoviewer/no.inductive.libraries/Plots/0.1.8///DrawScatterPlotFromSettings/online/)
+ * [Bar Plot](https://repo.progsbase.com/repoviewer/no.inductive.libraries/Plots/0.1.8///DrawBarPlotFromSettings/online/)
 
 ## General User Guide
 The library has the same interface in all supported languages. The example below is in Java with links to complete examples in all supported programming languages.

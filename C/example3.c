@@ -24,11 +24,10 @@ int main(){
         DeleteImage(imageRef->image);
 
         WriteToFile(pngdata, length, "example3.png");
-        DeleteImage(imageRef->image);
 	}else{
-        fprintf(stderr, "Error: ", errorMessage.string);
-        for(int i = 0; i < errorMessage.stringLength; i++){
-            fprintf(stderr, "%c", errorMessage.string[i]);
+        fprintf(stderr, "Error: ");
+        for(int i = 0; i < errorMessage->stringLength; i++){
+            fprintf(stderr, "%c", errorMessage->string[i]);
         }
         fprintf(stderr, "\n");
     }
