@@ -19,8 +19,8 @@ int main(){
         DeleteImage(imageReference->image);
 	}else{
 	    cerr << "Error: ";
-        for(char c : errorMessage.string){
-            cerr << c;
+        for(wchar_t c : *errorMessage->string){
+            wcerr << c;
         }
         cerr << endl;
 	}

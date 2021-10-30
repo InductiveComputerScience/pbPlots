@@ -289,16 +289,17 @@ void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, std::vector<wc
 
 ScatterPlotSettings *GetDefaultScatterPlotSettings();
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings();
-void DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, std::vector<double> *xs, std::vector<double> *ys);
-bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings);
+bool DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, double height, std::vector<double> *xs, std::vector<double> *ys, StringReference *errorMessage);
+bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, ScatterPlotSettings *settings, StringReference *errorMessage);
 void ComputeBoundariesBasedOnSettings(ScatterPlotSettings *settings, Rectangle *boundaries);
-bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings);
+bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings, StringReference *errorMessage);
 
 BarPlotSettings *GetDefaultBarPlotSettings();
 BarPlotSeries *GetDefaultBarPlotSeriesSettings();
-RGBABitmapImage *DrawBarPlot(double width, double height, std::vector<double> *ys);
-bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings);
-bool BarPlotSettingsIsValid(BarPlotSettings *settings);
+RGBABitmapImage *DrawBarPlotNoErrorCheck(double width, double height, std::vector<double> *ys);
+bool DrawBarPlot(RGBABitmapImageReference *canvasReference, double width, double height, std::vector<double> *ys, StringReference *errorMessage);
+bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotSettings *settings, StringReference *errorMessage);
+bool BarPlotSettingsIsValid(BarPlotSettings *settings, StringReference *errorMessage);
 
 double GetMinimum(std::vector<double> *data);
 double GetMaximum(std::vector<double> *data);
@@ -308,6 +309,8 @@ double RoundToDigits(double element, double digitsAfterPoint);
 double test();
 void TestMapping(NumberReference *failures);
 void TestMapping2(NumberReference *failures);
+void ExampleRegression(RGBABitmapImageReference *image);
+void BarPlotExample(RGBABitmapImageReference *imageReference);
 
 RGBA *GetBlack();
 RGBA *GetWhite();
@@ -366,6 +369,8 @@ RGBABitmapImage *Blur(RGBABitmapImage *src, double pixels);
 RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels);
 
 std::vector<wchar_t> *CreateStringScientificNotationDecimalFromNumber(double decimal);
+std::vector<wchar_t> *CreateStringScientificNotationDecimalFromNumber15d2e(double decimal);
+std::vector<wchar_t> *CreateStringScientificNotationDecimalFromNumberAllOptions(double decimal, bool complete);
 std::vector<wchar_t> *CreateStringDecimalFromNumber(double decimal);
 bool CreateStringFromNumberWithCheck(double decimal, double base, StringReference *stringReference);
 double GetMaximumDigitsForBase(double base);
@@ -483,6 +488,7 @@ StringArrayReference *CreateStringArrayReference(std::vector<StringReference*> *
 StringArrayReference *CreateStringArrayReferenceLengthValue(double length, std::vector<wchar_t> *value);
 void FreeStringArrayReference(StringArrayReference *stringArrayReference);
 
+std::vector<wchar_t> *DigitDataBase16();
 void DrawDigitCharacter(RGBABitmapImage *image, double topx, double topy, double digit);
 
 std::vector<wchar_t> *GetPixelFontData();

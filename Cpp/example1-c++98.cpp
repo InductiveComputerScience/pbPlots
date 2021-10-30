@@ -21,8 +21,8 @@ int main(){
         DeleteImage(imageReference->image);
 	}else{
 	    cerr << "Error: ";
-        for(int i = 0; i < errorMessage.string->size(); i++){
-            cerr << errorMessage.string[i];
+        for(int i = 0; i < errorMessage->string->size(); i++){
+            wcerr << errorMessage->string->at(i);
         }
         cerr << endl;
 	}

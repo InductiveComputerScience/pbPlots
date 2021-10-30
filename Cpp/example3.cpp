@@ -1,6 +1,8 @@
 #include "pbPlots.hpp"
 #include "supportLib.hpp"
 
+using namespace std;
+
 int main(){
     bool success;
     StringReference *errorMessage = new StringReference();
@@ -50,7 +52,7 @@ int main(){
         DeleteImage(imageReference->image);
 	}else{
 	    cerr << "Error: ";
-        for(char c : errorMessage.string){
+        for(wchar_t c : *errorMessage->string){
             cerr << c;
         }
         cerr << endl;
