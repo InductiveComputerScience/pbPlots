@@ -171,7 +171,7 @@ public class DynamicArrayNumbers{
 	public double [] array;
 	public double length;
 }
-public class pbPlots{
+public class Plots{
 	public static bool CropLineWithinBoundary(NumberReference x1Ref, NumberReference y1Ref, NumberReference x2Ref, NumberReference y2Ref, double xMin, double xMax, double yMin, double yMax){
 		double x1, y1, x2, y2;
 		bool success, p1In, p2In;
@@ -766,8 +766,9 @@ public class pbPlots{
 	}
 
 
-	public static void DrawScatterPlot(RGBABitmapImageReference canvasReference, double width, double height, double [] xs, double [] ys){
+	public static bool DrawScatterPlot(RGBABitmapImageReference canvasReference, double width, double height, double [] xs, double [] ys, StringReference errorMessage){
 		ScatterPlotSettings settings;
+		bool success;
 
 		settings = GetDefaultScatterPlotSettings();
 
@@ -780,11 +781,13 @@ public class pbPlots{
 		delete(settings.scatterPlotSeries[0].ys);
 		settings.scatterPlotSeries[0].ys = ys;
 
-		DrawScatterPlotFromSettings(canvasReference, settings);
+		success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage);
+
+		return success;
 	}
 
 
-	public static bool DrawScatterPlotFromSettings(RGBABitmapImageReference canvasReference, ScatterPlotSettings settings){
+	public static bool DrawScatterPlotFromSettings(RGBABitmapImageReference canvasReference, ScatterPlotSettings settings, StringReference errorMessage){
 		double xMin, xMax, yMin, yMax, xLength, yLength, i, x, y, xPrev, yPrev, px, py, pxPrev, pyPrev, originX, originY, p, l, plot;
 		Rectangle boundaries;
 		double xPadding, yPadding, originXPixels, originYPixels;
@@ -807,7 +810,7 @@ public class pbPlots{
 		canvas = CreateImage(settings.width, settings.height, GetWhite());
 		patternOffset = CreateNumberReference(0d);
 
-		success = ScatterPlotFromSettingsValid(settings);
+		success = ScatterPlotFromSettingsValid(settings, errorMessage);
 
 		if(success){
 
@@ -818,16 +821,16 @@ public class pbPlots{
 			xMax = boundaries.x2;
 			yMax = boundaries.y2;
 
-            // If zero, set to defaults.
-            if(xMin - xMax == 0){
-                xMin = 0;
-                xMax = 10;
-            }
+			/* If zero, set to defaults.*/
+			if(xMin - xMax == 0d){
+				xMin = 0d;
+				xMax = 10d;
+			}
 
-            if(yMin - yMax == 0){
-                yMin = 0;
-                yMax = 10;
-            }
+			if(yMin - yMax == 0d){
+				yMin = 0d;
+				yMax = 10d;
+			}
 
 			xLength = xMax - xMin;
 			yLength = yMax - yMin;
@@ -1103,7 +1106,6 @@ if(settings.yAxisLeft){
 				}
 			}
 
-			DeleteImage(canvasReference.image);
 			canvasReference.image = canvas;
 		}
 
@@ -1150,7 +1152,7 @@ if(settings.yAxisLeft){
 	}
 
 
-	public static bool ScatterPlotFromSettingsValid(ScatterPlotSettings settings){
+	public static bool ScatterPlotFromSettingsValid(ScatterPlotSettings settings, StringReference errorMessage){
 		bool success, found;
 		ScatterPlotSeries series;
 		double i;
@@ -1161,18 +1163,22 @@ if(settings.yAxisLeft){
 		if(!settings.xAxisAuto){
 			if(settings.xAxisTop && settings.xAxisBottom){
 				success = false;
+				errorMessage.stringx = "x-axis not automatic and configured to be both on top and on bottom.".ToCharArray();
 			}
 			if(!settings.xAxisTop && !settings.xAxisBottom){
 				success = false;
+				errorMessage.stringx = "x-axis not automatic and configured to be neither on top nor on bottom.".ToCharArray();
 			}
 		}
 
 		if(!settings.yAxisAuto){
 			if(settings.yAxisLeft && settings.yAxisRight){
 				success = false;
+				errorMessage.stringx = "y-axis not automatic and configured to be both on top and on bottom.".ToCharArray();
 			}
 			if(!settings.yAxisLeft && !settings.yAxisRight){
 				success = false;
+				errorMessage.stringx = "y-axis not automatic and configured to be neither on top nor on bottom.".ToCharArray();
 			}
 		}
 
@@ -1181,12 +1187,15 @@ if(settings.yAxisLeft){
 			series = settings.scatterPlotSeries[(int)(i)];
 			if(series.xs.Length != series.ys.Length){
 				success = false;
+				errorMessage.stringx = "x and y series must be of the same length.".ToCharArray();
 			}
 			if(series.xs.Length == 0d){
 				success = false;
+				errorMessage.stringx = "There must be data in the series to be plotted.".ToCharArray();
 			}
 			if(series.linearInterpolation && series.xs.Length == 1d){
 				success = false;
+				errorMessage.stringx = "Linear interpolation requires at least two data points to be plotted.".ToCharArray();
 			}
 		}
 
@@ -1194,9 +1203,11 @@ if(settings.yAxisLeft){
 		if(!settings.autoBoundaries){
 			if(settings.xMin >= settings.xMax){
 				success = false;
+				errorMessage.stringx = "x min is higher than or equal to x max.".ToCharArray();
 			}
 			if(settings.yMin >= settings.yMax){
 				success = false;
+				errorMessage.stringx = "y min is higher than or equal to y max.".ToCharArray();
 			}
 		}
 
@@ -1204,18 +1215,22 @@ if(settings.yAxisLeft){
 		if(!settings.autoPadding){
 			if(2d*settings.xPadding >= settings.width){
 				success = false;
+				errorMessage.stringx = "The x padding is more then the width.".ToCharArray();
 			}
 			if(2d*settings.yPadding >= settings.height){
 				success = false;
+				errorMessage.stringx = "The y padding is more then the height.".ToCharArray();
 			}
 		}
 
 		/* Check width and height.*/
 		if(settings.width < 0d){
 			success = false;
+			errorMessage.stringx = "The width is less than 0.".ToCharArray();
 		}
 		if(settings.height < 0d){
 			success = false;
+			errorMessage.stringx = "The height is less than 0.".ToCharArray();
 		}
 
 		/* Check point types.*/
@@ -1224,6 +1239,7 @@ if(settings.yAxisLeft){
 
 			if(series.lineThickness < 0d){
 				success = false;
+				errorMessage.stringx = "The line thickness is less than 0.".ToCharArray();
 			}
 
 			if(!series.linearInterpolation){
@@ -1244,6 +1260,7 @@ if(settings.yAxisLeft){
 				}
 				if(!found){
 					success = false;
+					errorMessage.stringx = "The point type is unknown.".ToCharArray();
 				}
 			}else{
 				/* Line type.*/
@@ -1264,6 +1281,7 @@ if(settings.yAxisLeft){
 
 				if(!found){
 					success = false;
+					errorMessage.stringx = "The line type is unknown.".ToCharArray();
 				}
 			}
 		}
@@ -1322,34 +1340,50 @@ if(settings.yAxisLeft){
 	}
 
 
-	public static RGBABitmapImage DrawBarPlot(double width, double height, double [] ys){
-		BarPlotSettings settings;
+	public static RGBABitmapImage DrawBarPlotNoErrorCheck(double width, double height, double [] ys){
+		StringReference errorMessage;
+		bool success;
 		RGBABitmapImageReference canvasReference;
 
+		errorMessage = new StringReference();
+		canvasReference = CreateRGBABitmapImageReference();
+
+		success = DrawBarPlot(canvasReference, width, height, ys, errorMessage);
+
+		FreeStringReference(errorMessage);
+
+		return canvasReference.image;
+	}
+
+
+	public static bool DrawBarPlot(RGBABitmapImageReference canvasReference, double width, double height, double [] ys, StringReference errorMessage){
+		BarPlotSettings settings;
+		bool success;
+
+		errorMessage = new StringReference();
 		settings = GetDefaultBarPlotSettings();
 
 		settings.barPlotSeries = new BarPlotSeries [1];
 		settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
 		delete(settings.barPlotSeries[0].ys);
 		settings.barPlotSeries[0].ys = ys;
-		canvasReference = new RGBABitmapImageReference();
 		settings.width = width;
 		settings.height = height;
 
-		DrawBarPlotFromSettings(canvasReference, settings);
+		success = DrawBarPlotFromSettings(canvasReference, settings, errorMessage);
 
-		return canvasReference.image;
+		return success;
 	}
 
 
-	public static bool DrawBarPlotFromSettings(RGBABitmapImageReference canvasReference, BarPlotSettings settings){
+	public static bool DrawBarPlotFromSettings(RGBABitmapImageReference canvasReference, BarPlotSettings settings, StringReference errorMessage){
 		double xPadding, yPadding;
 		double xPixelMin, yPixelMin, yPixelMax, xPixelMax;
 		double xLengthPixels, yLengthPixels;
 		double s, n, y, x, w, h, yMin, yMax, b, i, py, yValue;
 		RGBA [] colors;
 		double [] ys, yGridPositions;
-		double yTop, yBottom, ss, bs, yLength;
+		double yTop, yBottom, ss, bs;
 		double groupSeparation, barSeparation, barWidth, textwidth;
 		StringArrayReference yLabels;
 		NumberArrayReference yLabelPriorities;
@@ -1360,10 +1394,9 @@ if(settings.yAxisLeft){
 		bool success;
 		RGBABitmapImage canvas;
 
-		success = BarPlotSettingsIsValid(settings);
+		success = BarPlotSettingsIsValid(settings, errorMessage);
 
 		if(success){
-
 			canvas = CreateImage(settings.width, settings.height, GetWhite());
 
 			ss = settings.barPlotSeries.Length;
@@ -1400,7 +1433,6 @@ if(settings.yAxisLeft){
 				yMin = settings.yMin;
 				yMax = settings.yMax;
 			}
-			yLength = yMax - yMin;
 
 			/* boundaries*/
 			xPixelMin = xPadding;
@@ -1555,10 +1587,10 @@ if(settings.yAxisLeft){
 	}
 
 
-	public static bool BarPlotSettingsIsValid(BarPlotSettings settings){
+	public static bool BarPlotSettingsIsValid(BarPlotSettings settings, StringReference errorMessage){
 		bool success, lengthSet;
 		BarPlotSeries series;
-		double i, width, height, length;
+		double i, length;
 
 		success = true;
 
@@ -1573,6 +1605,7 @@ if(settings.yAxisLeft){
 				lengthSet = true;
 			}else if(length != series.ys.Length){
 				success = false;
+				errorMessage.stringx = "The number of data points must be equal for all series.".ToCharArray();
 			}
 		}
 
@@ -1580,6 +1613,7 @@ if(settings.yAxisLeft){
 		if(!settings.autoBoundaries){
 			if(settings.yMin >= settings.yMax){
 				success = false;
+				errorMessage.stringx = "Minimum y lower than maximum y.".ToCharArray();
 			}
 		}
 
@@ -1587,27 +1621,33 @@ if(settings.yAxisLeft){
 		if(!settings.autoPadding){
 			if(2d*settings.xPadding >= settings.width){
 				success = false;
+				errorMessage.stringx = "Double the horizontal padding is larger than or equal to the width.".ToCharArray();
 			}
 			if(2d*settings.yPadding >= settings.height){
 				success = false;
+				errorMessage.stringx = "Double the vertical padding is larger than or equal to the height.".ToCharArray();
 			}
 		}
 
 		/* Check width and height.*/
 		if(settings.width < 0d){
 			success = false;
+			errorMessage.stringx = "Width lower than zero.".ToCharArray();
 		}
 		if(settings.height < 0d){
 			success = false;
+			errorMessage.stringx = "Height lower than zero.".ToCharArray();
 		}
 
 		/* Check spacing*/
 		if(!settings.autoSpacing){
 			if(settings.groupSeparation < 0d){
 				success = false;
+				errorMessage.stringx = "Group separation lower than zero.".ToCharArray();
 			}
 			if(settings.barSeparation < 0d){
 				success = false;
+				errorMessage.stringx = "Bar separation lower than zero.".ToCharArray();
 			}
 		}
 
@@ -1652,8 +1692,11 @@ if(settings.yAxisLeft){
 		NumberArrayReference labelPriorities;
 		RGBABitmapImageReference imageReference;
 		double [] xs, ys;
+		StringReference errorMessage;
+		bool success;
 
 		failures = CreateNumberReference(0d);
+		errorMessage = CreateStringReference("".ToCharArray());
 
 		imageReference = CreateRGBABitmapImageReference();
 
@@ -1708,12 +1751,20 @@ if(settings.yAxisLeft){
 		ys[2] = -2d;
 		ys[3] = -1d;
 		ys[4] = 2d;
-		DrawScatterPlot(imageReference, 800d, 600d, xs, ys);
+		success = DrawScatterPlot(imageReference, 800d, 600d, xs, ys, errorMessage);
 
-		imageReference.image = DrawBarPlot(800d, 600d, ys);
+		AssertTrue(success, failures);
 
-		TestMapping(failures);
-		TestMapping2(failures);
+		if(success){
+			success = DrawBarPlot(imageReference, 800d, 600d, ys, errorMessage);
+
+			AssertTrue(success, failures);
+
+			if(success){
+				TestMapping(failures);
+				TestMapping2(failures);
+			}
+		}
 
 		return failures.numberValue;
 	}
@@ -1724,6 +1775,10 @@ if(settings.yAxisLeft){
 		ScatterPlotSettings settings;
 		RGBABitmapImageReference imageReference;
 		double x1, y1;
+		StringReference errorMessage;
+		bool success;
+
+		errorMessage = CreateStringReference("".ToCharArray());
 
 		series = GetDefaultScatterPlotSeriesSettings();
 
@@ -1756,13 +1811,17 @@ if(settings.yAxisLeft){
 		settings.scatterPlotSeries[0] = series;
 
 		imageReference = CreateRGBABitmapImageReference();
-		DrawScatterPlotFromSettings(imageReference, settings);
+		success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-		x1 = MapXCoordinateAutoSettings(-1d, imageReference.image, series.xs);
-		y1 = MapYCoordinateAutoSettings(-1d, imageReference.image, series.ys);
+		AssertTrue(success, failures);
 
-		AssertEquals(x1, 180d, failures);
-		AssertEquals(y1, 280d, failures);
+		if(success){
+			x1 = MapXCoordinateAutoSettings(-1d, imageReference.image, series.xs);
+			y1 = MapYCoordinateAutoSettings(-1d, imageReference.image, series.ys);
+
+			AssertEquals(x1, 180d, failures);
+			AssertEquals(y1, 280d, failures);
+		}
 	}
 
 
@@ -1773,6 +1832,10 @@ if(settings.yAxisLeft){
 		ScatterPlotSettings settings;
 		double points;
 		double x1, y1;
+		StringReference errorMessage;
+		bool success;
+
+		errorMessage = CreateStringReference("".ToCharArray());
 
 		points = 300d;
 		w = 600d*2d;
@@ -1831,13 +1894,121 @@ if(settings.yAxisLeft){
 
 		canvasReference = CreateRGBABitmapImageReference();
 
-		DrawScatterPlotFromSettings(canvasReference, settings);
+		success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage);
 
-		x1 = MapXCoordinateBasedOnSettings(27d, settings);
-		y1 = MapYCoordinateBasedOnSettings(1d, settings);
+		AssertTrue(success, failures);
 
-		AssertEquals(Floor(x1), 292d, failures);
-		AssertEquals(y1, 60d, failures);
+		if(success){
+			x1 = MapXCoordinateBasedOnSettings(27d, settings);
+			y1 = MapYCoordinateBasedOnSettings(1d, settings);
+
+			AssertEquals(Floor(x1), 292d, failures);
+			AssertEquals(y1, 60d, failures);
+		}
+	}
+
+
+	public static void ExampleRegression(RGBABitmapImageReference image){
+		char [] xsStr, ysStr;
+		double [] xs, ys, xs2, ys2;
+		StringReference errorMessage;
+		bool success;
+		ScatterPlotSettings settings;
+
+		errorMessage = CreateStringReference("".ToCharArray());
+
+		xsStr = "20.1, 7.1, 16.1, 14.9, 16.7, 8.8, 9.7, 10.3, 22, 16.2, 12.1, 10.3, 14.5, 12.4, 9.6, 12.2, 10.8, 14.7, 19.7, 11.2, 10.1, 11, 12.2, 9.2, 23.5, 9.4, 15.3, 9.6, 11.1, 5.3, 7.8, 25.3, 16.5, 12.6, 12, 11.5, 17.1, 11.2, 12.2, 10.6, 19.9, 14.5, 15.5, 17.4, 8.4, 10.3, 10.2, 12.5, 16.7, 8.5, 12.2".ToCharArray();
+		ysStr = "31.5, 18.9, 35, 31.6, 22.6, 26.2, 14.1, 24.7, 44.8, 23.2, 31.4, 17.7, 18.4, 23.4, 22.6, 16.4, 21.4, 26.5, 31.7, 11.9, 20, 12.5, 18, 14.2, 37.6, 22.2, 17.8, 18.3, 28, 8.1, 14.7, 37.8, 15.7, 28.6, 11.7, 20.1, 30.1, 18.2, 17.2, 19.6, 29.2, 17.3, 28.2, 38.2, 17.8, 10.4, 19, 16.8, 21.5, 15.9, 17.7".ToCharArray();
+
+		xs = StringToNumberArray(xsStr);
+		ys = StringToNumberArray(ysStr);
+
+		settings = GetDefaultScatterPlotSettings();
+
+		settings.scatterPlotSeries = new ScatterPlotSeries [2];
+		settings.scatterPlotSeries[0] = new ScatterPlotSeries();
+		settings.scatterPlotSeries[0].xs = xs;
+		settings.scatterPlotSeries[0].ys = ys;
+		settings.scatterPlotSeries[0].linearInterpolation = false;
+		settings.scatterPlotSeries[0].pointType = "dots".ToCharArray();
+		settings.scatterPlotSeries[0].color = CreateRGBColor(1d, 0d, 0d);
+
+		/*OrdinaryLeastSquaresWithIntercept();*/
+		xs2 = new double [2];
+		ys2 = new double [2];
+
+		xs2[0] = 5d;
+		ys2[0] = 12d;
+		xs2[1] = 25d;
+		ys2[1] = 39d;
+
+		settings.scatterPlotSeries[1] = new ScatterPlotSeries();
+		settings.scatterPlotSeries[1].xs = xs2;
+		settings.scatterPlotSeries[1].ys = ys2;
+		settings.scatterPlotSeries[1].linearInterpolation = true;
+		settings.scatterPlotSeries[1].lineType = "solid".ToCharArray();
+		settings.scatterPlotSeries[1].lineThickness = 2d;
+		settings.scatterPlotSeries[1].color = CreateRGBColor(0d, 0d, 1d);
+
+		settings.autoBoundaries = true;
+		settings.yLabel = "".ToCharArray();
+		settings.xLabel = "".ToCharArray();
+		settings.title = "".ToCharArray();
+		settings.width = 600d;
+		settings.height = 400d;
+
+		success = DrawScatterPlotFromSettings(image, settings, errorMessage);
+	}
+
+
+	public static void BarPlotExample(RGBABitmapImageReference imageReference){
+		double [] ys1, ys2, ys3;
+		BarPlotSettings settings;
+		StringReference errorMessage;
+		bool success;
+
+		errorMessage = new StringReference();
+
+		ys1 = StringToNumberArray("1, 2, 3, 4, 5".ToCharArray());
+		ys2 = StringToNumberArray("5, 4, 3, 2, 1".ToCharArray());
+		ys3 = StringToNumberArray("10, 2, 4, 3, 4".ToCharArray());
+
+		settings = GetDefaultBarPlotSettings();
+
+		settings.autoBoundaries = true;
+		/*settings.yMax;*/
+		/*settings.yMin;*/
+		settings.autoPadding = true;
+		/*settings.xPadding;*/
+		/*settings.yPadding;*/
+		settings.title = "title".ToCharArray();
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.1);
+		settings.yLabel = "y label".ToCharArray();
+		settings.autoColor = true;
+		settings.grayscaleAutoColor = false;
+		settings.autoSpacing = true;
+		/*settings.groupSeparation;*/
+		/*settings.barSeparation;*/
+		settings.autoLabels = false;
+		settings.xLabels = new StringReference [5];
+		settings.xLabels[0] = CreateStringReference("may 20".ToCharArray());
+		settings.xLabels[1] = CreateStringReference("jun 20".ToCharArray());
+		settings.xLabels[2] = CreateStringReference("jul 20".ToCharArray());
+		settings.xLabels[3] = CreateStringReference("aug 20".ToCharArray());
+		settings.xLabels[4] = CreateStringReference("sep 20".ToCharArray());
+		/*settings.colors;*/
+		settings.barBorder = true;
+
+		settings.barPlotSeries = new BarPlotSeries [3];
+		settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
+		settings.barPlotSeries[0].ys = ys1;
+		settings.barPlotSeries[1] = GetDefaultBarPlotSeriesSettings();
+		settings.barPlotSeries[1].ys = ys2;
+		settings.barPlotSeries[2] = GetDefaultBarPlotSeriesSettings();
+		settings.barPlotSeries[2].ys = ys3;
+
+		success = DrawBarPlotFromSettings(imageReference, settings, errorMessage);
 	}
 
 
@@ -2837,10 +3008,20 @@ if(settings.yAxisLeft){
 
 
 	public static char [] CreateStringScientificNotationDecimalFromNumber(double decimalx){
+		return CreateStringScientificNotationDecimalFromNumberAllOptions(decimalx, false);
+	}
+
+
+	public static char [] CreateStringScientificNotationDecimalFromNumber15d2e(double decimalx){
+		return CreateStringScientificNotationDecimalFromNumberAllOptions(decimalx, true);
+	}
+
+
+	public static char [] CreateStringScientificNotationDecimalFromNumberAllOptions(double decimalx, bool complete){
 		StringReference mantissaReference, exponentReference;
-		double multiplier, inc;
+		double multiplier, inc, i, additional;
 		double exponent;
-		bool done, isPositive;
+		bool done, isPositive, isPositiveExponent;
 		char [] result;
 
 		mantissaReference = new StringReference();
@@ -2875,7 +3056,14 @@ if(settings.yAxisLeft){
 			}
 
 			if(!done){
-				for(; decimalx >= 10d || decimalx < 1d; ){
+				exponent = (double)Round(Log10(decimalx));
+				exponent = Min(99d, exponent);
+				exponent = Max(-99d, exponent);
+
+				decimalx = decimalx/Pow(10d, exponent);
+
+				/* Adjust*/
+				for(; (decimalx >= 10d || decimalx < 1d) && Abs(exponent) < 99d; ){
 					decimalx = decimalx*multiplier;
 					exponent = exponent + inc;
 				}
@@ -2884,14 +3072,45 @@ if(settings.yAxisLeft){
 
 		CreateStringFromNumberWithCheck(decimalx, 10d, mantissaReference);
 
+		isPositiveExponent = exponent >= 0d;
+		if(!isPositiveExponent){
+			exponent = -exponent;
+		}
+
 		CreateStringFromNumberWithCheck(exponent, 10d, exponentReference);
 
 		if(!isPositive){
 			result = AppendString(result, "-".ToCharArray());
+		}else if(complete){
+			result = AppendString(result, "+".ToCharArray());
 		}
 
 		result = AppendString(result, mantissaReference.stringx);
+		if(complete){
+			additional = 16d;
+
+			if(mantissaReference.stringx.Length == 1d){
+				result = AppendString(result, ".".ToCharArray());
+				additional = additional - 1d;
+			}
+
+			for(i = mantissaReference.stringx.Length; i < additional; i = i + 1d){
+				result = AppendString(result, "0".ToCharArray());
+			}
+		}
 		result = AppendString(result, "e".ToCharArray());
+
+		if(!isPositiveExponent){
+			result = AppendString(result, "-".ToCharArray());
+		}else if(complete){
+			result = AppendString(result, "+".ToCharArray());
+		}
+
+		if(complete){
+			for(i = exponentReference.stringx.Length; i < 2d; i = i + 1d){
+				result = AppendString(result, "0".ToCharArray());
+			}
+		}
 		result = AppendString(result, exponentReference.stringx);
 
 		return result;
@@ -4420,32 +4639,25 @@ if(settings.yAxisLeft){
 	}
 
 	public static char [] GetPixelFontData(){
-		return "0000000000000000000000000000001818000018181818181818000000000000000000363636360000006666ff6666ff666600000000187eff1b1f7ef8d8ff7e1800000e1bdb6e30180c76dbd87000007fc6cfd87070d8cccc6c38000000000000000000181c0c0e00000c1830303030303030180c000030180c0c0c0c0c0c0c183000000000995a3cff3c5a990000000000181818ffff1818180000000030181c1c00000000000000000000000000ffff000000000000000038380000000000000000006060303018180c0c0606030300003c66c3e3f3dbcfc7c3663c00007e181818181818187838180000ffc0c06030180c0603e77e00007ee70303077e070303e77e00000c0c0c0c0cffcc6c3c1c0c00007ee7030307fec0c0c0c0ff00007ee7c3c3c7fec0c0c0e77e000030303030180c06030303ff00007ee7c3c3e77ee7c3c3e77e00007ee70303037fe7c3c3e77e00000038380000383800000000000030181c1c00001c1c0000000000060c183060c06030180c0600000000ffff00ffff0000000000006030180c0603060c183060000018000018180c0603c3c37e00003f60cfdbd3ddc37e0000000000c3c3c3c3ffc3c3c3663c180000fec7c3c3c7fec7c3c3c7fe00007ee7c0c0c0c0c0c0c0e77e0000fccec7c3c3c3c3c3c7cefc0000ffc0c0c0c0fcc0c0c0c0ff0000c0c0c0c0c0c0fcc0c0c0ff00007ee7c3c3cfc0c0c0c0e77e0000c3c3c3c3c3ffc3c3c3c3c300007e1818181818181818187e00007ceec606060606060606060000c3c6ccd8f0e0f0d8ccc6c30000ffc0c0c0c0c0c0c0c0c0c00000c3c3c3c3c3c3dbffffe7c30000c7c7cfcfdfdbfbf3f3e3e300007ee7c3c3c3c3c3c3c3e77e0000c0c0c0c0c0fec7c3c3c7fe00003f6edfdbc3c3c3c3c3663c0000c3c6ccd8f0fec7c3c3c7fe00007ee70303077ee0c0c0e77e000018181818181818181818ff00007ee7c3c3c3c3c3c3c3c3c30000183c3c6666c3c3c3c3c3c30000c3e7ffffdbdbc3c3c3c3c30000c366663c3c183c3c6666c300001818181818183c3c6666c30000ffc0c060307e0c060303ff00003c3030303030303030303c00030306060c0c18183030606000003c0c0c0c0c0c0c0c0c0c3c000000000000000000c3663c18ffff00000000000000000000000000000000000000001838307000007fc3c37f03c37e000000000000fec3c3c3c3fec0c0c0c0c000007ec3c0c0c0c37e0000000000007fc3c3c3c37f030303030300007fc0c0fec3c37e0000000000003030303030fc303030331e7ec303037fc3c3c37e000000000000c3c3c3c3c3c3fec0c0c0c000001818181818181800001800386c0c0c0c0c0c0c0c00000c000000c6ccf8f0d8ccc6c0c0c0c000007e181818181818181818780000dbdbdbdbdbdbfe000000000000c6c6c6c6c6c6fc0000000000007cc6c6c6c6c67c00000000c0c0c0fec3c3c3c3fe000000000303037fc3c3c3c37f000000000000c0c0c0c0c0e0fe000000000000fe03037ec0c07f0000000000001c3630303030fc3030300000007ec6c6c6c6c6c6000000000000183c3c6666c3c3000000000000c3e7ffdbc3c3c3000000000000c3663c183c66c300000000c0606030183c6666c3000000000000ff6030180c06ff0000000000000f18181838f0381818180f181818181818181818181818180000f01818181c0f1c181818f0000000000000068ff160000000".ToCharArray();
+		return "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011000000110000000000000000000000110000001100000011000000110000001100000011000000110000000000000000000000000000000000000000000000000000000000000000000000000000110110001101100011011000110110000000000000000000000000001100110011001101111111101100110011001101111111101100110011001100000000000000000000000000000000000011000011111101111111111011000111110000111111000011111000110111111111101111110000110000000000000000000011100001101100011011011011101100000110000011000001100000110111011011011000110110000111000000000000000001111111001100011111100110001101100001110000011100001101100110011001100110011011000011100000000000000000000000000000000000000000000000000000000000000000000000000000110000011100000110000011100000000000000000000001100000001100000001100000011000000110000001100000011000000110000001100000110000011000000000000000000000000110000011000001100000011000000110000001100000011000000110000001100000001100000001100000000000000000000000000000000001001100101011010001111001111111100111100010110101001100100000000000000000000000000000000000000000001100000011000000110001111111111111111000110000001100000011000000000000000000000000000000000000000110000011000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111100000000000000000000000000000000000000000000000000000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000001100000011000001100000011000001100000011000001100000011000001100000011000001100000011000000000000000000000000111100011001101100001111000111110011111101101111110011111000111100001101100110001111000000000000000000011111100001100000011000000110000001100000011000000110000001100000011110000111000001100000000000000000001111111100000011000000110000011000001100000110000011000001100000110000001110011101111110000000000000000001111110111001111100000011000000111000000111111011100000110000001100000011100111011111100000000000000000001100000011000000110000001100000011000011111111001100110011011000111100001110000011000000000000000000000111111011100111110000001100000011100000011111110000001100000011000000110000001111111111000000000000000001111110111001111100001111000011111000110111111100000011000000110000001111100111011111100000000000000000000011000000110000001100000011000001100000110000011000001100000011000000110000001111111100000000000000000111111011100111110000111100001111100111011111101110011111000011110000111110011101111110000000000000000001111110111001111100000011000000110000001111111011100111110000111100001111100111011111100000000000000000000000000001110000011100000000000000000000011100000111000000000000000000000000000000000000000000000000000000110000011000001110000011100000000000000000000011100000111000000000000000000000000000000000000000000001100000001100000001100000001100000001100000001100000110000011000001100000110000011000000000000000000000000000000000000011111111111111110000000011111111111111110000000000000000000000000000000000000000000000000000011000001100000110000011000001100000110000000110000000110000000110000000110000000110000000000000000000011000000000000000000000011000000110000011000001100000110000001100001111000011011111100000000000000000111111000000011011110011110110111100101110111011110000110111111000000000000000000000000000000000000000001100001111000011110000111100001111111111110000111100001111000011011001100011110000011000000000000000000001111111111000111100001111000011111000110111111111100011110000111100001111100011011111110000000000000000011111101110011100000011000000110000001100000011000000110000001100000011111001110111111000000000000000000011111101110011111000111100001111000011110000111100001111000011111000110111001100111111000000000000000011111111000000110000001100000011000000110011111100000011000000110000001100000011111111110000000000000000000000110000001100000011000000110000001100000011001111110000001100000011000000111111111100000000000000000111111011100111110000111100001111110011000000110000001100000011000000111110011101111110000000000000000011000011110000111100001111000011110000111111111111000011110000111100001111000011110000110000000000000000011111100001100000011000000110000001100000011000000110000001100000011000000110000111111000000000000000000011111001110111011000110110000001100000011000000110000001100000011000000110000001100000000000000000000011000011011000110011001100011011000011110000011100001111000110110011001101100011110000110000000000000000111111110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000001100001111000011110000111100001111000011110000111101101111111111111111111110011111000011000000000000000011100011111000111111001111110011111110111101101111011111110011111100111111000111110001110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011111001110111111000000000000000000000001100000011000000110000001100000011011111111110001111000011110000111110001101111111000000000000000011111100011101101111101111011011110000111100001111000011110000111100001101100110001111000000000000000000110000110110001100110011000110110000111101111111111000111100001111000011111000110111111100000000000000000111111011100111110000001100000011100000011111100000011100000011000000111110011101111110000000000000000000011000000110000001100000011000000110000001100000011000000110000001100000011000111111110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011110000111100001100000000000000000001100000111100001111000110011001100110110000111100001111000011110000111100001111000011000000000000000011000011111001111111111111111111110110111101101111000011110000111100001111000011110000110000000000000000110000110110011001100110001111000011110000011000001111000011110001100110011001101100001100000000000000000001100000011000000110000001100000011000000110000011110000111100011001100110011011000011000000000000000011111111000000110000001100000110000011000111111000110000011000001100000011000000111111110000000000000000001111000000110000001100000011000000110000001100000011000000110000001100000011000011110000000000110000001100000001100000011000000011000000110000000110000001100000001100000011000000011000000110000000000000000000111100001100000011000000110000001100000011000000110000001100000011000000110000001111000000000000000000000000000000000000000000000000000000000000000000000000001100001101100110001111000001100011111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000001110000001100000011100000000000000000111111101100001111000011111111101100000011000011011111100000000000000000000000000000000000000000000000000111111111000011110000111100001111000011011111110000001100000011000000110000001100000011000000000000000001111110110000110000001100000011000000111100001101111110000000000000000000000000000000000000000000000000111111101100001111000011110000111100001111111110110000001100000011000000110000001100000000000000000000001111111000000011000000110111111111000011110000110111111000000000000000000000000000000000000000000000000000001100000011000000110000001100000011000011111100001100000011000000110011001100011110000111111011000011110000001100000011111110110000111100001111000011011111100000000000000000000000000000000000000000000000001100001111000011110000111100001111000011110000110111111100000011000000110000001100000011000000000000000000011000000110000001100000011000000110000001100000011000000000000000000000011000000000000001110000110110001100000011000000110000001100000011000000110000001100000000000000000000001100000000000000000000000000000110001100110011000111110000111100011011001100110110001100000011000000110000001100000011000000000000000001111110000110000001100000011000000110000001100000011000000110000001100000011000000111100000000000000000110110111101101111011011110110111101101111011011011111110000000000000000000000000000000000000000000000000110001101100011011000110110001101100011011000110011111100000000000000000000000000000000000000000000000000111110011000110110001101100011011000110110001100111110000000000000000000000000000000000000001100000011000000110111111111000011110000111100001111000011011111110000000000000000000000000000000011000000110000001100000011111110110000111100001111000011110000111111111000000000000000000000000000000000000000000000000000000011000000110000001100000011000000110000011101111111000000000000000000000000000000000000000000000000011111111100000011000000011111100000001100000011111111100000000000000000000000000000000000000000000000000011100001101100000011000000110000001100000011000011111100001100000011000000110000000000000000000000000001111110011000110110001101100011011000110110001101100011000000000000000000000000000000000000000000000000000110000011110000111100011001100110011011000011110000110000000000000000000000000000000000000000000000001100001111100111111111111101101111000011110000111100001100000000000000000000000000000000000000000000000011000011011001100011110000011000001111000110011011000011000000000000000000000000000000000000001100000110000001100000110000011000001111000110011001100110110000110000000000000000000000000000000000000000000000001111111100000110000011000001100000110000011000001111111100000000000000000000000000000000000000000000000011110000000110000001100000011000000111000000111100011100000110000001100000011000111100000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000000000000111100011000000110000001100000111000111100000011100000011000000110000001100000001111".ToCharArray();
 	}
 
 
 	public static void DrawAsciiCharacter(RGBABitmapImage image, double topx, double topy, char a, RGBA color){
-		double index, x, y, row, pixel;
-		char [] allCharData, charData, rowData;
-		NumberReference rowReference;
-		StringReference errorMessage;
-
-		rowReference = new NumberReference();
-		errorMessage = new StringReference();
+		double index, x, y, pixel, basis, ybasis;
+		char [] allCharData;
 
 		index = a;
 		index = index - 32d;
 		allCharData = GetPixelFontData();
-		charData = Substring(allCharData, index*2d*13d, (index + 1d)*2d*13d);
+
+		basis = index*8d*13d;
 
 		for(y = 0d; y < 13d; y = y + 1d){
-			rowData = Substring(charData, y*2d, (y + 1d)*2d);
-			ToUpperCase(rowData);
-			CreateNumberFromStringWithCheck(rowData, 16d, rowReference, errorMessage);
-			row = rowReference.numberValue;
+			ybasis = basis + y*8d;
 			for(x = 0d; x < 8d; x = x + 1d){
-				pixel = Floor(row/Pow(2d, x))%2d;
-				if(pixel == 1d){
+				pixel = allCharData[(int)(ybasis + x)];
+				if(pixel == '1'){
 					DrawPixel(image, topx + 8d - 1d - x, topy + 13d - 1d - y, color);
 				}
 			}

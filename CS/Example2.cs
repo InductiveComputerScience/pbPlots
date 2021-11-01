@@ -4,7 +4,9 @@ using static SupportLib;
 public class Example2{
 
 	public static void Main2(){
+	    boolean success;
 		RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
+        StringReference errorMessage = new StringReference;
 
 		ScatterPlotSeries series = GetDefaultScatterPlotSeriesSettings();
 		series.xs = new double [] {-2, -1, 0, 1, 2};
@@ -24,10 +26,14 @@ public class Example2{
 		settings.yLabel = "Y axis".ToCharArray();
 		settings.scatterPlotSeries = new ScatterPlotSeries [] {series};
 
-		DrawScatterPlotFromSettings(imageReference, settings);
+		success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-		double[] pngdata = ConvertToPNG(imageReference.image);
-		WriteToFile(pngdata, "example2.png");
-		DeleteImage(imageReference.image);
+		if(success){
+            double[] pngdata = ConvertToPNG(imageReference.image);
+            WriteToFile(pngdata, "example2.png");
+            DeleteImage(imageReference.image);
+		}else{
+            Console.Error(errorMessage.string);
+        }
 	}
 }

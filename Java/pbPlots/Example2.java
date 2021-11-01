@@ -5,6 +5,8 @@ import static pbPlots.SupportLib.*;
 
 public class Example2{
 	public static void main(String [] args){
+		boolean success;
+		StringReference errorMessage = new StringReference();
 		ScatterPlotSeries series = GetDefaultScatterPlotSeriesSettings();
 		series.xs = new double [] {-2, -1, 0, 1, 2};
 		series.ys = new double [] {2, -1, -2, -1, 2};
@@ -24,10 +26,14 @@ public class Example2{
 		settings.scatterPlotSeries = new ScatterPlotSeries [] {series};
 
 		RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
-		DrawScatterPlotFromSettings(imageReference, settings);
+		success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-		double[] pngdata = ConvertToPNG(imageReference.image);
-		WriteToFile(pngdata, "example2.png");
-		DeleteImage(imageReference.image);
+		if(success) {
+			double[] pngdata = ConvertToPNG(imageReference.image);
+			WriteToFile(pngdata, "example2.png");
+			DeleteImage(imageReference.image);
+		}else{
+			System.err.println(new String(errorMessage.string));
+		}
 	}
 }
