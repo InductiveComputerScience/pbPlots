@@ -171,7 +171,7 @@ public class DynamicArrayNumbers{
 	public double [] array;
 	public double length;
 }
-public class Plots{
+public class pbPlots{
 	public static bool CropLineWithinBoundary(NumberReference x1Ref, NumberReference y1Ref, NumberReference x2Ref, NumberReference y2Ref, double xMin, double xMax, double yMin, double yMax){
 		double x1, y1, x2, y2;
 		bool success, p1In, p2In;

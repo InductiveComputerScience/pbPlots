@@ -1,12 +1,13 @@
 using static pbPlots;
 using static SupportLib;
+using System;
 
 public class Example2{
 
 	public static void Main2(){
-	    boolean success;
+	    bool success;
 		RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
-        StringReference errorMessage = new StringReference;
+        StringReference errorMessage = new StringReference();
 
 		ScatterPlotSeries series = GetDefaultScatterPlotSeriesSettings();
 		series.xs = new double [] {-2, -1, 0, 1, 2};
@@ -33,7 +34,7 @@ public class Example2{
             WriteToFile(pngdata, "example2.png");
             DeleteImage(imageReference.image);
 		}else{
-            Console.Error(errorMessage.string);
+            Console.Error.WriteLine(errorMessage.stringx);
         }
 	}
 }

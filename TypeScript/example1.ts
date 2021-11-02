@@ -8,8 +8,13 @@ var imageReference = pbPlots.CreateRGBABitmapImageReference();
 var xs = [-2, -1, 0, 1, 2];
 var ys = [2, -1, -2, -1, 2];
 
-pbPlots.DrawScatterPlot(imageReference, 800, 600, xs, ys);
+var errorMessage = {};
+var success = pbPlots.DrawScatterPlot(imageReference, 800, 600, xs, ys, errorMessage);
 
-var pngdata = pbPlots.ConvertToPNG(imageReference.image);
-supportLib.WriteToFile(pngdata, "example1.png");
-pbPlots.DeleteImage(imageReference.image);
+if(success){
+    var pngdata = pbPlots.ConvertToPNG(imageReference.image);
+    supportLib.WriteToFile(pngdata, "example1.png");
+    pbPlots.DeleteImage(imageReference.image);
+}else{
+    console.error(errorMessage.stringx.join(''));
+}

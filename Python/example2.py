@@ -1,5 +1,6 @@
 import pbPlots as pbPlots
 import supportLib as supportLib
+import sys
 
 series = pbPlots.GetDefaultScatterPlotSeriesSettings()
 series.xs = [-2, -1, 0, 1, 2]
@@ -20,8 +21,12 @@ settings.yLabel = "Y axis"
 settings.scatterPlotSeries = [series]
 
 imageReference = pbPlots.CreateRGBABitmapImageReference()
-pbPlots.DrawScatterPlotFromSettings(imageReference, settings)
+errorMessage = pbPlots.StringReference()
+success = pbPlots.DrawScatterPlotFromSettings(imageReference, settings, errorMessage)
 
-pngdata = pbPlots.ConvertToPNG(imageReference.image)
-supportLib.WriteToFile(pngdata, "example2.png")
-pbPlots.DeleteImage(imageReference.image)
+if success:
+    pngdata = pbPlots.ConvertToPNG(imageReference.image)
+    supportLib.WriteToFile(pngdata, "example2.png")
+    pbPlots.DeleteImage(imageReference.image)
+else:
+    sys.stderr.write("".join(errorMessage.string))

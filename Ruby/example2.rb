@@ -20,8 +20,13 @@ settings.yLabel = "Y axis"
 settings.scatterPlotSeries = [series]
 
 imageReference = CreateRGBABitmapImageReference()
-DrawScatterPlotFromSettings(imageReference, settings)
+errorMessage = StringReference.new
+success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage)
 
-pngdata = ConvertToPNG(imageReference.image)
-WriteToFile(pngdata, "example2.png")
-DeleteImage(imageReference.image)
+if success
+    pngdata = ConvertToPNG(imageReference.image)
+    WriteToFile(pngdata, "example2.png")
+    DeleteImage(imageReference.image)
+else
+    STDERR.puts(errorMessage.string.join(''))
+end

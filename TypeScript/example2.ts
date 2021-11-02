@@ -20,8 +20,13 @@ settings.yLabel = "Y axis".split('');
 settings.scatterPlotSeries = [series];
 
 var imageReference = pbPlots.CreateRGBABitmapImageReference();
-pbPlots.DrawScatterPlotFromSettings(imageReference, settings);
+var errorMessage = {};
+var success = pbPlots.DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-var pngdata = pbPlots.ConvertToPNG(imageReference.image);
-supportLib.WriteToFile(pngdata, "example2.png");
-pbPlots.DeleteImage(imageReference.image);
+if(success){
+    var pngdata = pbPlots.ConvertToPNG(imageReference.image);
+    supportLib.WriteToFile(pngdata, "example2.png");
+    pbPlots.DeleteImage(imageReference.image);
+}else{
+    console.error(errorMessage.stringx.join(''));
+}

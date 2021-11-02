@@ -764,8 +764,9 @@ export function GetDefaultScatterPlotSeriesSettings() : ScatterPlotSeries{
 	}
 
 
-export function DrawScatterPlot(canvasReference : RGBABitmapImageReference, width : number, height : number, xs : number [], ys : number []) : void{
+export function DrawScatterPlot(canvasReference : RGBABitmapImageReference, width : number, height : number, xs : number [], ys : number [], errorMessage : StringReference) : boolean{
 		var settings : ScatterPlotSettings;
+		var success : boolean;
 
 		settings = GetDefaultScatterPlotSettings();
 
@@ -778,11 +779,13 @@ export function DrawScatterPlot(canvasReference : RGBABitmapImageReference, widt
 		delete settings.scatterPlotSeries[0].ys;
 		settings.scatterPlotSeries[0].ys = ys;
 
-		DrawScatterPlotFromSettings(canvasReference, settings);
+		success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage);
+
+		return success;
 	}
 
 
-export function DrawScatterPlotFromSettings(canvasReference : RGBABitmapImageReference, settings : ScatterPlotSettings) : boolean{
+export function DrawScatterPlotFromSettings(canvasReference : RGBABitmapImageReference, settings : ScatterPlotSettings, errorMessage : StringReference) : boolean{
 		var xMin : number, xMax : number, yMin : number, yMax : number, xLength : number, yLength : number, i : number, x : number, y : number, xPrev : number, yPrev : number, px : number, py : number, pxPrev : number, pyPrev : number, originX : number, originY : number, p : number, l : number, plot : number;
 		var boundaries : Rectangle;
 		var xPadding : number, yPadding : number, originXPixels : number, originYPixels : number;
@@ -805,7 +808,7 @@ export function DrawScatterPlotFromSettings(canvasReference : RGBABitmapImageRef
 		canvas = CreateImage(settings.width, settings.height, GetWhite());
 		patternOffset = CreateNumberReference(0);
 
-		success = ScatterPlotFromSettingsValid(settings);
+		success = ScatterPlotFromSettingsValid(settings, errorMessage);
 
 		if(success){
 
@@ -816,16 +819,16 @@ export function DrawScatterPlotFromSettings(canvasReference : RGBABitmapImageRef
 			xMax = boundaries.x2;
 			yMax = boundaries.y2;
 
-            // If zero, set to defaults.
-            if(xMin - xMax == 0){
-                xMin = 0;
-                xMax = 10;
-            }
+			/* If zero, set to defaults.*/
+			if(xMin - xMax == 0){
+				xMin = 0;
+				xMax = 10;
+			}
 
-            if(yMin - yMax == 0){
-                yMin = 0;
-                yMax = 10;
-            }
+			if(yMin - yMax == 0){
+				yMin = 0;
+				yMax = 10;
+			}
 
 			xLength = xMax - xMin;
 			yLength = yMax - yMin;
@@ -1101,7 +1104,6 @@ if(settings.yAxisLeft){
 				}
 			}
 
-			DeleteImage(canvasReference.image);
 			canvasReference.image = canvas;
 		}
 
@@ -1148,7 +1150,7 @@ export function ComputeBoundariesBasedOnSettings(settings : ScatterPlotSettings,
 	}
 
 
-export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : boolean{
+export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings, errorMessage : StringReference) : boolean{
 		var success : boolean, found : boolean;
 		var series : ScatterPlotSeries;
 		var i : number;
@@ -1159,18 +1161,22 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 		if(!settings.xAxisAuto){
 			if(settings.xAxisTop && settings.xAxisBottom){
 				success = false;
+				errorMessage.stringx = "x-axis not automatic and configured to be both on top and on bottom.".split('');
 			}
 			if(!settings.xAxisTop && !settings.xAxisBottom){
 				success = false;
+				errorMessage.stringx = "x-axis not automatic and configured to be neither on top nor on bottom.".split('');
 			}
 		}
 
 		if(!settings.yAxisAuto){
 			if(settings.yAxisLeft && settings.yAxisRight){
 				success = false;
+				errorMessage.stringx = "y-axis not automatic and configured to be both on top and on bottom.".split('');
 			}
 			if(!settings.yAxisLeft && !settings.yAxisRight){
 				success = false;
+				errorMessage.stringx = "y-axis not automatic and configured to be neither on top nor on bottom.".split('');
 			}
 		}
 
@@ -1179,12 +1185,15 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 			series = settings.scatterPlotSeries[i];
 			if(series.xs.length != series.ys.length){
 				success = false;
+				errorMessage.stringx = "x and y series must be of the same length.".split('');
 			}
 			if(series.xs.length == 0){
 				success = false;
+				errorMessage.stringx = "There must be data in the series to be plotted.".split('');
 			}
 			if(series.linearInterpolation && series.xs.length == 1){
 				success = false;
+				errorMessage.stringx = "Linear interpolation requires at least two data points to be plotted.".split('');
 			}
 		}
 
@@ -1192,9 +1201,11 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 		if(!settings.autoBoundaries){
 			if(settings.xMin >= settings.xMax){
 				success = false;
+				errorMessage.stringx = "x min is higher than or equal to x max.".split('');
 			}
 			if(settings.yMin >= settings.yMax){
 				success = false;
+				errorMessage.stringx = "y min is higher than or equal to y max.".split('');
 			}
 		}
 
@@ -1202,18 +1213,22 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 		if(!settings.autoPadding){
 			if(2*settings.xPadding >= settings.width){
 				success = false;
+				errorMessage.stringx = "The x padding is more then the width.".split('');
 			}
 			if(2*settings.yPadding >= settings.height){
 				success = false;
+				errorMessage.stringx = "The y padding is more then the height.".split('');
 			}
 		}
 
 		/* Check width and height.*/
 		if(settings.width < 0){
 			success = false;
+			errorMessage.stringx = "The width is less than 0.".split('');
 		}
 		if(settings.height < 0){
 			success = false;
+			errorMessage.stringx = "The height is less than 0.".split('');
 		}
 
 		/* Check point types.*/
@@ -1222,6 +1237,7 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 
 			if(series.lineThickness < 0){
 				success = false;
+				errorMessage.stringx = "The line thickness is less than 0.".split('');
 			}
 
 			if(!series.linearInterpolation){
@@ -1242,6 +1258,7 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 				}
 				if(!found){
 					success = false;
+					errorMessage.stringx = "The point type is unknown.".split('');
 				}
 			}else{
 				/* Line type.*/
@@ -1262,6 +1279,7 @@ export function ScatterPlotFromSettingsValid(settings : ScatterPlotSettings) : b
 
 				if(!found){
 					success = false;
+					errorMessage.stringx = "The line type is unknown.".split('');
 				}
 			}
 		}
@@ -1320,34 +1338,50 @@ export function GetDefaultBarPlotSeriesSettings() : BarPlotSeries{
 	}
 
 
-export function DrawBarPlot(width : number, height : number, ys : number []) : RGBABitmapImage{
-		var settings : BarPlotSettings;
+export function DrawBarPlotNoErrorCheck(width : number, height : number, ys : number []) : RGBABitmapImage{
+		var errorMessage : StringReference;
+		var success : boolean;
 		var canvasReference : RGBABitmapImageReference;
 
+		errorMessage = new StringReference();
+		canvasReference = CreateRGBABitmapImageReference();
+
+		success = DrawBarPlot(canvasReference, width, height, ys, errorMessage);
+
+		FreeStringReference(errorMessage);
+
+		return canvasReference.image;
+	}
+
+
+export function DrawBarPlot(canvasReference : RGBABitmapImageReference, width : number, height : number, ys : number [], errorMessage : StringReference) : boolean{
+		var settings : BarPlotSettings;
+		var success : boolean;
+
+		errorMessage = new StringReference();
 		settings = GetDefaultBarPlotSettings();
 
 		settings.barPlotSeries = new Array<BarPlotSeries>(1);
 		settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
 		delete settings.barPlotSeries[0].ys;
 		settings.barPlotSeries[0].ys = ys;
-		canvasReference = new RGBABitmapImageReference();
 		settings.width = width;
 		settings.height = height;
 
-		DrawBarPlotFromSettings(canvasReference, settings);
+		success = DrawBarPlotFromSettings(canvasReference, settings, errorMessage);
 
-		return canvasReference.image;
+		return success;
 	}
 
 
-export function DrawBarPlotFromSettings(canvasReference : RGBABitmapImageReference, settings : BarPlotSettings) : boolean{
+export function DrawBarPlotFromSettings(canvasReference : RGBABitmapImageReference, settings : BarPlotSettings, errorMessage : StringReference) : boolean{
 		var xPadding : number, yPadding : number;
 		var xPixelMin : number, yPixelMin : number, yPixelMax : number, xPixelMax : number;
 		var xLengthPixels : number, yLengthPixels : number;
 		var s : number, n : number, y : number, x : number, w : number, h : number, yMin : number, yMax : number, b : number, i : number, py : number, yValue : number;
 		var colors : RGBA [];
 		var ys : number [], yGridPositions : number [];
-		var yTop : number, yBottom : number, ss : number, bs : number, yLength : number;
+		var yTop : number, yBottom : number, ss : number, bs : number;
 		var groupSeparation : number, barSeparation : number, barWidth : number, textwidth : number;
 		var yLabels : StringArrayReference;
 		var yLabelPriorities : NumberArrayReference;
@@ -1358,10 +1392,9 @@ export function DrawBarPlotFromSettings(canvasReference : RGBABitmapImageReferen
 		var success : boolean;
 		var canvas : RGBABitmapImage;
 
-		success = BarPlotSettingsIsValid(settings);
+		success = BarPlotSettingsIsValid(settings, errorMessage);
 
 		if(success){
-
 			canvas = CreateImage(settings.width, settings.height, GetWhite());
 
 			ss = settings.barPlotSeries.length;
@@ -1398,7 +1431,6 @@ export function DrawBarPlotFromSettings(canvasReference : RGBABitmapImageReferen
 				yMin = settings.yMin;
 				yMax = settings.yMax;
 			}
-			yLength = yMax - yMin;
 
 			/* boundaries*/
 			xPixelMin = xPadding;
@@ -1553,10 +1585,10 @@ export function DrawBarPlotFromSettings(canvasReference : RGBABitmapImageReferen
 	}
 
 
-export function BarPlotSettingsIsValid(settings : BarPlotSettings) : boolean{
+export function BarPlotSettingsIsValid(settings : BarPlotSettings, errorMessage : StringReference) : boolean{
 		var success : boolean, lengthSet : boolean;
 		var series : BarPlotSeries;
-		var i : number, width : number, height : number, length : number;
+		var i : number, length : number;
 
 		success = true;
 
@@ -1571,6 +1603,7 @@ export function BarPlotSettingsIsValid(settings : BarPlotSettings) : boolean{
 				lengthSet = true;
 			}else if(length != series.ys.length){
 				success = false;
+				errorMessage.stringx = "The number of data points must be equal for all series.".split('');
 			}
 		}
 
@@ -1578,6 +1611,7 @@ export function BarPlotSettingsIsValid(settings : BarPlotSettings) : boolean{
 		if(!settings.autoBoundaries){
 			if(settings.yMin >= settings.yMax){
 				success = false;
+				errorMessage.stringx = "Minimum y lower than maximum y.".split('');
 			}
 		}
 
@@ -1585,27 +1619,33 @@ export function BarPlotSettingsIsValid(settings : BarPlotSettings) : boolean{
 		if(!settings.autoPadding){
 			if(2*settings.xPadding >= settings.width){
 				success = false;
+				errorMessage.stringx = "Double the horizontal padding is larger than or equal to the width.".split('');
 			}
 			if(2*settings.yPadding >= settings.height){
 				success = false;
+				errorMessage.stringx = "Double the vertical padding is larger than or equal to the height.".split('');
 			}
 		}
 
 		/* Check width and height.*/
 		if(settings.width < 0){
 			success = false;
+			errorMessage.stringx = "Width lower than zero.".split('');
 		}
 		if(settings.height < 0){
 			success = false;
+			errorMessage.stringx = "Height lower than zero.".split('');
 		}
 
 		/* Check spacing*/
 		if(!settings.autoSpacing){
 			if(settings.groupSeparation < 0){
 				success = false;
+				errorMessage.stringx = "Group separation lower than zero.".split('');
 			}
 			if(settings.barSeparation < 0){
 				success = false;
+				errorMessage.stringx = "Bar separation lower than zero.".split('');
 			}
 		}
 
@@ -1650,8 +1690,11 @@ export function test() : number{
 		var labelPriorities : NumberArrayReference;
 		var imageReference : RGBABitmapImageReference;
 		var xs : number [], ys : number [];
+		var errorMessage : StringReference;
+		var success : boolean;
 
 		failures = CreateNumberReference(0);
+		errorMessage = CreateStringReference("".split(''));
 
 		imageReference = CreateRGBABitmapImageReference();
 
@@ -1706,12 +1749,20 @@ export function test() : number{
 		ys[2] = -2;
 		ys[3] = -1;
 		ys[4] = 2;
-		DrawScatterPlot(imageReference, 800, 600, xs, ys);
+		success = DrawScatterPlot(imageReference, 800, 600, xs, ys, errorMessage);
 
-		imageReference.image = DrawBarPlot(800, 600, ys);
+		AssertTrue(success, failures);
 
-		TestMapping(failures);
-		TestMapping2(failures);
+		if(success){
+			success = DrawBarPlot(imageReference, 800, 600, ys, errorMessage);
+
+			AssertTrue(success, failures);
+
+			if(success){
+				TestMapping(failures);
+				TestMapping2(failures);
+			}
+		}
 
 		return failures.numberValue;
 	}
@@ -1722,6 +1773,10 @@ export function TestMapping(failures : NumberReference) : void{
 		var settings : ScatterPlotSettings;
 		var imageReference : RGBABitmapImageReference;
 		var x1 : number, y1 : number;
+		var errorMessage : StringReference;
+		var success : boolean;
+
+		errorMessage = CreateStringReference("".split(''));
 
 		series = GetDefaultScatterPlotSeriesSettings();
 
@@ -1754,13 +1809,17 @@ export function TestMapping(failures : NumberReference) : void{
 		settings.scatterPlotSeries[0] = series;
 
 		imageReference = CreateRGBABitmapImageReference();
-		DrawScatterPlotFromSettings(imageReference, settings);
+		success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-		x1 = MapXCoordinateAutoSettings(-1, imageReference.image, series.xs);
-		y1 = MapYCoordinateAutoSettings(-1, imageReference.image, series.ys);
+		AssertTrue(success, failures);
 
-		AssertEquals(x1, 180, failures);
-		AssertEquals(y1, 280, failures);
+		if(success){
+			x1 = MapXCoordinateAutoSettings(-1, imageReference.image, series.xs);
+			y1 = MapYCoordinateAutoSettings(-1, imageReference.image, series.ys);
+
+			AssertEquals(x1, 180, failures);
+			AssertEquals(y1, 280, failures);
+		}
 	}
 
 
@@ -1771,6 +1830,10 @@ export function TestMapping2(failures : NumberReference) : void{
 		var settings : ScatterPlotSettings;
 		var points : number;
 		var x1 : number, y1 : number;
+		var errorMessage : StringReference;
+		var success : boolean;
+
+		errorMessage = CreateStringReference("".split(''));
 
 		points = 300;
 		w = 600*2;
@@ -1829,13 +1892,121 @@ export function TestMapping2(failures : NumberReference) : void{
 
 		canvasReference = CreateRGBABitmapImageReference();
 
-		DrawScatterPlotFromSettings(canvasReference, settings);
+		success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage);
 
-		x1 = MapXCoordinateBasedOnSettings(27, settings);
-		y1 = MapYCoordinateBasedOnSettings(1, settings);
+		AssertTrue(success, failures);
 
-		AssertEquals(Math.floor(x1), 292, failures);
-		AssertEquals(y1, 60, failures);
+		if(success){
+			x1 = MapXCoordinateBasedOnSettings(27, settings);
+			y1 = MapYCoordinateBasedOnSettings(1, settings);
+
+			AssertEquals(Math.floor(x1), 292, failures);
+			AssertEquals(y1, 60, failures);
+		}
+	}
+
+
+export function ExampleRegression(image : RGBABitmapImageReference) : void{
+		var xsStr : string [], ysStr : string [];
+		var xs : number [], ys : number [], xs2 : number [], ys2 : number [];
+		var errorMessage : StringReference;
+		var success : boolean;
+		var settings : ScatterPlotSettings;
+
+		errorMessage = CreateStringReference("".split(''));
+
+		xsStr = "20.1, 7.1, 16.1, 14.9, 16.7, 8.8, 9.7, 10.3, 22, 16.2, 12.1, 10.3, 14.5, 12.4, 9.6, 12.2, 10.8, 14.7, 19.7, 11.2, 10.1, 11, 12.2, 9.2, 23.5, 9.4, 15.3, 9.6, 11.1, 5.3, 7.8, 25.3, 16.5, 12.6, 12, 11.5, 17.1, 11.2, 12.2, 10.6, 19.9, 14.5, 15.5, 17.4, 8.4, 10.3, 10.2, 12.5, 16.7, 8.5, 12.2".split('');
+		ysStr = "31.5, 18.9, 35, 31.6, 22.6, 26.2, 14.1, 24.7, 44.8, 23.2, 31.4, 17.7, 18.4, 23.4, 22.6, 16.4, 21.4, 26.5, 31.7, 11.9, 20, 12.5, 18, 14.2, 37.6, 22.2, 17.8, 18.3, 28, 8.1, 14.7, 37.8, 15.7, 28.6, 11.7, 20.1, 30.1, 18.2, 17.2, 19.6, 29.2, 17.3, 28.2, 38.2, 17.8, 10.4, 19, 16.8, 21.5, 15.9, 17.7".split('');
+
+		xs = StringToNumberArray(xsStr);
+		ys = StringToNumberArray(ysStr);
+
+		settings = GetDefaultScatterPlotSettings();
+
+		settings.scatterPlotSeries = new Array<ScatterPlotSeries>(2);
+		settings.scatterPlotSeries[0] = new ScatterPlotSeries();
+		settings.scatterPlotSeries[0].xs = xs;
+		settings.scatterPlotSeries[0].ys = ys;
+		settings.scatterPlotSeries[0].linearInterpolation = false;
+		settings.scatterPlotSeries[0].pointType = "dots".split('');
+		settings.scatterPlotSeries[0].color = CreateRGBColor(1, 0, 0);
+
+		/*OrdinaryLeastSquaresWithIntercept();*/
+		xs2 = new Array<number>(2);
+		ys2 = new Array<number>(2);
+
+		xs2[0] = 5;
+		ys2[0] = 12;
+		xs2[1] = 25;
+		ys2[1] = 39;
+
+		settings.scatterPlotSeries[1] = new ScatterPlotSeries();
+		settings.scatterPlotSeries[1].xs = xs2;
+		settings.scatterPlotSeries[1].ys = ys2;
+		settings.scatterPlotSeries[1].linearInterpolation = true;
+		settings.scatterPlotSeries[1].lineType = "solid".split('');
+		settings.scatterPlotSeries[1].lineThickness = 2;
+		settings.scatterPlotSeries[1].color = CreateRGBColor(0, 0, 1);
+
+		settings.autoBoundaries = true;
+		settings.yLabel = "".split('');
+		settings.xLabel = "".split('');
+		settings.title = "".split('');
+		settings.width = 600;
+		settings.height = 400;
+
+		success = DrawScatterPlotFromSettings(image, settings, errorMessage);
+	}
+
+
+export function BarPlotExample(imageReference : RGBABitmapImageReference) : void{
+		var ys1 : number [], ys2 : number [], ys3 : number [];
+		var settings : BarPlotSettings;
+		var errorMessage : StringReference;
+		var success : boolean;
+
+		errorMessage = new StringReference();
+
+		ys1 = StringToNumberArray("1, 2, 3, 4, 5".split(''));
+		ys2 = StringToNumberArray("5, 4, 3, 2, 1".split(''));
+		ys3 = StringToNumberArray("10, 2, 4, 3, 4".split(''));
+
+		settings = GetDefaultBarPlotSettings();
+
+		settings.autoBoundaries = true;
+		/*settings.yMax;*/
+		/*settings.yMin;*/
+		settings.autoPadding = true;
+		/*settings.xPadding;*/
+		/*settings.yPadding;*/
+		settings.title = "title".split('');
+		settings.showGrid = true;
+		settings.gridColor = GetGray(0.1);
+		settings.yLabel = "y label".split('');
+		settings.autoColor = true;
+		settings.grayscaleAutoColor = false;
+		settings.autoSpacing = true;
+		/*settings.groupSeparation;*/
+		/*settings.barSeparation;*/
+		settings.autoLabels = false;
+		settings.xLabels = new Array<StringReference>(5);
+		settings.xLabels[0] = CreateStringReference("may 20".split(''));
+		settings.xLabels[1] = CreateStringReference("jun 20".split(''));
+		settings.xLabels[2] = CreateStringReference("jul 20".split(''));
+		settings.xLabels[3] = CreateStringReference("aug 20".split(''));
+		settings.xLabels[4] = CreateStringReference("sep 20".split(''));
+		/*settings.colors;*/
+		settings.barBorder = true;
+
+		settings.barPlotSeries = new Array<BarPlotSeries>(3);
+		settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
+		settings.barPlotSeries[0].ys = ys1;
+		settings.barPlotSeries[1] = GetDefaultBarPlotSeriesSettings();
+		settings.barPlotSeries[1].ys = ys2;
+		settings.barPlotSeries[2] = GetDefaultBarPlotSeriesSettings();
+		settings.barPlotSeries[2].ys = ys3;
+
+		success = DrawBarPlotFromSettings(imageReference, settings, errorMessage);
 	}
 
 
@@ -2835,10 +3006,20 @@ export function CreateBlurForPoint(src : RGBABitmapImage, x : number, y : number
 
 
 export function CreateStringScientificNotationDecimalFromNumber(decimal : number) : string []{
+		return CreateStringScientificNotationDecimalFromNumberAllOptions(decimal, false);
+	}
+
+
+export function CreateStringScientificNotationDecimalFromNumber15d2e(decimal : number) : string []{
+		return CreateStringScientificNotationDecimalFromNumberAllOptions(decimal, true);
+	}
+
+
+export function CreateStringScientificNotationDecimalFromNumberAllOptions(decimal : number, complete : boolean) : string []{
 		var mantissaReference : StringReference, exponentReference : StringReference;
-		var multiplier : number, inc : number;
+		var multiplier : number, inc : number, i : number, additional : number;
 		var exponent : number;
-		var done : boolean, isPositive : boolean;
+		var done : boolean, isPositive : boolean, isPositiveExponent : boolean;
 		var result : string [];
 
 		mantissaReference = new StringReference();
@@ -2873,7 +3054,14 @@ export function CreateStringScientificNotationDecimalFromNumber(decimal : number
 			}
 
 			if(!done){
-				for(; decimal >= 10 || decimal < 1; ){
+				exponent = Math.round(Math.log10(decimal));
+				exponent = Math.min(99, exponent);
+				exponent = Math.max(-99, exponent);
+
+				decimal = decimal/10**exponent;
+
+				/* Adjust*/
+				for(; (decimal >= 10 || decimal < 1) && Math.abs(exponent) < 99; ){
 					decimal = decimal*multiplier;
 					exponent = exponent + inc;
 				}
@@ -2882,14 +3070,45 @@ export function CreateStringScientificNotationDecimalFromNumber(decimal : number
 
 		CreateStringFromNumberWithCheck(decimal, 10, mantissaReference);
 
+		isPositiveExponent = exponent >= 0;
+		if(!isPositiveExponent){
+			exponent = -exponent;
+		}
+
 		CreateStringFromNumberWithCheck(exponent, 10, exponentReference);
 
 		if(!isPositive){
 			result = AppendString(result, "-".split(''));
+		}else if(complete){
+			result = AppendString(result, "+".split(''));
 		}
 
 		result = AppendString(result, mantissaReference.stringx);
+		if(complete){
+			additional = 16;
+
+			if(mantissaReference.stringx.length == 1){
+				result = AppendString(result, ".".split(''));
+				additional = additional - 1;
+			}
+
+			for(i = mantissaReference.stringx.length; i < additional; i = i + 1){
+				result = AppendString(result, "0".split(''));
+			}
+		}
 		result = AppendString(result, "e".split(''));
+
+		if(!isPositiveExponent){
+			result = AppendString(result, "-".split(''));
+		}else if(complete){
+			result = AppendString(result, "+".split(''));
+		}
+
+		if(complete){
+			for(i = exponentReference.stringx.length; i < 2; i = i + 1){
+				result = AppendString(result, "0".split(''));
+			}
+		}
 		result = AppendString(result, exponentReference.stringx);
 
 		return result;
@@ -4418,33 +4637,63 @@ export function FreeStringArrayReference(stringArrayReference : StringArrayRefer
 	}
 
 
+export function DigitDataBase16() : string []{
+		return "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe891412108153069c4ffffffffffffffffffffffffffffffffffffffff9409000000000000000049e7ffffffffffffffffffffffffffffffffff61000000000000000000000017ddffffffffffffffffffffffffffffff840000000573d3f5e5a62b00000028f0ffffffffffffffffffffffffffda04000008bcfffffffffff44200000073ffffffffffffffffffffffffff5700000088ffffffffffffffe812000008e3ffffffffffffffffffffffea02000015f9ffffffffffffffff8100000080ffffffffffffffffffffff9c00000072ffffffffffffffffffe40100002fffffffffffffffffffffff51000000b8ffffffffffffffffffff2a000000e2ffffffffffffffffffff21000001f0ffffffffffffffffffff65000000b3fffffffffffffffffff602000018ffffffffffffffffffffff8b0000008affffffffffffffffffd200000036ffffffffffffffffffffffa900000063ffffffffffffffffffc00000004effffffffffffffffffffffc100000052ffffffffffffffffffb500000057ffffffffffffffffffffffc900000046ffffffffffffffffffa90000005fffffffffffffffffffffffd20000003affffffffffffffffffa900000060ffffffffffffffffffffffd30000003affffffffffffffffffb400000057ffffffffffffffffffffffca00000046ffffffffffffffffffc00000004effffffffffffffffffffffc100000052ffffffffffffffffffd100000037ffffffffffffffffffffffa900000063fffffffffffffffffff602000019ffffffffffffffffffffff8b00000089ffffffffffffffffffff21000001f1ffffffffffffffffffff66000000b3ffffffffffffffffffff50000000b8ffffffffffffffffffff2a000000e1ffffffffffffffffffff9c00000073ffffffffffffffffffe40100002fffffffffffffffffffffffea02000015f9ffffffffffffffff8200000080ffffffffffffffffffffffff5700000088ffffffffffffffe812000008e2ffffffffffffffffffffffffda04000008bcfffffffffff44300000073ffffffffffffffffffffffffffff830000000674d3f6e6a72b00000028f0ffffffffffffffffffffffffffffff60000000000000000000000016ddfffffffffffffffffffffffffffffffffe9309000000000000000048e6ffffffffffffffffffffffffffffffffffffffe88f3f1f07132e68c3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9d7b28e69441f02000000afffffffffffffffffffffffffffffffffffff6300000000000000000000afffffffffffffffffffffffffffffffffffff6300000000000000000000afffffffffffffffffffffffffffffffffffff6a274c7095b9de64000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000affffffffffffffffffffffffffffffffffffff7000000000000000000000000000000003bfffffffffffffffffffffffff7000000000000000000000000000000003bfffffffffffffffffffffffff7000000000000000000000000000000003bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd48b56271005142a5ea0f6ffffffffffffffffffffffffffffffffdb7c20000000000000000000001392feffffffffffffffffffffffffffff1f00000000000000000000000000004cf9ffffffffffffffffffffffffff1f0000003784c7e7f9e8b1480000000056ffffffffffffffffffffffffff1f015accffffffffffffffff9701000000b0ffffffffffffffffffffffff58caffffffffffffffffffffff770000003cfffffffffffffffffffffffffffffffffffffffffffffffffff107000002edffffffffffffffffffffffffffffffffffffffffffffffffff3a000000ccffffffffffffffffffffffffffffffffffffffffffffffffff4c000000baffffffffffffffffffffffffffffffffffffffffffffffffff32000000cbffffffffffffffffffffffffffffffffffffffffffffffffec05000002edffffffffffffffffffffffffffffffffffffffffffffffff8d00000039ffffffffffffffffffffffffffffffffffffffffffffffffeb140000009affffffffffffffffffffffffffffffffffffffffffffffff520000002afbffffffffffffffffffffffffffffffffffffffffffffff8c00000003c7ffffffffffffffffffffffffffffffffffffffffffffffb30300000085ffffffffffffffffffffffffffffffffffffffffffffffc50a0000005dfeffffffffffffffffffffffffffffffffffffffffffffd2110000004efbffffffffffffffffffffffffffffffffffffffffffffdb1800000042f8ffffffffffffffffffffffffffffffffffffffffffffe21f00000039f3ffffffffffffffffffffffffffffffffffffffffffffe92600000030efffffffffffffffffffffffffffffffffffffffffffffee2e00000029eafffffffffffffffffffffffffffffffffffffffffffff33700000022e5fffffffffffffffffffffffffffffffffffffffffffff7410000001cdffffffffffffffffffffffffffffffffffffffffffffffb4c00000017d9fffffffffffffffffffffffffffffffffffffffffffffd5900000012d2ffffffffffffffffffffffffffffffffffffffffffffff680000000ecbffffffffffffffffffffffffffffffffffffffffffffffef0000000000000000000000000000000000008bffffffffffffffffffffef0000000000000000000000000000000000008bffffffffffffffffffffef0000000000000000000000000000000000008bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe2af8058392817060a1a3f74c8ffffffffffffffffffffffffffffffffeb0000000000000000000000000036cfffffffffffffffffffffffffffffeb000000000000000000000000000004a7ffffffffffffffffffffffffffeb00000f5a9dd0edfbf0ca841900000003c2ffffffffffffffffffffffffec3da8f9fffffffffffffffff0410000002bffffffffffffffffffffffffffffffffffffffffffffffffffee12000000cbffffffffffffffffffffffffffffffffffffffffffffffffff6900000090ffffffffffffffffffffffffffffffffffffffffffffffffff9600000078ffffffffffffffffffffffffffffffffffffffffffffffffff9a0000007effffffffffffffffffffffffffffffffffffffffffffffffff73000000a5fffffffffffffffffffffffffffffffffffffffffffffffff51b000009edfffffffffffffffffffffffffffffffffffffffffffffff7540000007efffffffffffffffffffffffffffffffffffffffffff3d3912400000055fcffffffffffffffffffffffffffffffffff1700000000000000001692feffffffffffffffffffffffffffffffffffff17000000000000002db8feffffffffffffffffffffffffffffffffffffff170000000000000000002bc3fffffffffffffffffffffffffffffffffffffffffffdf0cf922e00000003a5fffffffffffffffffffffffffffffffffffffffffffffffffd8700000007d1ffffffffffffffffffffffffffffffffffffffffffffffffff780000004ffffffffffffffffffffffffffffffffffffffffffffffffffff308000006f6ffffffffffffffffffffffffffffffffffffffffffffffffff3c000000d0ffffffffffffffffffffffffffffffffffffffffffffffffff4d000000c6ffffffffffffffffffffffffffffffffffffffffffffffffff35000000ddffffffffffffffffffffffffffffffffffffffffffffffffea0300000bf9ffffffffffffffffffffffffffffffffffffffffffffffff6200000054ffffffffffffffffffffff47bafefffffffffffffffffff56b00000002cbffffffffffffffffffffff0b001e71a9d7edfbf6e4ba771a000000007cffffffffffffffffffffffff0b0000000000000000000000000000017dffffffffffffffffffffffffff0b000000000000000000000000003cc8ffffffffffffffffffffffffffffe9b989593827160608162a5689dbffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbd0100000000f3fffffffffffffffffffffffffffffffffffffffffffff3200000000000f3ffffffffffffffffffffffffffffffffffffffffffff69000000000000f3ffffffffffffffffffffffffffffffffffffffffffbf01000b0e000000f3fffffffffffffffffffffffffffffffffffffffff42100008e1f000000f3ffffffffffffffffffffffffffffffffffffffff6a000035fc1f000000f3ffffffffffffffffffffffffffffffffffffffc0010004d1ff1f000000f3fffffffffffffffffffffffffffffffffffff42200007affff1f000000f3ffffffffffffffffffffffffffffffffffff6c000026f7ffff1f000000f3ffffffffffffffffffffffffffffffffffc1010001c1ffffff1f000000f3fffffffffffffffffffffffffffffffff523000066ffffffff1f000000f3ffffffffffffffffffffffffffffffff6d000019f0ffffffff1f000000f3ffffffffffffffffffffffffffffffc2010000aeffffffffff1f000000f3fffffffffffffffffffffffffffff524000052ffffffffffff1f000000f3ffffffffffffffffffffffffffff6e00000fe6ffffffffffff1f000000f3ffffffffffffffffffffffffffc30200009affffffffffffff1f000000f3fffffffffffffffffffffffff62400003ffeffffffffffffff1f000000f3ffffffffffffffffffffffff70000008daffffffffffffffff1f000000f3fffffffffffffffffffffff602000086ffffffffffffffffff1f000000f3fffffffffffffffffffffff3000000000000000000000000000000000000000000cbfffffffffffffff3000000000000000000000000000000000000000000cbfffffffffffffff3000000000000000000000000000000000000000000cbffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000000000000000000000000002fffffffffffffffffffffffffffff4f00000000000000000000000000002fffffffffffffffffffffffffffff4f00000000000000000000000000002fffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f000008672f120514275997efffffffffffffffffffffffffffffffffff4f00000000000000000000000b73f6ffffffffffffffffffffffffffffff4f000000000000000000000000002bdeffffffffffffffffffffffffffff60538cbad2e7faf0d599370000000025ebffffffffffffffffffffffffffffffffffffffffffffffffa0090000005bffffffffffffffffffffffffffffffffffffffffffffffffffb100000001d2ffffffffffffffffffffffffffffffffffffffffffffffffff560000007effffffffffffffffffffffffffffffffffffffffffffffffffb80000003dffffffffffffffffffffffffffffffffffffffffffffffffffec00000022fffffffffffffffffffffffffffffffffffffffffffffffffffd00000011ffffffffffffffffffffffffffffffffffffffffffffffffffec00000022ffffffffffffffffffffffffffffffffffffffffffffffffffb80000003cffffffffffffffffffffffffffffffffffffffffffffffffff580000007dffffffffffffffffffffffffffffffffffffffffffffffffb301000000cfffffffffffffffffffffff4cb1fdffffffffffffffffffa40a00000058ffffffffffffffffffffffff17001a6ea9d7eefbf2d69b380000000024e8ffffffffffffffffffffffff1700000000000000000000000000002de0ffffffffffffffffffffffffff17000000000000000000000000127ef9ffffffffffffffffffffffffffffebba8a59372615050a1a3569a6f7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffca753915050d233866a3e0ffffffffffffffffffffffffffffffffffd13f0000000000000000000000f7ffffffffffffffffffffffffffffff9d07000000000000000000000000f7ffffffffffffffffffffffffffff9700000000469fdbf3f5da9e490100f7ffffffffffffffffffffffffffca0300000eb3ffffffffffffffffd84df8fffffffffffffffffffffffffa2d000007c8ffffffffffffffffffffffffffffffffffffffffffffffff9100000081ffffffffffffffffffffffffffffffffffffffffffffffffff28000010f6ffffffffffffffffffffffffffffffffffffffffffffffffc20000006affffffffffffffffffffffffffffffffffffffffffffffffff79000000b2ffffffffffffffffffffffffffffffffffffffffffffffffff43000000ebffeb903d1a0616306fc0ffffffffffffffffffffffffffffff0f000015ffa211000000000000000041dcfffffffffffffffffffffffff30000003087000000000000000000000013c6ffffffffffffffffffffffe30000000f00000055beeef7d8881000000017e6ffffffffffffffffffffd30000000000019dffffffffffffe12200000056ffffffffffffffffffffd100000000006effffffffffffffffce04000002dbffffffffffffffffffdd0000000006eaffffffffffffffffff550000008bffffffffffffffffffe90000000043ffffffffffffffffffffa90000004dfffffffffffffffffff80200000074ffffffffffffffffffffdb0000002cffffffffffffffffffff2200000088ffffffffffffffffffffef00000019ffffffffffffffffffff4d00000088ffffffffffffffffffffee0000001affffffffffffffffffff7e00000074ffffffffffffffffffffdb0000002dffffffffffffffffffffcd00000042ffffffffffffffffffffa900000052ffffffffffffffffffffff21000005e9ffffffffffffffffff5400000093ffffffffffffffffffffff8f0000006dffffffffffffffffcd04000007e6fffffffffffffffffffffff9220000019effffffffffffe1230000006cffffffffffffffffffffffffffc00600000056beeff8d888110000002af3ffffffffffffffffffffffffffffa603000000000000000000000026ddffffffffffffffffffffffffffffffffc8280000000000000000025deffffffffffffffffffffffffffffffffffffffab25a2a1106193b7ed7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff47000000000000000000000000000000000000f7ffffffffffffffffffff47000000000000000000000000000000000003faffffffffffffffffffff4700000000000000000000000000000000004afffffffffffffffffffffffffffffffffffffffffffffffffc1a000000adffffffffffffffffffffffffffffffffffffffffffffffffb300000015faffffffffffffffffffffffffffffffffffffffffffffffff5100000073ffffffffffffffffffffffffffffffffffffffffffffffffea05000000d6ffffffffffffffffffffffffffffffffffffffffffffffff8d00000039ffffffffffffffffffffffffffffffffffffffffffffffffff2c0000009dffffffffffffffffffffffffffffffffffffffffffffffffc90000000cf3ffffffffffffffffffffffffffffffffffffffffffffffff6700000063fffffffffffffffffffffffffffffffffffffffffffffffff60f000000c6ffffffffffffffffffffffffffffffffffffffffffffffffa300000029ffffffffffffffffffffffffffffffffffffffffffffffffff410000008cffffffffffffffffffffffffffffffffffffffffffffffffdf01000005e9ffffffffffffffffffffffffffffffffffffffffffffffff7d00000052fffffffffffffffffffffffffffffffffffffffffffffffffd1e000000b5ffffffffffffffffffffffffffffffffffffffffffffffffb90000001bfcffffffffffffffffffffffffffffffffffffffffffffffff570000007bffffffffffffffffffffffffffffffffffffffffffffffffee07000001ddffffffffffffffffffffffffffffffffffffffffffffffff9300000042ffffffffffffffffffffffffffffffffffffffffffffffffff31000000a5ffffffffffffffffffffffffffffffffffffffffffffffffd000000010f7ffffffffffffffffffffffffffffffffffffffffffffffff6d0000006bfffffffffffffffffffffffffffffffffffffffffffffffff913000000ceffffffffffffffffffffffffffffffffffffffffffffffffa900000031ffffffffffffffffffffffffffffffffffffffffffffffffff4700000094ffffffffffffffffffffffffffffffffffffffffffffffffe302000008eeffffffffffffffffffffffffffffffffffffffffffffffff840000005afffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9a8602c13050c1d4882dfffffffffffffffffffffffffffffffffffffa918000000000000000000025eeeffffffffffffffffffffffffffffff780000000000000000000000000023e5ffffffffffffffffffffffffff9f0000000037a8e4faf1c66d0500000033fdfffffffffffffffffffffff81600000065fdffffffffffffc40a0000009fffffffffffffffffffffffb600000021faffffffffffffffff8d00000047ffffffffffffffffffffff820000007bffffffffffffffffffeb01000014ffffffffffffffffffffff6d000000a2ffffffffffffffffffff15000001fdffffffffffffffffffff76000000a2ffffffffffffffffffff14000007ffffffffffffffffffffffa10000007bffffffffffffffffffec01000033ffffffffffffffffffffffec08000022fbffffffffffffffff8e00000087ffffffffffffffffffffffff7d00000068fdffffffffffffc70b00001ef2fffffffffffffffffffffffffb5500000039aae5fbf2c87006000013d0fffffffffffffffffffffffffffffe93160000000000000000000153e3ffffffffffffffffffffffffffffffffffbd2e000000000000000780f0ffffffffffffffffffffffffffffffffce3500000000000000000000000e87fcffffffffffffffffffffffffffb3060000004fb2e6faf0cd82150000004ffaffffffffffffffffffffffda0b000004a9ffffffffffffffe93600000076ffffffffffffffffffffff5600000084ffffffffffffffffffe80e000005e2fffffffffffffffffff606000008f4ffffffffffffffffffff6f0000008dffffffffffffffffffcb00000039ffffffffffffffffffffffac0000005cffffffffffffffffffbc0000004affffffffffffffffffffffbe0000004dffffffffffffffffffcc00000039ffffffffffffffffffffffac0000005effffffffffffffffffea00000008f4ffffffffffffffffffff6e0000007cffffffffffffffffffff2f00000085ffffffffffffffffffe70d000000c1ffffffffffffffffffff9300000004a9ffffffffffffffe83400000028fcfffffffffffffffffffffa2d0000000050b2e7fbf2cd821400000002b8ffffffffffffffffffffffffe523000000000000000000000000000299fffffffffffffffffffffffffffff16605000000000000000000002cc5ffffffffffffffffffffffffffffffffffe88e542512040b1b3d72c1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8a259251008203f8be2ffffffffffffffffffffffffffffffffffffffa91d0000000000000000047ffaffffffffffffffffffffffffffffffff7b00000000000000000000000040f8ffffffffffffffffffffffffffff94000000004db9ecf7da8b1300000057ffffffffffffffffffffffffffdc050000008fffffffffffffe527000000acffffffffffffffffffffffff630000005fffffffffffffffffd406000025fbfffffffffffffffffffffb0c000002e0ffffffffffffffffff5f000000b2ffffffffffffffffffffc600000036ffffffffffffffffffffb50000005fffffffffffffffffffffa000000068ffffffffffffffffffffe700000011feffffffffffffffffff8d0000007cfffffffffffffffffffffb00000000dfffffffffffffffffff8c0000007cfffffffffffffffffffffb00000000b4ffffffffffffffffff9e00000069ffffffffffffffffffffe7000000008dffffffffffffffffffbe00000038ffffffffffffffffffffb6000000007bfffffffffffffffffff606000003e2ffffffffffffffffff62000000006fffffffffffffffffffff4f00000064ffffffffffffffffd8080000000062ffffffffffffffffffffc50000000096ffffffffffffe82b000000000064ffffffffffffffffffffff6c0000000051bbeff8dc8e1500001000000074fffffffffffffffffffffff94f0000000000000000000000288c00000084fffffffffffffffffffffffffd810b000000000000000052ea830000009fffffffffffffffffffffffffffffea8d471d090d2864c1ffff5b000000d4ffffffffffffffffffffffffffffffffffffffffffffffffff2100000dfdffffffffffffffffffffffffffffffffffffffffffffffffd900000052ffffffffffffffffffffffffffffffffffffffffffffffffff75000000b8ffffffffffffffffffffffffffffffffffffffffffffffffe30d000023fefffffffffffffffffffffffffffffffffffffffffffffff945000000b7ffffffffffffffffffffffffff7fa2fdffffffffffffffe8480000005effffffffffffffffffffffffffff63002080c4ecfae7c0740e00000034f4ffffffffffffffffffffffffffff6300000000000000000000000043f0ffffffffffffffffffffffffffffff6300000000000000000000118efdfffffffffffffffffffffffffffffffff4bb7f462b15040b25569ff4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".split('');
+	}
+
+
+export function DrawDigitCharacter(image : RGBABitmapImage, topx : number, topy : number, digit : number) : void{
+		var x : number, y : number;
+		var allCharData : string [], colorChars : string [];
+		var colorReference : NumberReference;
+		var errorMessage : StringReference;
+		var color : RGBA;
+
+		colorReference = new NumberReference();
+		errorMessage = new StringReference();
+		color = new RGBA();
+
+		colorChars = new Array<string>(2);
+
+		allCharData = DigitDataBase16();
+
+		for(y = 0; y < 37; y = y + 1){
+			for(x = 0; x < 30; x = x + 1){
+				colorChars[0] = allCharData[digit*30*37*2 + y*2*30 + x*2 + 0];
+				colorChars[1] = allCharData[digit*30*37*2 + y*2*30 + x*2 + 1];
+
+				ToUpperCase(colorChars);
+				CreateNumberFromStringWithCheck(colorChars, 16, colorReference, errorMessage);
+				color.r = colorReference.numberValue/255;
+				color.g = colorReference.numberValue/255;
+				color.b = colorReference.numberValue/255;
+				color.a = 1;
+				SetPixel(image, topx + x, topy + y, color);
+			}
+		}
+	}
+
+
 export function GetPixelFontData() : string []{
-		return "0000000000000000000000000000001818000018181818181818000000000000000000363636360000006666ff6666ff666600000000187eff1b1f7ef8d8ff7e1800000e1bdb6e30180c76dbd87000007fc6cfd87070d8cccc6c38000000000000000000181c0c0e00000c1830303030303030180c000030180c0c0c0c0c0c0c183000000000995a3cff3c5a990000000000181818ffff1818180000000030181c1c00000000000000000000000000ffff000000000000000038380000000000000000006060303018180c0c0606030300003c66c3e3f3dbcfc7c3663c00007e181818181818187838180000ffc0c06030180c0603e77e00007ee70303077e070303e77e00000c0c0c0c0cffcc6c3c1c0c00007ee7030307fec0c0c0c0ff00007ee7c3c3c7fec0c0c0e77e000030303030180c06030303ff00007ee7c3c3e77ee7c3c3e77e00007ee70303037fe7c3c3e77e00000038380000383800000000000030181c1c00001c1c0000000000060c183060c06030180c0600000000ffff00ffff0000000000006030180c0603060c183060000018000018180c0603c3c37e00003f60cfdbd3ddc37e0000000000c3c3c3c3ffc3c3c3663c180000fec7c3c3c7fec7c3c3c7fe00007ee7c0c0c0c0c0c0c0e77e0000fccec7c3c3c3c3c3c7cefc0000ffc0c0c0c0fcc0c0c0c0ff0000c0c0c0c0c0c0fcc0c0c0ff00007ee7c3c3cfc0c0c0c0e77e0000c3c3c3c3c3ffc3c3c3c3c300007e1818181818181818187e00007ceec606060606060606060000c3c6ccd8f0e0f0d8ccc6c30000ffc0c0c0c0c0c0c0c0c0c00000c3c3c3c3c3c3dbffffe7c30000c7c7cfcfdfdbfbf3f3e3e300007ee7c3c3c3c3c3c3c3e77e0000c0c0c0c0c0fec7c3c3c7fe00003f6edfdbc3c3c3c3c3663c0000c3c6ccd8f0fec7c3c3c7fe00007ee70303077ee0c0c0e77e000018181818181818181818ff00007ee7c3c3c3c3c3c3c3c3c30000183c3c6666c3c3c3c3c3c30000c3e7ffffdbdbc3c3c3c3c30000c366663c3c183c3c6666c300001818181818183c3c6666c30000ffc0c060307e0c060303ff00003c3030303030303030303c00030306060c0c18183030606000003c0c0c0c0c0c0c0c0c0c3c000000000000000000c3663c18ffff00000000000000000000000000000000000000001838307000007fc3c37f03c37e000000000000fec3c3c3c3fec0c0c0c0c000007ec3c0c0c0c37e0000000000007fc3c3c3c37f030303030300007fc0c0fec3c37e0000000000003030303030fc303030331e7ec303037fc3c3c37e000000000000c3c3c3c3c3c3fec0c0c0c000001818181818181800001800386c0c0c0c0c0c0c0c00000c000000c6ccf8f0d8ccc6c0c0c0c000007e181818181818181818780000dbdbdbdbdbdbfe000000000000c6c6c6c6c6c6fc0000000000007cc6c6c6c6c67c00000000c0c0c0fec3c3c3c3fe000000000303037fc3c3c3c37f000000000000c0c0c0c0c0e0fe000000000000fe03037ec0c07f0000000000001c3630303030fc3030300000007ec6c6c6c6c6c6000000000000183c3c6666c3c3000000000000c3e7ffdbc3c3c3000000000000c3663c183c66c300000000c0606030183c6666c3000000000000ff6030180c06ff0000000000000f18181838f0381818180f181818181818181818181818180000f01818181c0f1c181818f0000000000000068ff160000000".split('');
+		return "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011000000110000000000000000000000110000001100000011000000110000001100000011000000110000000000000000000000000000000000000000000000000000000000000000000000000000110110001101100011011000110110000000000000000000000000001100110011001101111111101100110011001101111111101100110011001100000000000000000000000000000000000011000011111101111111111011000111110000111111000011111000110111111111101111110000110000000000000000000011100001101100011011011011101100000110000011000001100000110111011011011000110110000111000000000000000001111111001100011111100110001101100001110000011100001101100110011001100110011011000011100000000000000000000000000000000000000000000000000000000000000000000000000000110000011100000110000011100000000000000000000001100000001100000001100000011000000110000001100000011000000110000001100000110000011000000000000000000000000110000011000001100000011000000110000001100000011000000110000001100000001100000001100000000000000000000000000000000001001100101011010001111001111111100111100010110101001100100000000000000000000000000000000000000000001100000011000000110001111111111111111000110000001100000011000000000000000000000000000000000000000110000011000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111100000000000000000000000000000000000000000000000000000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000001100000011000001100000011000001100000011000001100000011000001100000011000001100000011000000000000000000000000111100011001101100001111000111110011111101101111110011111000111100001101100110001111000000000000000000011111100001100000011000000110000001100000011000000110000001100000011110000111000001100000000000000000001111111100000011000000110000011000001100000110000011000001100000110000001110011101111110000000000000000001111110111001111100000011000000111000000111111011100000110000001100000011100111011111100000000000000000001100000011000000110000001100000011000011111111001100110011011000111100001110000011000000000000000000000111111011100111110000001100000011100000011111110000001100000011000000110000001111111111000000000000000001111110111001111100001111000011111000110111111100000011000000110000001111100111011111100000000000000000000011000000110000001100000011000001100000110000011000001100000011000000110000001111111100000000000000000111111011100111110000111100001111100111011111101110011111000011110000111110011101111110000000000000000001111110111001111100000011000000110000001111111011100111110000111100001111100111011111100000000000000000000000000001110000011100000000000000000000011100000111000000000000000000000000000000000000000000000000000000110000011000001110000011100000000000000000000011100000111000000000000000000000000000000000000000000001100000001100000001100000001100000001100000001100000110000011000001100000110000011000000000000000000000000000000000000011111111111111110000000011111111111111110000000000000000000000000000000000000000000000000000011000001100000110000011000001100000110000000110000000110000000110000000110000000110000000000000000000011000000000000000000000011000000110000011000001100000110000001100001111000011011111100000000000000000111111000000011011110011110110111100101110111011110000110111111000000000000000000000000000000000000000001100001111000011110000111100001111111111110000111100001111000011011001100011110000011000000000000000000001111111111000111100001111000011111000110111111111100011110000111100001111100011011111110000000000000000011111101110011100000011000000110000001100000011000000110000001100000011111001110111111000000000000000000011111101110011111000111100001111000011110000111100001111000011111000110111001100111111000000000000000011111111000000110000001100000011000000110011111100000011000000110000001100000011111111110000000000000000000000110000001100000011000000110000001100000011001111110000001100000011000000111111111100000000000000000111111011100111110000111100001111110011000000110000001100000011000000111110011101111110000000000000000011000011110000111100001111000011110000111111111111000011110000111100001111000011110000110000000000000000011111100001100000011000000110000001100000011000000110000001100000011000000110000111111000000000000000000011111001110111011000110110000001100000011000000110000001100000011000000110000001100000000000000000000011000011011000110011001100011011000011110000011100001111000110110011001101100011110000110000000000000000111111110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000001100001111000011110000111100001111000011110000111101101111111111111111111110011111000011000000000000000011100011111000111111001111110011111110111101101111011111110011111100111111000111110001110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011111001110111111000000000000000000000001100000011000000110000001100000011011111111110001111000011110000111110001101111111000000000000000011111100011101101111101111011011110000111100001111000011110000111100001101100110001111000000000000000000110000110110001100110011000110110000111101111111111000111100001111000011111000110111111100000000000000000111111011100111110000001100000011100000011111100000011100000011000000111110011101111110000000000000000000011000000110000001100000011000000110000001100000011000000110000001100000011000111111110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011110000111100001100000000000000000001100000111100001111000110011001100110110000111100001111000011110000111100001111000011000000000000000011000011111001111111111111111111110110111101101111000011110000111100001111000011110000110000000000000000110000110110011001100110001111000011110000011000001111000011110001100110011001101100001100000000000000000001100000011000000110000001100000011000000110000011110000111100011001100110011011000011000000000000000011111111000000110000001100000110000011000111111000110000011000001100000011000000111111110000000000000000001111000000110000001100000011000000110000001100000011000000110000001100000011000011110000000000110000001100000001100000011000000011000000110000000110000001100000001100000011000000011000000110000000000000000000111100001100000011000000110000001100000011000000110000001100000011000000110000001111000000000000000000000000000000000000000000000000000000000000000000000000001100001101100110001111000001100011111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000001110000001100000011100000000000000000111111101100001111000011111111101100000011000011011111100000000000000000000000000000000000000000000000000111111111000011110000111100001111000011011111110000001100000011000000110000001100000011000000000000000001111110110000110000001100000011000000111100001101111110000000000000000000000000000000000000000000000000111111101100001111000011110000111100001111111110110000001100000011000000110000001100000000000000000000001111111000000011000000110111111111000011110000110111111000000000000000000000000000000000000000000000000000001100000011000000110000001100000011000011111100001100000011000000110011001100011110000111111011000011110000001100000011111110110000111100001111000011011111100000000000000000000000000000000000000000000000001100001111000011110000111100001111000011110000110111111100000011000000110000001100000011000000000000000000011000000110000001100000011000000110000001100000011000000000000000000000011000000000000001110000110110001100000011000000110000001100000011000000110000001100000000000000000000001100000000000000000000000000000110001100110011000111110000111100011011001100110110001100000011000000110000001100000011000000000000000001111110000110000001100000011000000110000001100000011000000110000001100000011000000111100000000000000000110110111101101111011011110110111101101111011011011111110000000000000000000000000000000000000000000000000110001101100011011000110110001101100011011000110011111100000000000000000000000000000000000000000000000000111110011000110110001101100011011000110110001100111110000000000000000000000000000000000000001100000011000000110111111111000011110000111100001111000011011111110000000000000000000000000000000011000000110000001100000011111110110000111100001111000011110000111111111000000000000000000000000000000000000000000000000000000011000000110000001100000011000000110000011101111111000000000000000000000000000000000000000000000000011111111100000011000000011111100000001100000011111111100000000000000000000000000000000000000000000000000011100001101100000011000000110000001100000011000011111100001100000011000000110000000000000000000000000001111110011000110110001101100011011000110110001101100011000000000000000000000000000000000000000000000000000110000011110000111100011001100110011011000011110000110000000000000000000000000000000000000000000000001100001111100111111111111101101111000011110000111100001100000000000000000000000000000000000000000000000011000011011001100011110000011000001111000110011011000011000000000000000000000000000000000000001100000110000001100000110000011000001111000110011001100110110000110000000000000000000000000000000000000000000000001111111100000110000011000001100000110000011000001111111100000000000000000000000000000000000000000000000011110000000110000001100000011000000111000000111100011100000110000001100000011000111100000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000000000000111100011000000110000001100000111000111100000011100000011000000110000001100000001111".split('');
 	}
 
 
 export function DrawAsciiCharacter(image : RGBABitmapImage, topx : number, topy : number, a : string, color : RGBA) : void{
-		var index : number, x : number, y : number, row : number, pixel : number;
-		var allCharData : string [], charData : string [], rowData : string [];
-		var rowReference : NumberReference;
-		var errorMessage : StringReference;
-
-		rowReference = new NumberReference();
-		errorMessage = new StringReference();
+		var index : number, x : number, y : number, pixel : number, basis : number, ybasis : number;
+		var allCharData : string [];
 
 		index = a.charCodeAt(0);
 		index = index - 32;
 		allCharData = GetPixelFontData();
-		charData = Substring(allCharData, index*2*13, (index + 1)*2*13);
+
+		basis = index*8*13;
 
 		for(y = 0; y < 13; y = y + 1){
-			rowData = Substring(charData, y*2, (y + 1)*2);
-			ToUpperCase(rowData);
-			CreateNumberFromStringWithCheck(rowData, 16, rowReference, errorMessage);
-			row = rowReference.numberValue;
+			ybasis = basis + y*8;
 			for(x = 0; x < 8; x = x + 1){
-				pixel = Math.floor(row/2**x)%2;
-				if(pixel == 1){
+				pixel = allCharData[ybasis + x].charCodeAt(0);
+				if(pixel == '1'.charCodeAt(0)){
 					DrawPixel(image, topx + 8 - 1 - x, topy + 13 - 1 - y, color);
 				}
 			}

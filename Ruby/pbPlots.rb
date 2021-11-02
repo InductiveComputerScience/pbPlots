@@ -187,15 +187,15 @@ def CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
 		dy = y1 - y2
 
 		if dx != 0.0
-			f1 = (xMin - x2) / dx
-			f2 = (xMax - x2) / dx
+			f1 = (xMin - x2).to_f / dx
+			f2 = (xMax - x2).to_f / dx
 		else
 			f1 = 1.0
 			f2 = 1.0
 		end
 		if dy != 0.0
-			f3 = (yMin - y2) / dy
-			f4 = (yMax - y2) / dy
+			f3 = (yMin - y2).to_f / dy
+			f4 = (yMax - y2).to_f / dy
 		else
 			f3 = 1.0
 			f4 = 1.0
@@ -225,15 +225,15 @@ def CropLineWithinBoundary(x1Ref, y1Ref, x2Ref, y2Ref, xMin, xMax, yMin, yMax)
 		dy = y2 - y1
 
 		if dx != 0.0
-			f1 = (xMin - x1) / dx
-			f2 = (xMax - x1) / dx
+			f1 = (xMin - x1).to_f / dx
+			f2 = (xMax - x1).to_f / dx
 		else
 			f1 = 1.0
 			f2 = 1.0
 		end
 		if dy != 0.0
-			f3 = (yMin - y1) / dy
-			f4 = (yMax - y1) / dy
+			f3 = (yMin - y1).to_f / dy
+			f4 = (yMax - y1).to_f / dy
 		else
 			f3 = 1.0
 			f4 = 1.0
@@ -272,7 +272,7 @@ end
 
 
 def IncrementFromCoordinates(x1, y1, x2, y2)
-	return (x2 - x1) / (y2 - y1)
+	return (x2 - x1).to_f / (y2 - y1)
 end
 
 
@@ -287,14 +287,14 @@ end
 
 def Get8HighContrastColors()
 	colors = Array.new(8)
-	colors[0] = CreateRGBColor(3.0 / 256.0, 146.0 / 256.0, 206.0 / 256.0)
-	colors[1] = CreateRGBColor(253.0 / 256.0, 83.0 / 256.0, 8.0 / 256.0)
-	colors[2] = CreateRGBColor(102.0 / 256.0, 176.0 / 256.0, 50.0 / 256.0)
-	colors[3] = CreateRGBColor(208.0 / 256.0, 234.0 / 256.0, 43.0 / 256.0)
-	colors[4] = CreateRGBColor(167.0 / 256.0, 25.0 / 256.0, 75.0 / 256.0)
-	colors[5] = CreateRGBColor(254.0 / 256.0, 254.0 / 256.0, 51.0 / 256.0)
-	colors[6] = CreateRGBColor(134.0 / 256.0, 1.0 / 256.0, 175.0 / 256.0)
-	colors[7] = CreateRGBColor(251.0 / 256.0, 153.0 / 256.0, 2.0 / 256.0)
+	colors[0] = CreateRGBColor(3.0.to_f / 256.0, 146.0.to_f / 256.0, 206.0.to_f / 256.0)
+	colors[1] = CreateRGBColor(253.0.to_f / 256.0, 83.0.to_f / 256.0, 8.0.to_f / 256.0)
+	colors[2] = CreateRGBColor(102.0.to_f / 256.0, 176.0.to_f / 256.0, 50.0.to_f / 256.0)
+	colors[3] = CreateRGBColor(208.0.to_f / 256.0, 234.0.to_f / 256.0, 43.0.to_f / 256.0)
+	colors[4] = CreateRGBColor(167.0.to_f / 256.0, 25.0.to_f / 256.0, 75.0.to_f / 256.0)
+	colors[5] = CreateRGBColor(254.0.to_f / 256.0, 254.0.to_f / 256.0, 51.0.to_f / 256.0)
+	colors[6] = CreateRGBColor(134.0.to_f / 256.0, 1.0.to_f / 256.0, 175.0.to_f / 256.0)
+	colors[7] = CreateRGBColor(251.0.to_f / 256.0, 153.0.to_f / 256.0, 2.0.to_f / 256.0)
 	return colors
 end
 
@@ -362,7 +362,7 @@ def DrawXLabelsForPriority(p, xMin, oy, xMax, xPixelMin, xPixelMax, nextRectangl
 			px = MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
 			text = xLabels.stringArray[i].string
 
-			r.x1 = (px - GetTextWidth(text) / 2.0).floor
+			r.x1 = (px - GetTextWidth(text).to_f / 2.0).floor
 			if textOnBottom
 				r.y1 = (oy + 5.0).floor
 			else
@@ -405,7 +405,7 @@ def DrawXLabelsForPriority(p, xMin, oy, xMax, xPixelMin, xPixelMax, nextRectangl
 			if xLabelPriorities.numberArray[i] == p
 				text = xLabels.stringArray[i].string
 
-				r.x1 = (px - GetTextWidth(text) / 2.0).floor
+				r.x1 = (px - GetTextWidth(text).to_f / 2.0).floor
 				if textOnBottom
 					r.y1 = (oy + 5.0).floor
 				else
@@ -510,9 +510,9 @@ def ComputeGridLinePositions(cMin, cMax, labels, priorities)
 	p = (Math.log10(cLength)).floor
 	pInterval = 10.0**p
 	# gives 10-1 lines for 100-10 diff
-	pMin = (cMin / pInterval).ceil*pInterval
-	pMax = (cMax / pInterval).floor*pInterval
-	pNum = Round((pMax - pMin) / pInterval + 1.0)
+	pMin = (cMin.to_f / pInterval).ceil*pInterval
+	pMax = (cMax.to_f / pInterval).floor*pInterval
+	pNum = Round((pMax - pMin).to_f / pInterval + 1.0)
 
 	mode = 1.0
 
@@ -520,27 +520,27 @@ def ComputeGridLinePositions(cMin, cMax, labels, priorities)
 		p = (Math.log10(cLength) - 1.0).floor
 		# gives 100-10 lines for 100-10 diff
 		pInterval = 10.0**p
-		pMin = (cMin / pInterval).ceil*pInterval
-		pMax = (cMax / pInterval).floor*pInterval
-		pNum = Round((pMax - pMin) / pInterval + 1.0)
+		pMin = (cMin.to_f / pInterval).ceil*pInterval
+		pMax = (cMax.to_f / pInterval).floor*pInterval
+		pNum = Round((pMax - pMin).to_f / pInterval + 1.0)
 
 		mode = 4.0
 	elsif pNum <= 6.0
 		p = (Math.log10(cLength)).floor
-		pInterval = 10.0**p / 4.0
+		pInterval = 10.0**p.to_f / 4.0
 		# gives 40-5 lines for 100-10 diff
-		pMin = (cMin / pInterval).ceil*pInterval
-		pMax = (cMax / pInterval).floor*pInterval
-		pNum = Round((pMax - pMin) / pInterval + 1.0)
+		pMin = (cMin.to_f / pInterval).ceil*pInterval
+		pMax = (cMax.to_f / pInterval).floor*pInterval
+		pNum = Round((pMax - pMin).to_f / pInterval + 1.0)
 
 		mode = 3.0
 	elsif pNum <= 10.0
 		p = (Math.log10(cLength)).floor
-		pInterval = 10.0**p / 2.0
+		pInterval = 10.0**p.to_f / 2.0
 		# gives 20-3 lines for 100-10 diff
-		pMin = (cMin / pInterval).ceil*pInterval
-		pMax = (cMax / pInterval).floor*pInterval
-		pNum = Round((pMax - pMin) / pInterval + 1.0)
+		pMin = (cMin.to_f / pInterval).ceil*pInterval
+		pMax = (cMax.to_f / pInterval).floor*pInterval
+		pNum = Round((pMax - pMin).to_f / pInterval + 1.0)
 
 		mode = 2.0
 	end
@@ -559,7 +559,7 @@ def ComputeGridLinePositions(cMin, cMax, labels, priorities)
 
 		# Prioritize x.25, x.5 and x.75 lower.
 		if mode == 2.0 || mode == 3.0
-			rem = ((num / 10.0**(p - 2.0)).round).abs%100.0
+			rem = ((num.to_f / 10.0**(p - 2.0)).round).abs%100.0
 
 			priority = 1.0
 			if rem == 50.0
@@ -571,7 +571,7 @@ def ComputeGridLinePositions(cMin, cMax, labels, priorities)
 
 		# Prioritize x.1-x.4 and x.6-x.9 lower
 		if mode == 4.0
-			rem = (Round(num / 10.0**p)).abs%10.0
+			rem = (Round(num.to_f / 10.0**p)).abs%10.0
 
 			priority = 1.0
 			if rem == 1.0 || rem == 2.0 || rem == 3.0 || rem == 4.0 || rem == 6.0 || rem == 7.0 || rem == 8.0 || rem == 9.0
@@ -609,7 +609,7 @@ def MapYCoordinate(y, yMin, yMax, yPixelMin, yPixelMax)
 	yPixelLength = yPixelMax - yPixelMin
 
 	y = y - yMin
-	y = y*yPixelLength / yLength
+	y = y*yPixelLength.to_f / yLength
 	y = yPixelLength - y
 	y = y + yPixelMin
 	return y
@@ -622,7 +622,7 @@ def MapXCoordinate(x, xMin, xMax, xPixelMin, xPixelMax)
 	xPixelLength = xPixelMax - xPixelMin
 
 	x = x - xMin
-	x = x*xPixelLength / xLength
+	x = x*xPixelLength.to_f / xLength
 	x = x + xPixelMin
 	return x
 end
@@ -752,7 +752,7 @@ def GetDefaultScatterPlotSeriesSettings()
 end
 
 
-def DrawScatterPlot(canvasReference, width, height, xs, ys)
+def DrawScatterPlot(canvasReference, width, height, xs, ys, errorMessage)
 
 	settings = GetDefaultScatterPlotSettings()
 
@@ -765,16 +765,18 @@ def DrawScatterPlot(canvasReference, width, height, xs, ys)
 	delete(settings.scatterPlotSeries[0].ys)
 	settings.scatterPlotSeries[0].ys = ys
 
-	DrawScatterPlotFromSettings(canvasReference, settings)
+	success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage)
+
+	return success
 end
 
 
-def DrawScatterPlotFromSettings(canvasReference, settings)
+def DrawScatterPlotFromSettings(canvasReference, settings, errorMessage)
 
 	canvas = CreateImage(settings.width, settings.height, GetWhite())
 	patternOffset = CreateNumberReference(0.0)
 
-	success = ScatterPlotFromSettingsValid(settings)
+	success = ScatterPlotFromSettingsValid(settings, errorMessage)
 
 	if success
 
@@ -785,16 +787,16 @@ def DrawScatterPlotFromSettings(canvasReference, settings)
 		xMax = boundaries.x2
 		yMax = boundaries.y2
 
-        # If zero, set to defaults.
-        if xMin - xMax == 0
-            xMin = 0
-            xMax = 10
-        end
+		# If zero, set to defaults.
+		if xMin - xMax == 0.0
+			xMin = 0.0
+			xMax = 10.0
+		end
 
-        if yMin - yMax == 0
-            yMin = 0
-            yMax = 10
-        end
+		if yMin - yMax == 0.0
+			yMin = 0.0
+			yMax = 10.0
+		end
 
 		xLength = xMax - xMin
 		yLength = yMax - yMin
@@ -808,7 +810,7 @@ def DrawScatterPlotFromSettings(canvasReference, settings)
 		end
 
 		# Draw title
-		DrawText(canvas, (settings.width / 2.0 - GetTextWidth(settings.title) / 2.0).floor, (yPadding / 3.0).floor, settings.title, GetBlack())
+		DrawText(canvas, (settings.width.to_f / 2.0 - GetTextWidth(settings.title).to_f / 2.0).floor, (yPadding.to_f / 3.0).floor, settings.title, GetBlack())
 
 		# Draw grid
 		xPixelMin = xPadding
@@ -888,14 +890,14 @@ if settings.yAxisLeft
 		if originYInside
 			originTextY = 0.0
 		else
-			originTextY = yMin + yLength / 2.0
+			originTextY = yMin + yLength.to_f / 2.0
 		end
 		originTextYPixels = MapYCoordinate(originTextY, yMin, yMax, yPixelMin, yPixelMax)
 
 		if originXInside
 			originTextX = 0.0
 		else
-			originTextX = xMin + xLength / 2.0
+			originTextX = xMin + xLength.to_f / 2.0
 		end
 		originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax)
 
@@ -944,8 +946,8 @@ if settings.yAxisLeft
 		end
 
 		# Draw origin axis titles.
-		DrawTextUpwards(canvas, 10.0, (originTextYPixels - GetTextWidth(settings.yLabel) / 2.0).floor, settings.yLabel, GetBlack())
-		DrawText(canvas, (originTextXPixels - GetTextWidth(settings.xLabel) / 2.0).floor, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
+		DrawTextUpwards(canvas, 10.0, (originTextYPixels - GetTextWidth(settings.yLabel).to_f / 2.0).floor, settings.yLabel, GetBlack())
+		DrawText(canvas, (originTextXPixels - GetTextWidth(settings.xLabel).to_f / 2.0).floor, yPixelMax + axisLabelPadding, settings.xLabel, GetBlack())
 
 		# X-grid-markers
 		i = 0.0
@@ -1090,7 +1092,6 @@ if settings.yAxisLeft
 			plot = plot + 1.0
 		end
 
-		DeleteImage(canvasReference.image)
 		canvasReference.image = canvas
 	end
 
@@ -1137,7 +1138,7 @@ def ComputeBoundariesBasedOnSettings(settings, boundaries)
 end
 
 
-def ScatterPlotFromSettingsValid(settings)
+def ScatterPlotFromSettingsValid(settings, errorMessage)
 
 	success = true
 
@@ -1145,18 +1146,22 @@ def ScatterPlotFromSettingsValid(settings)
 	if !settings.xAxisAuto
 		if settings.xAxisTop && settings.xAxisBottom
 			success = false
+			errorMessage.string = "x-axis not automatic and configured to be both on top and on bottom.".split("")
 		end
 		if !settings.xAxisTop && !settings.xAxisBottom
 			success = false
+			errorMessage.string = "x-axis not automatic and configured to be neither on top nor on bottom.".split("")
 		end
 	end
 
 	if !settings.yAxisAuto
 		if settings.yAxisLeft && settings.yAxisRight
 			success = false
+			errorMessage.string = "y-axis not automatic and configured to be both on top and on bottom.".split("")
 		end
 		if !settings.yAxisLeft && !settings.yAxisRight
 			success = false
+			errorMessage.string = "y-axis not automatic and configured to be neither on top nor on bottom.".split("")
 		end
 	end
 
@@ -1166,12 +1171,15 @@ def ScatterPlotFromSettingsValid(settings)
 		series = settings.scatterPlotSeries[i]
 		if series.xs.length != series.ys.length
 			success = false
+			errorMessage.string = "x and y series must be of the same length.".split("")
 		end
 		if series.xs.length == 0.0
 			success = false
+			errorMessage.string = "There must be data in the series to be plotted.".split("")
 		end
 		if series.linearInterpolation && series.xs.length == 1.0
 			success = false
+			errorMessage.string = "Linear interpolation requires at least two data points to be plotted.".split("")
 		end
 		i = i + 1.0
 	end
@@ -1180,9 +1188,11 @@ def ScatterPlotFromSettingsValid(settings)
 	if !settings.autoBoundaries
 		if settings.xMin >= settings.xMax
 			success = false
+			errorMessage.string = "x min is higher than or equal to x max.".split("")
 		end
 		if settings.yMin >= settings.yMax
 			success = false
+			errorMessage.string = "y min is higher than or equal to y max.".split("")
 		end
 	end
 
@@ -1190,18 +1200,22 @@ def ScatterPlotFromSettingsValid(settings)
 	if !settings.autoPadding
 		if 2.0*settings.xPadding >= settings.width
 			success = false
+			errorMessage.string = "The x padding is more then the width.".split("")
 		end
 		if 2.0*settings.yPadding >= settings.height
 			success = false
+			errorMessage.string = "The y padding is more then the height.".split("")
 		end
 	end
 
 	# Check width and height.
 	if settings.width < 0.0
 		success = false
+		errorMessage.string = "The width is less than 0.".split("")
 	end
 	if settings.height < 0.0
 		success = false
+		errorMessage.string = "The height is less than 0.".split("")
 	end
 
 	# Check point types.
@@ -1211,6 +1225,7 @@ def ScatterPlotFromSettingsValid(settings)
 
 		if series.lineThickness < 0.0
 			success = false
+			errorMessage.string = "The line thickness is less than 0.".split("")
 		end
 
 		if !series.linearInterpolation
@@ -1231,6 +1246,7 @@ def ScatterPlotFromSettingsValid(settings)
 			end
 			if !found
 				success = false
+				errorMessage.string = "The point type is unknown.".split("")
 			end
 		else
 			# Line type.
@@ -1251,6 +1267,7 @@ def ScatterPlotFromSettingsValid(settings)
 
 			if !found
 				success = false
+				errorMessage.string = "The line type is unknown.".split("")
 			end
 		end
 		i = i + 1.0
@@ -1311,30 +1328,42 @@ def GetDefaultBarPlotSeriesSettings()
 end
 
 
-def DrawBarPlot(width, height, ys)
+def DrawBarPlotNoErrorCheck(width, height, ys)
 
+	errorMessage = StringReference.new
+	canvasReference = CreateRGBABitmapImageReference()
+
+	success = DrawBarPlot(canvasReference, width, height, ys, errorMessage)
+
+	FreeStringReference(errorMessage)
+
+	return canvasReference.image
+end
+
+
+def DrawBarPlot(canvasReference, width, height, ys, errorMessage)
+
+	errorMessage = StringReference.new
 	settings = GetDefaultBarPlotSettings()
 
 	settings.barPlotSeries = Array.new(1)
 	settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings()
 	delete(settings.barPlotSeries[0].ys)
 	settings.barPlotSeries[0].ys = ys
-	canvasReference = RGBABitmapImageReference.new
 	settings.width = width
 	settings.height = height
 
-	DrawBarPlotFromSettings(canvasReference, settings)
+	success = DrawBarPlotFromSettings(canvasReference, settings, errorMessage)
 
-	return canvasReference.image
+	return success
 end
 
 
-def DrawBarPlotFromSettings(canvasReference, settings)
+def DrawBarPlotFromSettings(canvasReference, settings, errorMessage)
 
-	success = BarPlotSettingsIsValid(settings)
+	success = BarPlotSettingsIsValid(settings, errorMessage)
 
 	if success
-
 		canvas = CreateImage(settings.width, settings.height, GetWhite())
 
 		ss = settings.barPlotSeries.length
@@ -1350,8 +1379,8 @@ def DrawBarPlotFromSettings(canvasReference, settings)
 		end
 
 		# Draw title
-		DrawText(canvas, (ImageWidth(canvas) / 2.0 - GetTextWidth(settings.title) / 2.0).floor, (yPadding / 3.0).floor, settings.title, GetBlack())
-		DrawTextUpwards(canvas, 10.0, (ImageHeight(canvas) / 2.0 - GetTextWidth(settings.yLabel) / 2.0).floor, settings.yLabel, GetBlack())
+		DrawText(canvas, (ImageWidth(canvas).to_f / 2.0 - GetTextWidth(settings.title).to_f / 2.0).floor, (yPadding.to_f / 3.0).floor, settings.title, GetBlack())
+		DrawTextUpwards(canvas, 10.0, (ImageHeight(canvas).to_f / 2.0 - GetTextWidth(settings.yLabel).to_f / 2.0).floor, settings.yLabel, GetBlack())
 
 		# min and max
 		if settings.autoBoundaries
@@ -1373,7 +1402,6 @@ def DrawBarPlotFromSettings(canvasReference, settings)
 			yMin = settings.yMin
 			yMax = settings.yMax
 		end
-		yLength = yMax - yMin
 
 		# boundaries
 		xPixelMin = xPadding
@@ -1432,7 +1460,7 @@ def DrawBarPlotFromSettings(canvasReference, settings)
 				if ss > 1.0
 					i = 0.0
 					while(i < ss)
-						colors[i] = GetGray(0.7 - (i / ss)*0.7)
+						colors[i] = GetGray(0.7 - (i.to_f / ss)*0.7)
 						i = i + 1.0
 					end
 				else
@@ -1454,7 +1482,7 @@ def DrawBarPlotFromSettings(canvasReference, settings)
 			barSeparation = settings.barSeparation
 		end
 
-		barWidth = (xLengthPixels - groupSeparation*(bs - 1.0) - barSeparation*(bs*(ss - 1.0))) / (bs*ss)
+		barWidth = (xLengthPixels - groupSeparation*(bs - 1.0) - barSeparation*(bs*(ss - 1.0))).to_f / (bs*ss)
 
 		# Draw bars.
 		b = 0.0
@@ -1527,7 +1555,7 @@ def DrawBarPlotFromSettings(canvasReference, settings)
 
 			textwidth = GetTextWidth(label)
 
-			x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1.0)*barSeparation) + n*groupSeparation - textwidth / 2.0
+			x = xPixelMin + (n + 0.5)*(ss*barWidth + (ss - 1.0)*barSeparation) + n*groupSeparation - textwidth.to_f / 2.0
 
 			DrawText(canvas, (x).floor, ImageHeight(canvas) - yPadding + 20.0, label, gridLabelColor)
 
@@ -1542,7 +1570,7 @@ def DrawBarPlotFromSettings(canvasReference, settings)
 end
 
 
-def BarPlotSettingsIsValid(settings)
+def BarPlotSettingsIsValid(settings, errorMessage)
 
 	success = true
 
@@ -1558,6 +1586,7 @@ def BarPlotSettingsIsValid(settings)
 			lengthSet = true
 		elsif length != series.ys.length
 			success = false
+			errorMessage.string = "The number of data points must be equal for all series.".split("")
 		end
 		i = i + 1.0
 	end
@@ -1566,6 +1595,7 @@ def BarPlotSettingsIsValid(settings)
 	if !settings.autoBoundaries
 		if settings.yMin >= settings.yMax
 			success = false
+			errorMessage.string = "Minimum y lower than maximum y.".split("")
 		end
 	end
 
@@ -1573,27 +1603,33 @@ def BarPlotSettingsIsValid(settings)
 	if !settings.autoPadding
 		if 2.0*settings.xPadding >= settings.width
 			success = false
+			errorMessage.string = "Double the horizontal padding is larger than or equal to the width.".split("")
 		end
 		if 2.0*settings.yPadding >= settings.height
 			success = false
+			errorMessage.string = "Double the vertical padding is larger than or equal to the height.".split("")
 		end
 	end
 
 	# Check width and height.
 	if settings.width < 0.0
 		success = false
+		errorMessage.string = "Width lower than zero.".split("")
 	end
 	if settings.height < 0.0
 		success = false
+		errorMessage.string = "Height lower than zero.".split("")
 	end
 
 	# Check spacing
 	if !settings.autoSpacing
 		if settings.groupSeparation < 0.0
 			success = false
+			errorMessage.string = "Group separation lower than zero.".split("")
 		end
 		if settings.barSeparation < 0.0
 			success = false
+			errorMessage.string = "Bar separation lower than zero.".split("")
 		end
 	end
 
@@ -1628,13 +1664,14 @@ end
 
 
 def RoundToDigits(element, digitsAfterPoint)
-	return Round(element*10.0**digitsAfterPoint) / 10.0**digitsAfterPoint
+	return Round(element*10.0**digitsAfterPoint).to_f / 10.0**digitsAfterPoint
 end
 
 
 def test()
 
 	failures = CreateNumberReference(0.0)
+	errorMessage = CreateStringReference("".split(""))
 
 	imageReference = CreateRGBABitmapImageReference()
 
@@ -1642,39 +1679,39 @@ def test()
 	labelPriorities = NumberArrayReference.new
 
 	z = 10.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 11.0, failures)
 
 	z = 9.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 19.0, failures)
 
 	z = 8.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 17.0, failures)
 
 	z = 7.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 15.0, failures)
 
 	z = 6.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 13.0, failures)
 
 	z = 5.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 21.0, failures)
 
 	z = 4.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 17.0, failures)
 
 	z = 3.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 31.0, failures)
 
 	z = 2.0
-	gridlines = ComputeGridLinePositions(-z / 2.0, z / 2.0, labels, labelPriorities)
+	gridlines = ComputeGridLinePositions(-z.to_f / 2.0, z.to_f / 2.0, labels, labelPriorities)
 	AssertEquals(gridlines.length, 21.0, failures)
 
 	xs = Array.new(5)
@@ -1689,18 +1726,28 @@ def test()
 	ys[2] = -2.0
 	ys[3] = -1.0
 	ys[4] = 2.0
-	DrawScatterPlot(imageReference, 800.0, 600.0, xs, ys)
+	success = DrawScatterPlot(imageReference, 800.0, 600.0, xs, ys, errorMessage)
 
-	imageReference.image = DrawBarPlot(800.0, 600.0, ys)
+	AssertTrue(success, failures)
 
-	TestMapping(failures)
-	TestMapping2(failures)
+	if success
+		success = DrawBarPlot(imageReference, 800.0, 600.0, ys, errorMessage)
+
+		AssertTrue(success, failures)
+
+		if success
+			TestMapping(failures)
+			TestMapping2(failures)
+		end
+	end
 
 	return failures.numberValue
 end
 
 
 def TestMapping(failures)
+
+	errorMessage = CreateStringReference("".split(""))
 
 	series = GetDefaultScatterPlotSeriesSettings()
 
@@ -1733,17 +1780,23 @@ def TestMapping(failures)
 	settings.scatterPlotSeries[0] = series
 
 	imageReference = CreateRGBABitmapImageReference()
-	DrawScatterPlotFromSettings(imageReference, settings)
+	success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage)
 
-	x1 = MapXCoordinateAutoSettings(-1.0, imageReference.image, series.xs)
-	y1 = MapYCoordinateAutoSettings(-1.0, imageReference.image, series.ys)
+	AssertTrue(success, failures)
 
-	AssertEquals(x1, 180.0, failures)
-	AssertEquals(y1, 280.0, failures)
+	if success
+		x1 = MapXCoordinateAutoSettings(-1.0, imageReference.image, series.xs)
+		y1 = MapYCoordinateAutoSettings(-1.0, imageReference.image, series.ys)
+
+		AssertEquals(x1, 180.0, failures)
+		AssertEquals(y1, 280.0, failures)
+	end
 end
 
 
 def TestMapping2(failures)
+
+	errorMessage = CreateStringReference("".split(""))
 
 	points = 300.0
 	w = 600.0*2.0
@@ -1760,14 +1813,14 @@ def TestMapping2(failures)
 
 	i = 0.0
 	while(i < points)
-		x = xMin + (xMax - xMin) / (points - 1.0)*i
+		x = xMin + (xMax - xMin).to_f / (points - 1.0)*i
 		# points - 1d is to ensure both extremeties are included.
-		y = x / (x + 7.0)
+		y = x.to_f / (x + 7.0)
 
 		xs[i] = x
 		ys[i] = y
 
-		y = 1.4*x / (x + 7.0)*(1.0 - (Math.atan((x / 1.5 - 30.0) / 5.0) / 1.6 + 1.0) / 2.0)
+		y = 1.4*x.to_f / (x + 7.0)*(1.0 - (Math.atan((x.to_f / 1.5 - 30.0).to_f / 5.0).to_f / 1.6 + 1.0).to_f / 2.0)
 
 		xs2[i] = x
 		ys2[i] = y
@@ -1804,13 +1857,112 @@ def TestMapping2(failures)
 
 	canvasReference = CreateRGBABitmapImageReference()
 
-	DrawScatterPlotFromSettings(canvasReference, settings)
+	success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage)
 
-	x1 = MapXCoordinateBasedOnSettings(27.0, settings)
-	y1 = MapYCoordinateBasedOnSettings(1.0, settings)
+	AssertTrue(success, failures)
 
-	AssertEquals((x1).floor, 292.0, failures)
-	AssertEquals(y1, 60.0, failures)
+	if success
+		x1 = MapXCoordinateBasedOnSettings(27.0, settings)
+		y1 = MapYCoordinateBasedOnSettings(1.0, settings)
+
+		AssertEquals((x1).floor, 292.0, failures)
+		AssertEquals(y1, 60.0, failures)
+	end
+end
+
+
+def ExampleRegression(image)
+
+	errorMessage = CreateStringReference("".split(""))
+
+	xsStr = "20.1, 7.1, 16.1, 14.9, 16.7, 8.8, 9.7, 10.3, 22, 16.2, 12.1, 10.3, 14.5, 12.4, 9.6, 12.2, 10.8, 14.7, 19.7, 11.2, 10.1, 11, 12.2, 9.2, 23.5, 9.4, 15.3, 9.6, 11.1, 5.3, 7.8, 25.3, 16.5, 12.6, 12, 11.5, 17.1, 11.2, 12.2, 10.6, 19.9, 14.5, 15.5, 17.4, 8.4, 10.3, 10.2, 12.5, 16.7, 8.5, 12.2".split("")
+	ysStr = "31.5, 18.9, 35, 31.6, 22.6, 26.2, 14.1, 24.7, 44.8, 23.2, 31.4, 17.7, 18.4, 23.4, 22.6, 16.4, 21.4, 26.5, 31.7, 11.9, 20, 12.5, 18, 14.2, 37.6, 22.2, 17.8, 18.3, 28, 8.1, 14.7, 37.8, 15.7, 28.6, 11.7, 20.1, 30.1, 18.2, 17.2, 19.6, 29.2, 17.3, 28.2, 38.2, 17.8, 10.4, 19, 16.8, 21.5, 15.9, 17.7".split("")
+
+	xs = StringToNumberArray(xsStr)
+	ys = StringToNumberArray(ysStr)
+
+	settings = GetDefaultScatterPlotSettings()
+
+	settings.scatterPlotSeries = Array.new(2)
+	settings.scatterPlotSeries[0] = ScatterPlotSeries.new
+	settings.scatterPlotSeries[0].xs = xs
+	settings.scatterPlotSeries[0].ys = ys
+	settings.scatterPlotSeries[0].linearInterpolation = false
+	settings.scatterPlotSeries[0].pointType = "dots".split("")
+	settings.scatterPlotSeries[0].color = CreateRGBColor(1.0, 0.0, 0.0)
+
+	#OrdinaryLeastSquaresWithIntercept();
+	xs2 = Array.new(2)
+	ys2 = Array.new(2)
+
+	xs2[0] = 5.0
+	ys2[0] = 12.0
+	xs2[1] = 25.0
+	ys2[1] = 39.0
+
+	settings.scatterPlotSeries[1] = ScatterPlotSeries.new
+	settings.scatterPlotSeries[1].xs = xs2
+	settings.scatterPlotSeries[1].ys = ys2
+	settings.scatterPlotSeries[1].linearInterpolation = true
+	settings.scatterPlotSeries[1].lineType = "solid".split("")
+	settings.scatterPlotSeries[1].lineThickness = 2.0
+	settings.scatterPlotSeries[1].color = CreateRGBColor(0.0, 0.0, 1.0)
+
+	settings.autoBoundaries = true
+	settings.yLabel = "".split("")
+	settings.xLabel = "".split("")
+	settings.title = "".split("")
+	settings.width = 600.0
+	settings.height = 400.0
+
+	success = DrawScatterPlotFromSettings(image, settings, errorMessage)
+end
+
+
+def BarPlotExample(imageReference)
+
+	errorMessage = StringReference.new
+
+	ys1 = StringToNumberArray("1, 2, 3, 4, 5".split(""))
+	ys2 = StringToNumberArray("5, 4, 3, 2, 1".split(""))
+	ys3 = StringToNumberArray("10, 2, 4, 3, 4".split(""))
+
+	settings = GetDefaultBarPlotSettings()
+
+	settings.autoBoundaries = true
+	#settings.yMax;
+	#settings.yMin;
+	settings.autoPadding = true
+	#settings.xPadding;
+	#settings.yPadding;
+	settings.title = "title".split("")
+	settings.showGrid = true
+	settings.gridColor = GetGray(0.1)
+	settings.yLabel = "y label".split("")
+	settings.autoColor = true
+	settings.grayscaleAutoColor = false
+	settings.autoSpacing = true
+	#settings.groupSeparation;
+	#settings.barSeparation;
+	settings.autoLabels = false
+	settings.xLabels = Array.new(5)
+	settings.xLabels[0] = CreateStringReference("may 20".split(""))
+	settings.xLabels[1] = CreateStringReference("jun 20".split(""))
+	settings.xLabels[2] = CreateStringReference("jul 20".split(""))
+	settings.xLabels[3] = CreateStringReference("aug 20".split(""))
+	settings.xLabels[4] = CreateStringReference("sep 20".split(""))
+	#settings.colors;
+	settings.barBorder = true
+
+	settings.barPlotSeries = Array.new(3)
+	settings.barPlotSeries[0] = GetDefaultBarPlotSeriesSettings()
+	settings.barPlotSeries[0].ys = ys1
+	settings.barPlotSeries[1] = GetDefaultBarPlotSeriesSettings()
+	settings.barPlotSeries[1].ys = ys2
+	settings.barPlotSeries[2] = GetDefaultBarPlotSeriesSettings()
+	settings.barPlotSeries[2].ys = ys3
+
+	success = DrawBarPlotFromSettings(imageReference, settings, errorMessage)
 end
 
 
@@ -1974,7 +2126,7 @@ end
 
 
 def AlphaBlend(cs, as, cd, ad, ao)
-	return (cs*as + cd*ad*(1.0 - as)) / ao
+	return (cs*as + cd*ad*(1.0 - as)).to_f / ao
 end
 
 
@@ -2054,7 +2206,7 @@ def XiaolinWusLineAlgorithm(image, x0, y0, x1, y1, color)
 
 	dx = x1 - x0
 	dy = y1 - y0
-	g = dy / dx
+	g = dy.to_f / dx
 
 	if dx == 0.0
 		g = 1.0
@@ -2130,7 +2282,7 @@ def DrawQuadraticBezierCurve(image, x0, y0, cx, cy, x1, y1, color)
 	dx = (x0 - x1).abs
 	dy = (y0 - y1).abs
 
-	dt = 1.0 / Math.sqrt(dx**2.0 + dy**2.0)
+	dt = 1.0.to_f / Math.sqrt(dx**2.0 + dy**2.0)
 
 	xs = NumberReference.new
 	ys = NumberReference.new
@@ -2165,7 +2317,7 @@ def DrawCubicBezierCurve(image, x0, y0, c0x, c0y, c1x, c1y, x1, y1, color)
 	dx = (x0 - x1).abs
 	dy = (y0 - y1).abs
 
-	dt = 1.0 / Math.sqrt(dx**2.0 + dy**2.0)
+	dt = 1.0.to_f / Math.sqrt(dx**2.0 + dy**2.0)
 
 	xs = NumberReference.new
 	ys = NumberReference.new
@@ -2224,7 +2376,7 @@ def HorizontalFlip(img)
 	y = 0.0
 	while(y < ImageHeight(img))
 		x = 0.0
-		while(x < ImageWidth(img) / 2.0)
+		while(x < ImageWidth(img).to_f / 2.0)
 			c1 = img.x[x].y[y]
 			c2 = img.x[ImageWidth(img) - 1.0 - x].y[y]
 
@@ -2317,7 +2469,7 @@ end
 
 def DrawCircleMidpointAlgorithm(canvas, xCenter, yCenter, radius, color)
 
-	d = ((5.0 - radius*4.0) / 4.0).floor
+	d = ((5.0 - radius*4.0).to_f / 4.0).floor
 	x = 0.0
 	y = radius
 
@@ -2355,7 +2507,7 @@ def DrawCircleBasicAlgorithm(canvas, xCenter, yCenter, radius, color)
 		pixels = pixels*10.0
 	end
 
-	da = 2.0*Math::PI / pixels
+	da = 2.0*Math::PI.to_f / pixels
 
 	a = 0.0
 	while(a < 2.0*Math::PI)
@@ -2376,7 +2528,7 @@ end
 
 def DrawFilledCircleMidpointAlgorithm(canvas, xCenter, yCenter, radius, color)
 
-	d = ((5.0 - radius*4.0) / 4.0).floor
+	d = ((5.0 - radius*4.0).to_f / 4.0).floor
 	x = 0.0
 	y = radius
 
@@ -2410,7 +2562,7 @@ def DrawFilledCircleBasicAlgorithm(canvas, xCenter, yCenter, radius, color)
 		pixels = pixels*10.0
 	end
 
-	da = 2.0*Math::PI / pixels
+	da = 2.0*Math::PI.to_f / pixels
 
 	# Draw lines for a half-circle to fill an entire circle.
 	a = 0.0
@@ -2429,9 +2581,9 @@ def DrawTriangle(canvas, xCenter, yCenter, height, color)
 
 	x1 = (xCenter + 0.5).floor
 	y1 = ((yCenter + 0.5).floor - height).floor
-	x2 = x1 - 2.0*height*Math.tan(Math::PI / 6.0)
+	x2 = x1 - 2.0*height*Math.tan(Math::PI.to_f / 6.0)
 	y2 = (y1 + 2.0*height).floor
-	x3 = x1 + 2.0*height*Math.tan(Math::PI / 6.0)
+	x3 = x1 + 2.0*height*Math.tan(Math::PI.to_f / 6.0)
 	y3 = (y1 + 2.0*height).floor
 
 	DrawLine1px(canvas, x1, y1, x2, y2, color)
@@ -2447,7 +2599,7 @@ def DrawFilledTriangle(canvas, xCenter, yCenter, height, color)
 
 	i = 0.0
 	while(i <= 2.0*height)
-		offset = (i*Math.tan(Math::PI / 6.0)).floor
+		offset = (i*Math.tan(Math::PI.to_f / 6.0)).floor
 		DrawHorizontalLine1px(canvas, x1 - offset, y1 + i, 2.0*offset, color)
 		i = i + 1.0
 	end
@@ -2484,10 +2636,10 @@ def DrawLineBresenhamsAlgorithmThick(canvas, x1, y1, x2, y2, thickness, color)
 
 	x = x1
 	y = y1
-	err = el / 2.0
+	err = el.to_f / 2.0
 
 	if thickness >= 3.0
-		r = thickness / 2.0
+		r = thickness.to_f / 2.0
 		DrawCircle(canvas, x, y, r, color)
 	elsif (thickness).floor == 2.0
 		DrawFilledRectangle(canvas, x, y, 2.0, 2.0, color)
@@ -2508,7 +2660,7 @@ def DrawLineBresenhamsAlgorithmThick(canvas, x1, y1, x2, y2, thickness, color)
 		end
 
 		if thickness >= 3.0
-			r = thickness / 2.0
+			r = thickness.to_f / 2.0
 			DrawCircle(canvas, x, y, r, color)
 		elsif (thickness).floor == 2.0
 			DrawFilledRectangle(canvas, x, y, 2.0, 2.0, color)
@@ -2545,7 +2697,7 @@ def DrawLineBresenhamsAlgorithm(canvas, x1, y1, x2, y2, color)
 
 	x = x1
 	y = y1
-	err = el / 2.0
+	err = el.to_f / 2.0
 	DrawPixel(canvas, x, y, color)
 
 	t = 0.0
@@ -2591,13 +2743,13 @@ def DrawLineBresenhamsAlgorithmThickPatterned(canvas, x1, y1, x2, y2, thickness,
 
 	x = x1
 	y = y1
-	err = el / 2.0
+	err = el.to_f / 2.0
 
 	offset.numberValue = (offset.numberValue + 1.0)%(pattern.length*thickness)
 
-	if pattern[(offset.numberValue / thickness).floor]
+	if pattern[(offset.numberValue.to_f / thickness).floor]
 		if thickness >= 3.0
-			r = thickness / 2.0
+			r = thickness.to_f / 2.0
 			DrawCircle(canvas, x, y, r, color)
 		elsif (thickness).floor == 2.0
 			DrawFilledRectangle(canvas, x, y, 2.0, 2.0, color)
@@ -2620,9 +2772,9 @@ def DrawLineBresenhamsAlgorithmThickPatterned(canvas, x1, y1, x2, y2, thickness,
 
 		offset.numberValue = (offset.numberValue + 1.0)%(pattern.length*thickness)
 
-		if pattern[(offset.numberValue / thickness).floor]
+		if pattern[(offset.numberValue.to_f / thickness).floor]
 			if thickness >= 3.0
-				r = thickness / 2.0
+				r = thickness.to_f / 2.0
 				DrawCircle(canvas, x, y, r, color)
 			elsif (thickness).floor == 2.0
 				DrawFilledRectangle(canvas, x, y, 2.0, 2.0, color)
@@ -2801,9 +2953,9 @@ def CreateBlurForPoint(src, x, y, pixels)
 	end
 
 	if countColor > 0.0
-		rgba.r = rgba.r / countColor
-		rgba.g = rgba.g / countColor
-		rgba.b = rgba.b / countColor
+		rgba.r = rgba.r.to_f / countColor
+		rgba.g = rgba.g.to_f / countColor
+		rgba.b = rgba.b.to_f / countColor
 	else
 		rgba.r = 0.0
 		rgba.g = 0.0
@@ -2811,7 +2963,7 @@ def CreateBlurForPoint(src, x, y, pixels)
 	end
 
 	if countTransparent > 0.0
-		rgba.a = rgba.a / countTransparent
+		rgba.a = rgba.a.to_f / countTransparent
 	else
 		rgba.a = 0.0
 	end
@@ -2821,6 +2973,16 @@ end
 
 
 def CreateStringScientificNotationDecimalFromNumber(decimal)
+	return CreateStringScientificNotationDecimalFromNumberAllOptions(decimal, false)
+end
+
+
+def CreateStringScientificNotationDecimalFromNumber15d2e(decimal)
+	return CreateStringScientificNotationDecimalFromNumberAllOptions(decimal, true)
+end
+
+
+def CreateStringScientificNotationDecimalFromNumberAllOptions(decimal, complete)
 
 	mantissaReference = StringReference.new
 	exponentReference = StringReference.new
@@ -2854,7 +3016,14 @@ def CreateStringScientificNotationDecimalFromNumber(decimal)
 		end
 
 		if !done
-			while(decimal >= 10.0 || decimal < 1.0)
+			exponent = (Math.log10(decimal)).round
+			exponent = [99.0, exponent].min
+			exponent = [-99.0, exponent].max
+
+			decimal = decimal.to_f / 10.0**exponent
+
+			# Adjust
+			while((decimal >= 10.0 || decimal < 1.0) && (exponent).abs < 99.0)
 				decimal = decimal*multiplier
 				exponent = exponent + inc
 			end
@@ -2863,14 +3032,49 @@ def CreateStringScientificNotationDecimalFromNumber(decimal)
 
 	CreateStringFromNumberWithCheck(decimal, 10.0, mantissaReference)
 
+	isPositiveExponent = exponent >= 0.0
+	if !isPositiveExponent
+		exponent = -exponent
+	end
+
 	CreateStringFromNumberWithCheck(exponent, 10.0, exponentReference)
 
 	if !isPositive
 		result = AppendString(result, "-".split(""))
+	elsif complete
+		result = AppendString(result, "+".split(""))
 	end
 
 	result = AppendString(result, mantissaReference.string)
+	if complete
+		additional = 16.0
+
+		if mantissaReference.string.length == 1.0
+			result = AppendString(result, ".".split(""))
+			additional = additional - 1.0
+		end
+
+		i = mantissaReference.string.length
+		while(i < additional)
+			result = AppendString(result, "0".split(""))
+			i = i + 1.0
+		end
+	end
 	result = AppendString(result, "e".split(""))
+
+	if !isPositiveExponent
+		result = AppendString(result, "-".split(""))
+	elsif complete
+		result = AppendString(result, "+".split(""))
+	end
+
+	if complete
+		i = exponentReference.string.length
+		while(i < 2.0)
+			result = AppendString(result, "0".split(""))
+			i = i + 1.0
+		end
+	end
 	result = AppendString(result, exponentReference.string)
 
 	return result
@@ -2935,7 +3139,7 @@ def CreateStringFromNumberWithCheck(decimal, base, stringReference)
 			# Print number.
 			i = 0.0
 			while(i < maximumDigits && success)
-				d = (decimal / base**(maximumDigits - i - 1.0)).floor
+				d = (decimal.to_f / base**(maximumDigits - i - 1.0)).floor
 
 				if d >= base
 					d = base - 1.0
@@ -2986,13 +3190,13 @@ end
 def GetMaximumDigitsForBase(base)
 
 	t = 10.0**15.0
-	return (Math.log10(t) / Math.log10(base)).floor
+	return (Math.log10(t).to_f / Math.log10(base)).floor
 end
 
 
 def GetFirstDigitPosition(decimal, base)
 
-	power = (Math.log10(decimal) / Math.log10(base)).ceil
+	power = (Math.log10(decimal).to_f / Math.log10(base)).ceil
 
 	t = decimal*base**(-power)
 	if t < base && t >= 1.0
@@ -3496,15 +3700,15 @@ def Atan2(y, x)
 	a = 0.0
 
 	if x > 0.0
-		a = Atan(y / x)
+		a = Atan(y.to_f / x)
 	elsif x < 0.0 && y >= 0.0
-		a = Atan(y / x) + Math::PI
+		a = Atan(y.to_f / x) + Math::PI
 	elsif x < 0.0 && y < 0.0
-		a = Atan(y / x) - Math::PI
+		a = Atan(y.to_f / x) - Math::PI
 	elsif x == 0.0 && y > 0.0
-		a = Math::PI / 2.0
+		a = Math::PI.to_f / 2.0
 	elsif x == 0.0 && y < 0.0
-		a = -Math::PI / 2.0
+		a = -Math::PI.to_f / 2.0
 	end
 
 	return a
@@ -3534,7 +3738,7 @@ def Combinations(n, k)
 
 	while(i <= n)
 		c = c*i
-		c = c / j
+		c = c.to_f / j
 
 		i = i + 1.0
 		j = j + 1.0
@@ -3617,7 +3821,7 @@ end
 def LeastCommonMultiple(a, b)
 
 	if a > 0.0 && b > 0.0
-		lcm = (a*b).abs / GreatestCommonDivisor(a, b)
+		lcm = (a*b).abs.to_f / GreatestCommonDivisor(a, b)
 	else
 		lcm = 0.0
 	end
@@ -3678,13 +3882,13 @@ def LanczosApproximation(z)
 	p[7] = 1.5056327351493116e-7
 
 	if z < 0.5
-		y = Math::PI / (Math.sin(Math::PI*z)*LanczosApproximation(1.0 - z))
+		y = Math::PI.to_f / (Math.sin(Math::PI*z)*LanczosApproximation(1.0 - z))
 	else
 		z = z - 1.0
 		x = 0.99999999999980993
 		i = 0.0
 		while(i < p.length)
-			x = x + p[i] / (z + i + 1.0)
+			x = x + p[i].to_f / (z + i + 1.0)
 			i = i + 1.0
 		end
 		t = z + p.length - 0.5
@@ -3696,52 +3900,52 @@ end
 
 
 def Beta(x, y)
-	return Gamma(x)*Gamma(y) / Gamma(x + y)
+	return Gamma(x)*Gamma(y).to_f / Gamma(x + y)
 end
 
 
 def Sinh(x)
-	return (Math.exp(x) - Math.exp(-x)) / 2.0
+	return (Math.exp(x) - Math.exp(-x)).to_f / 2.0
 end
 
 
 def Cosh(x)
-	return (Math.exp(x) + Math.exp(-x)) / 2.0
+	return (Math.exp(x) + Math.exp(-x)).to_f / 2.0
 end
 
 
 def Tanh(x)
-	return Sinh(x) / Cosh(x)
+	return Sinh(x).to_f / Cosh(x)
 end
 
 
 def Cot(x)
-	return 1.0 / Math.tan(x)
+	return 1.0.to_f / Math.tan(x)
 end
 
 
 def Sec(x)
-	return 1.0 / Math.cos(x)
+	return 1.0.to_f / Math.cos(x)
 end
 
 
 def Csc(x)
-	return 1.0 / Math.sin(x)
+	return 1.0.to_f / Math.sin(x)
 end
 
 
 def Coth(x)
-	return Cosh(x) / Sinh(x)
+	return Cosh(x).to_f / Sinh(x)
 end
 
 
 def Sech(x)
-	return 1.0 / Cosh(x)
+	return 1.0.to_f / Cosh(x)
 end
 
 
 def Csch(x)
-	return 1.0 / Sinh(x)
+	return 1.0.to_f / Sinh(x)
 end
 
 
@@ -3763,7 +3967,7 @@ def Error(x)
 		c9 = -0.82215223
 		c10 = +0.17087277
 
-		t = 1.0 / (1.0 + 0.5*(x).abs)
+		t = 1.0.to_f / (1.0 + 0.5*(x).abs)
 
 		tau = t*Math.exp(-x**2.0 + c1 + t*(c2 + t*(c3 + t*(c4 + t*(c5 + t*(c6 + t*(c7 + t*(c8 + t*(c9 + t*c10)))))))))
 
@@ -3776,10 +3980,10 @@ end
 
 def ErrorInverse(x)
 
-	a = (8.0*(Math::PI - 3.0)) / (3.0*Math::PI*(4.0 - Math::PI))
+	a = (8.0*(Math::PI - 3.0)).to_f / (3.0*Math::PI*(4.0 - Math::PI))
 
-	t = 2.0 / (Math::PI*a) + Math.log(1.0 - x**2.0) / 2.0
-	y = Sign(x)*Math.sqrt(Math.sqrt(t**2.0 - Math.log(1.0 - x**2.0) / a) - t)
+	t = 2.0.to_f / (Math::PI*a) + Math.log(1.0 - x**2.0).to_f / 2.0
+	y = Sign(x)*Math.sqrt(Math.sqrt(t**2.0 - Math.log(1.0 - x**2.0).to_f / a) - t)
 
 	return y
 end
@@ -3816,7 +4020,7 @@ end
 def Hypergeometric(a, b, c, z, maxIterations, precision)
 
 	if (z).abs >= 0.5
-		y = (1.0 - z)**(-a)*HypergeometricDirect(a, c - b, c, z / (z - 1.0), maxIterations, precision)
+		y = (1.0 - z)**(-a)*HypergeometricDirect(a, c - b, c, z.to_f / (z - 1.0), maxIterations, precision)
 	else
 		y = HypergeometricDirect(a, b, c, z, maxIterations, precision)
 	end
@@ -3832,7 +4036,7 @@ def HypergeometricDirect(a, b, c, z, maxIterations, precision)
 
 	n = 0.0
 	while(n < maxIterations && !done)
-		yp = RisingFactorial(a, n)*RisingFactorial(b, n) / RisingFactorial(c, n)*z**n / Factorial(n)
+		yp = RisingFactorial(a, n)*RisingFactorial(b, n).to_f / RisingFactorial(c, n)*z**n.to_f / Factorial(n)
 		if (yp).abs < precision
 			done = true
 		end
@@ -3855,7 +4059,7 @@ def AkiyamaTanigawaAlgorithm(n)
 
 	m = 0.0
 	while(m <= n)
-		a[m] = 1.0 / (m + 1.0)
+		a[m] = 1.0.to_f / (m + 1.0)
 		j = m
 		while(j >= 1.0)
 			a[j - 1.0] = j*(a[j - 1.0] - a[j])
@@ -4201,7 +4405,7 @@ end
 def aReverseNumberArray(array)
 
 	i = 0.0
-	while(i < array.length / 2.0)
+	while(i < array.length.to_f / 2.0)
 		aSwapElementsOfNumberArray(array, i, array.length - i - 1.0)
 		i = i + 1.0
 	end
@@ -4361,31 +4565,62 @@ def FreeStringArrayReference(stringArrayReference)
 end
 
 
+def DigitDataBase16()
+	return "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe891412108153069c4ffffffffffffffffffffffffffffffffffffffff9409000000000000000049e7ffffffffffffffffffffffffffffffffff61000000000000000000000017ddffffffffffffffffffffffffffffff840000000573d3f5e5a62b00000028f0ffffffffffffffffffffffffffda04000008bcfffffffffff44200000073ffffffffffffffffffffffffff5700000088ffffffffffffffe812000008e3ffffffffffffffffffffffea02000015f9ffffffffffffffff8100000080ffffffffffffffffffffff9c00000072ffffffffffffffffffe40100002fffffffffffffffffffffff51000000b8ffffffffffffffffffff2a000000e2ffffffffffffffffffff21000001f0ffffffffffffffffffff65000000b3fffffffffffffffffff602000018ffffffffffffffffffffff8b0000008affffffffffffffffffd200000036ffffffffffffffffffffffa900000063ffffffffffffffffffc00000004effffffffffffffffffffffc100000052ffffffffffffffffffb500000057ffffffffffffffffffffffc900000046ffffffffffffffffffa90000005fffffffffffffffffffffffd20000003affffffffffffffffffa900000060ffffffffffffffffffffffd30000003affffffffffffffffffb400000057ffffffffffffffffffffffca00000046ffffffffffffffffffc00000004effffffffffffffffffffffc100000052ffffffffffffffffffd100000037ffffffffffffffffffffffa900000063fffffffffffffffffff602000019ffffffffffffffffffffff8b00000089ffffffffffffffffffff21000001f1ffffffffffffffffffff66000000b3ffffffffffffffffffff50000000b8ffffffffffffffffffff2a000000e1ffffffffffffffffffff9c00000073ffffffffffffffffffe40100002fffffffffffffffffffffffea02000015f9ffffffffffffffff8200000080ffffffffffffffffffffffff5700000088ffffffffffffffe812000008e2ffffffffffffffffffffffffda04000008bcfffffffffff44300000073ffffffffffffffffffffffffffff830000000674d3f6e6a72b00000028f0ffffffffffffffffffffffffffffff60000000000000000000000016ddfffffffffffffffffffffffffffffffffe9309000000000000000048e6ffffffffffffffffffffffffffffffffffffffe88f3f1f07132e68c3fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9d7b28e69441f02000000afffffffffffffffffffffffffffffffffffff6300000000000000000000afffffffffffffffffffffffffffffffffffff6300000000000000000000afffffffffffffffffffffffffffffffffffff6a274c7095b9de64000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000afffffffffffffffffffffffffffffffffffffffffffffffffff67000000affffffffffffffffffffffffffffffffffffff7000000000000000000000000000000003bfffffffffffffffffffffffff7000000000000000000000000000000003bfffffffffffffffffffffffff7000000000000000000000000000000003bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd48b56271005142a5ea0f6ffffffffffffffffffffffffffffffffdb7c20000000000000000000001392feffffffffffffffffffffffffffff1f00000000000000000000000000004cf9ffffffffffffffffffffffffff1f0000003784c7e7f9e8b1480000000056ffffffffffffffffffffffffff1f015accffffffffffffffff9701000000b0ffffffffffffffffffffffff58caffffffffffffffffffffff770000003cfffffffffffffffffffffffffffffffffffffffffffffffffff107000002edffffffffffffffffffffffffffffffffffffffffffffffffff3a000000ccffffffffffffffffffffffffffffffffffffffffffffffffff4c000000baffffffffffffffffffffffffffffffffffffffffffffffffff32000000cbffffffffffffffffffffffffffffffffffffffffffffffffec05000002edffffffffffffffffffffffffffffffffffffffffffffffff8d00000039ffffffffffffffffffffffffffffffffffffffffffffffffeb140000009affffffffffffffffffffffffffffffffffffffffffffffff520000002afbffffffffffffffffffffffffffffffffffffffffffffff8c00000003c7ffffffffffffffffffffffffffffffffffffffffffffffb30300000085ffffffffffffffffffffffffffffffffffffffffffffffc50a0000005dfeffffffffffffffffffffffffffffffffffffffffffffd2110000004efbffffffffffffffffffffffffffffffffffffffffffffdb1800000042f8ffffffffffffffffffffffffffffffffffffffffffffe21f00000039f3ffffffffffffffffffffffffffffffffffffffffffffe92600000030efffffffffffffffffffffffffffffffffffffffffffffee2e00000029eafffffffffffffffffffffffffffffffffffffffffffff33700000022e5fffffffffffffffffffffffffffffffffffffffffffff7410000001cdffffffffffffffffffffffffffffffffffffffffffffffb4c00000017d9fffffffffffffffffffffffffffffffffffffffffffffd5900000012d2ffffffffffffffffffffffffffffffffffffffffffffff680000000ecbffffffffffffffffffffffffffffffffffffffffffffffef0000000000000000000000000000000000008bffffffffffffffffffffef0000000000000000000000000000000000008bffffffffffffffffffffef0000000000000000000000000000000000008bffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe2af8058392817060a1a3f74c8ffffffffffffffffffffffffffffffffeb0000000000000000000000000036cfffffffffffffffffffffffffffffeb000000000000000000000000000004a7ffffffffffffffffffffffffffeb00000f5a9dd0edfbf0ca841900000003c2ffffffffffffffffffffffffec3da8f9fffffffffffffffff0410000002bffffffffffffffffffffffffffffffffffffffffffffffffffee12000000cbffffffffffffffffffffffffffffffffffffffffffffffffff6900000090ffffffffffffffffffffffffffffffffffffffffffffffffff9600000078ffffffffffffffffffffffffffffffffffffffffffffffffff9a0000007effffffffffffffffffffffffffffffffffffffffffffffffff73000000a5fffffffffffffffffffffffffffffffffffffffffffffffff51b000009edfffffffffffffffffffffffffffffffffffffffffffffff7540000007efffffffffffffffffffffffffffffffffffffffffff3d3912400000055fcffffffffffffffffffffffffffffffffff1700000000000000001692feffffffffffffffffffffffffffffffffffff17000000000000002db8feffffffffffffffffffffffffffffffffffffff170000000000000000002bc3fffffffffffffffffffffffffffffffffffffffffffdf0cf922e00000003a5fffffffffffffffffffffffffffffffffffffffffffffffffd8700000007d1ffffffffffffffffffffffffffffffffffffffffffffffffff780000004ffffffffffffffffffffffffffffffffffffffffffffffffffff308000006f6ffffffffffffffffffffffffffffffffffffffffffffffffff3c000000d0ffffffffffffffffffffffffffffffffffffffffffffffffff4d000000c6ffffffffffffffffffffffffffffffffffffffffffffffffff35000000ddffffffffffffffffffffffffffffffffffffffffffffffffea0300000bf9ffffffffffffffffffffffffffffffffffffffffffffffff6200000054ffffffffffffffffffffff47bafefffffffffffffffffff56b00000002cbffffffffffffffffffffff0b001e71a9d7edfbf6e4ba771a000000007cffffffffffffffffffffffff0b0000000000000000000000000000017dffffffffffffffffffffffffff0b000000000000000000000000003cc8ffffffffffffffffffffffffffffe9b989593827160608162a5689dbffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffbd0100000000f3fffffffffffffffffffffffffffffffffffffffffffff3200000000000f3ffffffffffffffffffffffffffffffffffffffffffff69000000000000f3ffffffffffffffffffffffffffffffffffffffffffbf01000b0e000000f3fffffffffffffffffffffffffffffffffffffffff42100008e1f000000f3ffffffffffffffffffffffffffffffffffffffff6a000035fc1f000000f3ffffffffffffffffffffffffffffffffffffffc0010004d1ff1f000000f3fffffffffffffffffffffffffffffffffffff42200007affff1f000000f3ffffffffffffffffffffffffffffffffffff6c000026f7ffff1f000000f3ffffffffffffffffffffffffffffffffffc1010001c1ffffff1f000000f3fffffffffffffffffffffffffffffffff523000066ffffffff1f000000f3ffffffffffffffffffffffffffffffff6d000019f0ffffffff1f000000f3ffffffffffffffffffffffffffffffc2010000aeffffffffff1f000000f3fffffffffffffffffffffffffffff524000052ffffffffffff1f000000f3ffffffffffffffffffffffffffff6e00000fe6ffffffffffff1f000000f3ffffffffffffffffffffffffffc30200009affffffffffffff1f000000f3fffffffffffffffffffffffff62400003ffeffffffffffffff1f000000f3ffffffffffffffffffffffff70000008daffffffffffffffff1f000000f3fffffffffffffffffffffff602000086ffffffffffffffffff1f000000f3fffffffffffffffffffffff3000000000000000000000000000000000000000000cbfffffffffffffff3000000000000000000000000000000000000000000cbfffffffffffffff3000000000000000000000000000000000000000000cbffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffff1f000000f3ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000000000000000000000000002fffffffffffffffffffffffffffff4f00000000000000000000000000002fffffffffffffffffffffffffffff4f00000000000000000000000000002fffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f00000fffffffffffffffffffffffffffffffffffffffffffffffffffff4f000008672f120514275997efffffffffffffffffffffffffffffffffff4f00000000000000000000000b73f6ffffffffffffffffffffffffffffff4f000000000000000000000000002bdeffffffffffffffffffffffffffff60538cbad2e7faf0d599370000000025ebffffffffffffffffffffffffffffffffffffffffffffffffa0090000005bffffffffffffffffffffffffffffffffffffffffffffffffffb100000001d2ffffffffffffffffffffffffffffffffffffffffffffffffff560000007effffffffffffffffffffffffffffffffffffffffffffffffffb80000003dffffffffffffffffffffffffffffffffffffffffffffffffffec00000022fffffffffffffffffffffffffffffffffffffffffffffffffffd00000011ffffffffffffffffffffffffffffffffffffffffffffffffffec00000022ffffffffffffffffffffffffffffffffffffffffffffffffffb80000003cffffffffffffffffffffffffffffffffffffffffffffffffff580000007dffffffffffffffffffffffffffffffffffffffffffffffffb301000000cfffffffffffffffffffffff4cb1fdffffffffffffffffffa40a00000058ffffffffffffffffffffffff17001a6ea9d7eefbf2d69b380000000024e8ffffffffffffffffffffffff1700000000000000000000000000002de0ffffffffffffffffffffffffff17000000000000000000000000127ef9ffffffffffffffffffffffffffffebba8a59372615050a1a3569a6f7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffca753915050d233866a3e0ffffffffffffffffffffffffffffffffffd13f0000000000000000000000f7ffffffffffffffffffffffffffffff9d07000000000000000000000000f7ffffffffffffffffffffffffffff9700000000469fdbf3f5da9e490100f7ffffffffffffffffffffffffffca0300000eb3ffffffffffffffffd84df8fffffffffffffffffffffffffa2d000007c8ffffffffffffffffffffffffffffffffffffffffffffffff9100000081ffffffffffffffffffffffffffffffffffffffffffffffffff28000010f6ffffffffffffffffffffffffffffffffffffffffffffffffc20000006affffffffffffffffffffffffffffffffffffffffffffffffff79000000b2ffffffffffffffffffffffffffffffffffffffffffffffffff43000000ebffeb903d1a0616306fc0ffffffffffffffffffffffffffffff0f000015ffa211000000000000000041dcfffffffffffffffffffffffff30000003087000000000000000000000013c6ffffffffffffffffffffffe30000000f00000055beeef7d8881000000017e6ffffffffffffffffffffd30000000000019dffffffffffffe12200000056ffffffffffffffffffffd100000000006effffffffffffffffce04000002dbffffffffffffffffffdd0000000006eaffffffffffffffffff550000008bffffffffffffffffffe90000000043ffffffffffffffffffffa90000004dfffffffffffffffffff80200000074ffffffffffffffffffffdb0000002cffffffffffffffffffff2200000088ffffffffffffffffffffef00000019ffffffffffffffffffff4d00000088ffffffffffffffffffffee0000001affffffffffffffffffff7e00000074ffffffffffffffffffffdb0000002dffffffffffffffffffffcd00000042ffffffffffffffffffffa900000052ffffffffffffffffffffff21000005e9ffffffffffffffffff5400000093ffffffffffffffffffffff8f0000006dffffffffffffffffcd04000007e6fffffffffffffffffffffff9220000019effffffffffffe1230000006cffffffffffffffffffffffffffc00600000056beeff8d888110000002af3ffffffffffffffffffffffffffffa603000000000000000000000026ddffffffffffffffffffffffffffffffffc8280000000000000000025deffffffffffffffffffffffffffffffffffffffab25a2a1106193b7ed7ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff47000000000000000000000000000000000000f7ffffffffffffffffffff47000000000000000000000000000000000003faffffffffffffffffffff4700000000000000000000000000000000004afffffffffffffffffffffffffffffffffffffffffffffffffc1a000000adffffffffffffffffffffffffffffffffffffffffffffffffb300000015faffffffffffffffffffffffffffffffffffffffffffffffff5100000073ffffffffffffffffffffffffffffffffffffffffffffffffea05000000d6ffffffffffffffffffffffffffffffffffffffffffffffff8d00000039ffffffffffffffffffffffffffffffffffffffffffffffffff2c0000009dffffffffffffffffffffffffffffffffffffffffffffffffc90000000cf3ffffffffffffffffffffffffffffffffffffffffffffffff6700000063fffffffffffffffffffffffffffffffffffffffffffffffff60f000000c6ffffffffffffffffffffffffffffffffffffffffffffffffa300000029ffffffffffffffffffffffffffffffffffffffffffffffffff410000008cffffffffffffffffffffffffffffffffffffffffffffffffdf01000005e9ffffffffffffffffffffffffffffffffffffffffffffffff7d00000052fffffffffffffffffffffffffffffffffffffffffffffffffd1e000000b5ffffffffffffffffffffffffffffffffffffffffffffffffb90000001bfcffffffffffffffffffffffffffffffffffffffffffffffff570000007bffffffffffffffffffffffffffffffffffffffffffffffffee07000001ddffffffffffffffffffffffffffffffffffffffffffffffff9300000042ffffffffffffffffffffffffffffffffffffffffffffffffff31000000a5ffffffffffffffffffffffffffffffffffffffffffffffffd000000010f7ffffffffffffffffffffffffffffffffffffffffffffffff6d0000006bfffffffffffffffffffffffffffffffffffffffffffffffff913000000ceffffffffffffffffffffffffffffffffffffffffffffffffa900000031ffffffffffffffffffffffffffffffffffffffffffffffffff4700000094ffffffffffffffffffffffffffffffffffffffffffffffffe302000008eeffffffffffffffffffffffffffffffffffffffffffffffff840000005afffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff9a8602c13050c1d4882dfffffffffffffffffffffffffffffffffffffa918000000000000000000025eeeffffffffffffffffffffffffffffff780000000000000000000000000023e5ffffffffffffffffffffffffff9f0000000037a8e4faf1c66d0500000033fdfffffffffffffffffffffff81600000065fdffffffffffffc40a0000009fffffffffffffffffffffffb600000021faffffffffffffffff8d00000047ffffffffffffffffffffff820000007bffffffffffffffffffeb01000014ffffffffffffffffffffff6d000000a2ffffffffffffffffffff15000001fdffffffffffffffffffff76000000a2ffffffffffffffffffff14000007ffffffffffffffffffffffa10000007bffffffffffffffffffec01000033ffffffffffffffffffffffec08000022fbffffffffffffffff8e00000087ffffffffffffffffffffffff7d00000068fdffffffffffffc70b00001ef2fffffffffffffffffffffffffb5500000039aae5fbf2c87006000013d0fffffffffffffffffffffffffffffe93160000000000000000000153e3ffffffffffffffffffffffffffffffffffbd2e000000000000000780f0ffffffffffffffffffffffffffffffffce3500000000000000000000000e87fcffffffffffffffffffffffffffb3060000004fb2e6faf0cd82150000004ffaffffffffffffffffffffffda0b000004a9ffffffffffffffe93600000076ffffffffffffffffffffff5600000084ffffffffffffffffffe80e000005e2fffffffffffffffffff606000008f4ffffffffffffffffffff6f0000008dffffffffffffffffffcb00000039ffffffffffffffffffffffac0000005cffffffffffffffffffbc0000004affffffffffffffffffffffbe0000004dffffffffffffffffffcc00000039ffffffffffffffffffffffac0000005effffffffffffffffffea00000008f4ffffffffffffffffffff6e0000007cffffffffffffffffffff2f00000085ffffffffffffffffffe70d000000c1ffffffffffffffffffff9300000004a9ffffffffffffffe83400000028fcfffffffffffffffffffffa2d0000000050b2e7fbf2cd821400000002b8ffffffffffffffffffffffffe523000000000000000000000000000299fffffffffffffffffffffffffffff16605000000000000000000002cc5ffffffffffffffffffffffffffffffffffe88e542512040b1b3d72c1fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8a259251008203f8be2ffffffffffffffffffffffffffffffffffffffa91d0000000000000000047ffaffffffffffffffffffffffffffffffff7b00000000000000000000000040f8ffffffffffffffffffffffffffff94000000004db9ecf7da8b1300000057ffffffffffffffffffffffffffdc050000008fffffffffffffe527000000acffffffffffffffffffffffff630000005fffffffffffffffffd406000025fbfffffffffffffffffffffb0c000002e0ffffffffffffffffff5f000000b2ffffffffffffffffffffc600000036ffffffffffffffffffffb50000005fffffffffffffffffffffa000000068ffffffffffffffffffffe700000011feffffffffffffffffff8d0000007cfffffffffffffffffffffb00000000dfffffffffffffffffff8c0000007cfffffffffffffffffffffb00000000b4ffffffffffffffffff9e00000069ffffffffffffffffffffe7000000008dffffffffffffffffffbe00000038ffffffffffffffffffffb6000000007bfffffffffffffffffff606000003e2ffffffffffffffffff62000000006fffffffffffffffffffff4f00000064ffffffffffffffffd8080000000062ffffffffffffffffffffc50000000096ffffffffffffe82b000000000064ffffffffffffffffffffff6c0000000051bbeff8dc8e1500001000000074fffffffffffffffffffffff94f0000000000000000000000288c00000084fffffffffffffffffffffffffd810b000000000000000052ea830000009fffffffffffffffffffffffffffffea8d471d090d2864c1ffff5b000000d4ffffffffffffffffffffffffffffffffffffffffffffffffff2100000dfdffffffffffffffffffffffffffffffffffffffffffffffffd900000052ffffffffffffffffffffffffffffffffffffffffffffffffff75000000b8ffffffffffffffffffffffffffffffffffffffffffffffffe30d000023fefffffffffffffffffffffffffffffffffffffffffffffff945000000b7ffffffffffffffffffffffffff7fa2fdffffffffffffffe8480000005effffffffffffffffffffffffffff63002080c4ecfae7c0740e00000034f4ffffffffffffffffffffffffffff6300000000000000000000000043f0ffffffffffffffffffffffffffffff6300000000000000000000118efdfffffffffffffffffffffffffffffffff4bb7f462b15040b25569ff4ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff".split("")
+end
+
+
+def DrawDigitCharacter(image, topx, topy, digit)
+
+	colorReference = NumberReference.new
+	errorMessage = StringReference.new
+	color = RGBA.new
+
+	colorChars = Array.new(2)
+
+	allCharData = DigitDataBase16()
+
+	y = 0.0
+	while(y < 37.0)
+		x = 0.0
+		while(x < 30.0)
+			colorChars[0] = allCharData[digit*30.0*37.0*2.0 + y*2.0*30.0 + x*2.0 + 0.0]
+			colorChars[1] = allCharData[digit*30.0*37.0*2.0 + y*2.0*30.0 + x*2.0 + 1.0]
+
+			ToUpperCase(colorChars)
+			CreateNumberFromStringWithCheck(colorChars, 16.0, colorReference, errorMessage)
+			color.r = colorReference.numberValue.to_f / 255.0
+			color.g = colorReference.numberValue.to_f / 255.0
+			color.b = colorReference.numberValue.to_f / 255.0
+			color.a = 1.0
+			SetPixel(image, topx + x, topy + y, color)
+			x = x + 1.0
+		end
+		y = y + 1.0
+	end
+end
+
+
 def GetPixelFontData()
-	return "0000000000000000000000000000001818000018181818181818000000000000000000363636360000006666ff6666ff666600000000187eff1b1f7ef8d8ff7e1800000e1bdb6e30180c76dbd87000007fc6cfd87070d8cccc6c38000000000000000000181c0c0e00000c1830303030303030180c000030180c0c0c0c0c0c0c183000000000995a3cff3c5a990000000000181818ffff1818180000000030181c1c00000000000000000000000000ffff000000000000000038380000000000000000006060303018180c0c0606030300003c66c3e3f3dbcfc7c3663c00007e181818181818187838180000ffc0c06030180c0603e77e00007ee70303077e070303e77e00000c0c0c0c0cffcc6c3c1c0c00007ee7030307fec0c0c0c0ff00007ee7c3c3c7fec0c0c0e77e000030303030180c06030303ff00007ee7c3c3e77ee7c3c3e77e00007ee70303037fe7c3c3e77e00000038380000383800000000000030181c1c00001c1c0000000000060c183060c06030180c0600000000ffff00ffff0000000000006030180c0603060c183060000018000018180c0603c3c37e00003f60cfdbd3ddc37e0000000000c3c3c3c3ffc3c3c3663c180000fec7c3c3c7fec7c3c3c7fe00007ee7c0c0c0c0c0c0c0e77e0000fccec7c3c3c3c3c3c7cefc0000ffc0c0c0c0fcc0c0c0c0ff0000c0c0c0c0c0c0fcc0c0c0ff00007ee7c3c3cfc0c0c0c0e77e0000c3c3c3c3c3ffc3c3c3c3c300007e1818181818181818187e00007ceec606060606060606060000c3c6ccd8f0e0f0d8ccc6c30000ffc0c0c0c0c0c0c0c0c0c00000c3c3c3c3c3c3dbffffe7c30000c7c7cfcfdfdbfbf3f3e3e300007ee7c3c3c3c3c3c3c3e77e0000c0c0c0c0c0fec7c3c3c7fe00003f6edfdbc3c3c3c3c3663c0000c3c6ccd8f0fec7c3c3c7fe00007ee70303077ee0c0c0e77e000018181818181818181818ff00007ee7c3c3c3c3c3c3c3c3c30000183c3c6666c3c3c3c3c3c30000c3e7ffffdbdbc3c3c3c3c30000c366663c3c183c3c6666c300001818181818183c3c6666c30000ffc0c060307e0c060303ff00003c3030303030303030303c00030306060c0c18183030606000003c0c0c0c0c0c0c0c0c0c3c000000000000000000c3663c18ffff00000000000000000000000000000000000000001838307000007fc3c37f03c37e000000000000fec3c3c3c3fec0c0c0c0c000007ec3c0c0c0c37e0000000000007fc3c3c3c37f030303030300007fc0c0fec3c37e0000000000003030303030fc303030331e7ec303037fc3c3c37e000000000000c3c3c3c3c3c3fec0c0c0c000001818181818181800001800386c0c0c0c0c0c0c0c00000c000000c6ccf8f0d8ccc6c0c0c0c000007e181818181818181818780000dbdbdbdbdbdbfe000000000000c6c6c6c6c6c6fc0000000000007cc6c6c6c6c67c00000000c0c0c0fec3c3c3c3fe000000000303037fc3c3c3c37f000000000000c0c0c0c0c0e0fe000000000000fe03037ec0c07f0000000000001c3630303030fc3030300000007ec6c6c6c6c6c6000000000000183c3c6666c3c3000000000000c3e7ffdbc3c3c3000000000000c3663c183c66c300000000c0606030183c6666c3000000000000ff6030180c06ff0000000000000f18181838f0381818180f181818181818181818181818180000f01818181c0f1c181818f0000000000000068ff160000000".split("")
+	return "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000011000000110000000000000000000000110000001100000011000000110000001100000011000000110000000000000000000000000000000000000000000000000000000000000000000000000000110110001101100011011000110110000000000000000000000000001100110011001101111111101100110011001101111111101100110011001100000000000000000000000000000000000011000011111101111111111011000111110000111111000011111000110111111111101111110000110000000000000000000011100001101100011011011011101100000110000011000001100000110111011011011000110110000111000000000000000001111111001100011111100110001101100001110000011100001101100110011001100110011011000011100000000000000000000000000000000000000000000000000000000000000000000000000000110000011100000110000011100000000000000000000001100000001100000001100000011000000110000001100000011000000110000001100000110000011000000000000000000000000110000011000001100000011000000110000001100000011000000110000001100000001100000001100000000000000000000000000000000001001100101011010001111001111111100111100010110101001100100000000000000000000000000000000000000000001100000011000000110001111111111111111000110000001100000011000000000000000000000000000000000000000110000011000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000111111111111111100000000000000000000000000000000000000000000000000000000000000000001110000011100000000000000000000000000000000000000000000000000000000000000000000000000000001100000011000001100000011000001100000011000001100000011000001100000011000001100000011000000000000000000000000111100011001101100001111000111110011111101101111110011111000111100001101100110001111000000000000000000011111100001100000011000000110000001100000011000000110000001100000011110000111000001100000000000000000001111111100000011000000110000011000001100000110000011000001100000110000001110011101111110000000000000000001111110111001111100000011000000111000000111111011100000110000001100000011100111011111100000000000000000001100000011000000110000001100000011000011111111001100110011011000111100001110000011000000000000000000000111111011100111110000001100000011100000011111110000001100000011000000110000001111111111000000000000000001111110111001111100001111000011111000110111111100000011000000110000001111100111011111100000000000000000000011000000110000001100000011000001100000110000011000001100000011000000110000001111111100000000000000000111111011100111110000111100001111100111011111101110011111000011110000111110011101111110000000000000000001111110111001111100000011000000110000001111111011100111110000111100001111100111011111100000000000000000000000000001110000011100000000000000000000011100000111000000000000000000000000000000000000000000000000000000110000011000001110000011100000000000000000000011100000111000000000000000000000000000000000000000000001100000001100000001100000001100000001100000001100000110000011000001100000110000011000000000000000000000000000000000000011111111111111110000000011111111111111110000000000000000000000000000000000000000000000000000011000001100000110000011000001100000110000000110000000110000000110000000110000000110000000000000000000011000000000000000000000011000000110000011000001100000110000001100001111000011011111100000000000000000111111000000011011110011110110111100101110111011110000110111111000000000000000000000000000000000000000001100001111000011110000111100001111111111110000111100001111000011011001100011110000011000000000000000000001111111111000111100001111000011111000110111111111100011110000111100001111100011011111110000000000000000011111101110011100000011000000110000001100000011000000110000001100000011111001110111111000000000000000000011111101110011111000111100001111000011110000111100001111000011111000110111001100111111000000000000000011111111000000110000001100000011000000110011111100000011000000110000001100000011111111110000000000000000000000110000001100000011000000110000001100000011001111110000001100000011000000111111111100000000000000000111111011100111110000111100001111110011000000110000001100000011000000111110011101111110000000000000000011000011110000111100001111000011110000111111111111000011110000111100001111000011110000110000000000000000011111100001100000011000000110000001100000011000000110000001100000011000000110000111111000000000000000000011111001110111011000110110000001100000011000000110000001100000011000000110000001100000000000000000000011000011011000110011001100011011000011110000011100001111000110110011001101100011110000110000000000000000111111110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000001100001111000011110000111100001111000011110000111101101111111111111111111110011111000011000000000000000011100011111000111111001111110011111110111101101111011111110011111100111111000111110001110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011111001110111111000000000000000000000001100000011000000110000001100000011011111111110001111000011110000111110001101111111000000000000000011111100011101101111101111011011110000111100001111000011110000111100001101100110001111000000000000000000110000110110001100110011000110110000111101111111111000111100001111000011111000110111111100000000000000000111111011100111110000001100000011100000011111100000011100000011000000111110011101111110000000000000000000011000000110000001100000011000000110000001100000011000000110000001100000011000111111110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011110000111100001100000000000000000001100000111100001111000110011001100110110000111100001111000011110000111100001111000011000000000000000011000011111001111111111111111111110110111101101111000011110000111100001111000011110000110000000000000000110000110110011001100110001111000011110000011000001111000011110001100110011001101100001100000000000000000001100000011000000110000001100000011000000110000011110000111100011001100110011011000011000000000000000011111111000000110000001100000110000011000111111000110000011000001100000011000000111111110000000000000000001111000000110000001100000011000000110000001100000011000000110000001100000011000011110000000000110000001100000001100000011000000011000000110000000110000001100000001100000011000000011000000110000000000000000000111100001100000011000000110000001100000011000000110000001100000011000000110000001111000000000000000000000000000000000000000000000000000000000000000000000000001100001101100110001111000001100011111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000001110000001100000011100000000000000000111111101100001111000011111111101100000011000011011111100000000000000000000000000000000000000000000000000111111111000011110000111100001111000011011111110000001100000011000000110000001100000011000000000000000001111110110000110000001100000011000000111100001101111110000000000000000000000000000000000000000000000000111111101100001111000011110000111100001111111110110000001100000011000000110000001100000000000000000000001111111000000011000000110111111111000011110000110111111000000000000000000000000000000000000000000000000000001100000011000000110000001100000011000011111100001100000011000000110011001100011110000111111011000011110000001100000011111110110000111100001111000011011111100000000000000000000000000000000000000000000000001100001111000011110000111100001111000011110000110111111100000011000000110000001100000011000000000000000000011000000110000001100000011000000110000001100000011000000000000000000000011000000000000001110000110110001100000011000000110000001100000011000000110000001100000000000000000000001100000000000000000000000000000110001100110011000111110000111100011011001100110110001100000011000000110000001100000011000000000000000001111110000110000001100000011000000110000001100000011000000110000001100000011000000111100000000000000000110110111101101111011011110110111101101111011011011111110000000000000000000000000000000000000000000000000110001101100011011000110110001101100011011000110011111100000000000000000000000000000000000000000000000000111110011000110110001101100011011000110110001100111110000000000000000000000000000000000000001100000011000000110111111111000011110000111100001111000011011111110000000000000000000000000000000011000000110000001100000011111110110000111100001111000011110000111111111000000000000000000000000000000000000000000000000000000011000000110000001100000011000000110000011101111111000000000000000000000000000000000000000000000000011111111100000011000000011111100000001100000011111111100000000000000000000000000000000000000000000000000011100001101100000011000000110000001100000011000011111100001100000011000000110000000000000000000000000001111110011000110110001101100011011000110110001101100011000000000000000000000000000000000000000000000000000110000011110000111100011001100110011011000011110000110000000000000000000000000000000000000000000000001100001111100111111111111101101111000011110000111100001100000000000000000000000000000000000000000000000011000011011001100011110000011000001111000110011011000011000000000000000000000000000000000000001100000110000001100000110000011000001111000110011001100110110000110000000000000000000000000000000000000000000000001111111100000110000011000001100000110000011000001111111100000000000000000000000000000000000000000000000011110000000110000001100000011000000111000000111100011100000110000001100000011000111100000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000000000000111100011000000110000001100000111000111100000011100000011000000110000001100000001111".split("")
 end
 
 
 def DrawAsciiCharacter(image, topx, topy, a, color)
 
-	rowReference = NumberReference.new
-	errorMessage = StringReference.new
-
 	index = (a).ord
 	index = index - 32.0
 	allCharData = GetPixelFontData()
-	charData = Substring(allCharData, index*2.0*13.0, (index + 1.0)*2.0*13.0)
+
+	basis = index*8.0*13.0
 
 	y = 0.0
 	while(y < 13.0)
-		rowData = Substring(charData, y*2.0, (y + 1.0)*2.0)
-		ToUpperCase(rowData)
-		CreateNumberFromStringWithCheck(rowData, 16.0, rowReference, errorMessage)
-		row = rowReference.numberValue
+		ybasis = basis + y*8.0
 		x = 0.0
 		while(x < 8.0)
-			pixel = (row / 2.0**x).floor%2.0
-			if pixel == 1.0
+			pixel = (allCharData[ybasis + x]).ord
+			if pixel == ("1").ord
 				DrawPixel(image, topx + 8.0 - 1.0 - x, topy + 13.0 - 1.0 - y, color)
 			end
 			x = x + 1.0
@@ -5318,7 +5553,7 @@ end
 def Write2BytesLE(data, b, position)
 	data[position.numberValue] = Round(b%2.0**8.0)
 	position.numberValue = position.numberValue + 1.0
-	data[position.numberValue] = (b / 2.0**8.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**8.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
 end
 
@@ -5326,17 +5561,17 @@ end
 def Write4BytesLE(data, b, position)
 	data[position.numberValue] = Round(b%2.0**8.0)
 	position.numberValue = position.numberValue + 1.0
-	data[position.numberValue] = (b / 2.0**8.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**8.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
-	data[position.numberValue] = (b / 2.0**16.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**16.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
-	data[position.numberValue] = (b / 2.0**24.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**24.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
 end
 
 
 def Write2BytesBE(data, b, position)
-	data[position.numberValue] = (b / 2.0**8.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**8.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
 	data[position.numberValue] = Round(b%2.0**8.0)
 	position.numberValue = position.numberValue + 1.0
@@ -5344,11 +5579,11 @@ end
 
 
 def Write4BytesBE(data, b, position)
-	data[position.numberValue] = (b / 2.0**24.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**24.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
-	data[position.numberValue] = (b / 2.0**16.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**16.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
-	data[position.numberValue] = (b / 2.0**8.0).floor%2.0**8.0
+	data[position.numberValue] = (b.to_f / 2.0**8.0).floor%2.0**8.0
 	position.numberValue = position.numberValue + 1.0
 	data[position.numberValue] = Round(b%2.0**8.0)
 	position.numberValue = position.numberValue + 1.0
@@ -5376,9 +5611,9 @@ def MakeCRC32Table()
 		k = 0.0
 		while(k < 8.0)
 			if !DivisibleBy(c, 2.0)
-				c = Xor4Byte(3988292384.0, (c / 2.0).floor)
+				c = Xor4Byte(3988292384.0, (c.to_f / 2.0).floor)
 			else
-				c = (c / 2.0).floor
+				c = (c.to_f / 2.0).floor
 			end
 			k = k + 1.0
 		end
@@ -5395,7 +5630,7 @@ def UpdateCRC32(crc, buf, crc_table)
 	n = 0.0
 	while(n < buf.length)
 		index = And4Byte(Xor4Byte(crc, buf[n]), 2.0**8.0 - 1.0)
-		crc = Xor4Byte(crc_table[index], (crc / 2.0**8.0).floor)
+		crc = Xor4Byte(crc_table[index], (crc.to_f / 2.0**8.0).floor)
 		n = n + 1.0
 	end
 
@@ -5994,7 +6229,7 @@ end
 
 def DynamicArrayNumbersIncreaseSize(da)
 
-	newLength = (da.array.length*3.0 / 2.0).round
+	newLength = (da.array.length*3.0.to_f / 2.0).round
 	newArray = Array.new(newLength)
 
 	i = 0.0
@@ -6014,7 +6249,7 @@ def DynamicArrayNumbersDecreaseSizeNecessary(da)
 	needsDecrease = false
 
 	if da.length > 10.0
-		needsDecrease = da.length <= (da.array.length*2.0 / 3.0).round
+		needsDecrease = da.length <= (da.array.length*2.0.to_f / 3.0).round
 	end
 
 	return needsDecrease
@@ -6023,7 +6258,7 @@ end
 
 def DynamicArrayNumbersDecreaseSize(da)
 
-	newLength = (da.array.length*2.0 / 3.0).round
+	newLength = (da.array.length*2.0.to_f / 3.0).round
 	newArray = Array.new(newLength)
 
 	i = 0.0
@@ -6122,7 +6357,7 @@ def ArrayToDynamicArrayNumbersWithOptimalSize(array)
 =end
 
 	c = array.length
-	n = (Math.log(c) - 1.0) / Math.log(3.0 / 2.0)
+	n = (Math.log(c) - 1.0).to_f / Math.log(3.0.to_f / 2.0)
 	newCapacity = (n).floor + 1.0
 
 	da = CreateDynamicArrayNumbersWithInitialCapacity(newCapacity)
@@ -6675,8 +6910,8 @@ def AndBytes(n1, n2, bytes)
 			if n1%2.0 == 1.0 && n2%2.0 == 1.0
 				result = result + byteVal
 			end
-			n1 = (n1 / 2.0).floor
-			n2 = (n2 / 2.0).floor
+			n1 = (n1.to_f / 2.0).floor
+			n2 = (n2.to_f / 2.0).floor
 			byteVal = byteVal*2.0
 			i = i + 1.0
 		end
@@ -6728,8 +6963,8 @@ def OrBytes(n1, n2, bytes)
 			if n1%2.0 == 1.0 || n2%2.0 == 1.0
 				result = result + byteVal
 			end
-			n1 = (n1 / 2.0).floor
-			n2 = (n2 / 2.0).floor
+			n1 = (n1.to_f / 2.0).floor
+			n2 = (n2.to_f / 2.0).floor
 			byteVal = byteVal*2.0
 			i = i + 1.0
 		end
@@ -6781,8 +7016,8 @@ def XorBytes(n1, n2, bytes)
 			if n1%2.0 != n2%2.0
 				result = result + byteVal
 			end
-			n1 = (n1 / 2.0).floor
-			n2 = (n2 / 2.0).floor
+			n1 = (n1.to_f / 2.0).floor
+			n2 = (n2.to_f / 2.0).floor
 			byteVal = byteVal*2.0
 			i = i + 1.0
 		end
@@ -6911,7 +7146,7 @@ def ShiftRightBytes(b, amount, length)
 		b = Truncate(b)
 		amount = Truncate(amount)
 
-		result = Truncate(b / 2.0**amount)
+		result = Truncate(b.to_f / 2.0**amount)
 	end
 
 	return result
@@ -6920,12 +7155,12 @@ end
 
 def ReadNextBit(data, nextbit)
 
-	bytenr = (nextbit.numberValue / 8.0).floor
+	bytenr = (nextbit.numberValue.to_f / 8.0).floor
 	bitnumber = nextbit.numberValue%8.0
 
 	b = data[bytenr]
 
-	bit = (b / 2.0**bitnumber).floor%2.0
+	bit = (b.to_f / 2.0**bitnumber).floor%2.0
 
 	nextbit.numberValue = nextbit.numberValue + 1.0
 
@@ -6934,7 +7169,7 @@ end
 
 
 def BitExtract(b, fromInc, toInc)
-	return (b / 2.0**fromInc).floor%2.0**(toInc + 1.0 - fromInc)
+	return (b.to_f / 2.0**fromInc).floor%2.0**(toInc + 1.0 - fromInc)
 end
 
 
@@ -6942,8 +7177,8 @@ def ReadBitRange(data, nextbit, length)
 
 	number = 0.0
 
-	startbyte = (nextbit.numberValue / 8.0).floor
-	endbyte = ((nextbit.numberValue + length) / 8.0).floor
+	startbyte = (nextbit.numberValue.to_f / 8.0).floor
+	endbyte = ((nextbit.numberValue + length).to_f / 8.0).floor
 
 	startbit = nextbit.numberValue%8.0
 	endbit = (nextbit.numberValue + length - 1.0)%8.0
@@ -6967,7 +7202,7 @@ end
 
 def ReadNextByteBoundary(data, nextbit)
 
-	bytenr = (nextbit.numberValue / 8.0).floor
+	bytenr = (nextbit.numberValue.to_f / 8.0).floor
 	b = data[bytenr]
 	nextbit.numberValue = nextbit.numberValue + 8.0
 
@@ -7055,7 +7290,7 @@ def DeflateDataStaticHuffman(data, level)
 	AppendBitsToBytesRight(bytes, currentBit, code.numberValue, length.numberValue)
 
 	copy = NumberArrayReference.new
-	aCopyNumberArrayRange(bytes, 0.0, (currentBit.numberValue / 8.0).ceil, copy)
+	aCopyNumberArrayRange(bytes, 0.0, (currentBit.numberValue.to_f / 8.0).ceil, copy)
 	delete(bytes)
 	bytes = copy.numberArray
 
@@ -7071,7 +7306,7 @@ def FindMatch(data, pos, distanceReference, lengthReference, match, level)
 	longest = [pos - 1.0, deflateMaxLength].min
 	longest = [data.length - pos, longest].min
 
-	deflateMaxDistance = (32768.0 / 10.0*level).floor
+	deflateMaxDistance = (32768.0.to_f / 10.0*level).floor
 
 	startDistance = [pos, deflateMaxDistance].min
 
@@ -7147,7 +7382,7 @@ end
 def DeflateDataNoCompression(data)
 
 	maxblocksize = 2.0**16.0 - 1.0
-	blocks = (data.length / maxblocksize).ceil
+	blocks = (data.length.to_f / maxblocksize).ceil
 
 	position = CreateNumberReference(0.0)
 
@@ -7202,23 +7437,23 @@ def GetDeflateLengthCode(length, code, lengthAddition, lengthAdditionLength)
 		code.numberValue = 257.0 + length - 3.0
 		lengthAdditionLength.numberValue = 0.0
 	elsif length >= 11.0 && length <= 18.0
-		code.numberValue = 265.0 + ((length - 11.0) / 2.0).floor
+		code.numberValue = 265.0 + ((length - 11.0).to_f / 2.0).floor
 		lengthAddition.numberValue = ((length - 11.0)%2.0).floor
 		lengthAdditionLength.numberValue = 1.0
 	elsif length >= 19.0 && length <= 34.0
-		code.numberValue = 269.0 + ((length - 19.0) / 4.0).floor
+		code.numberValue = 269.0 + ((length - 19.0).to_f / 4.0).floor
 		lengthAddition.numberValue = ((length - 19.0)%4.0).floor
 		lengthAdditionLength.numberValue = 2.0
 	elsif length >= 35.0 && length <= 66.0
-		code.numberValue = 273.0 + ((length - 35.0) / 8.0).floor
+		code.numberValue = 273.0 + ((length - 35.0).to_f / 8.0).floor
 		lengthAddition.numberValue = ((length - 35.0)%8.0).floor
 		lengthAdditionLength.numberValue = 3.0
 	elsif length >= 67.0 && length <= 130.0
-		code.numberValue = 277.0 + ((length - 67.0) / 16.0).floor
+		code.numberValue = 277.0 + ((length - 67.0).to_f / 16.0).floor
 		lengthAddition.numberValue = ((length - 67.0)%16.0).floor
 		lengthAdditionLength.numberValue = 4.0
 	elsif length >= 131.0 && length <= 257.0
-		code.numberValue = 281.0 + ((length - 131.0) / 32.0).floor
+		code.numberValue = 281.0 + ((length - 131.0).to_f / 32.0).floor
 		lengthAddition.numberValue = ((length - 131.0)%32.0).floor
 		lengthAdditionLength.numberValue = 5.0
 	elsif length == 258.0
@@ -7234,55 +7469,55 @@ def GetDeflateDistanceCode(distance, code, distanceAdditionReference, distanceAd
 		code.numberValue = distance - 1.0
 		distanceAdditionLengthReference.numberValue = 0.0
 	elsif distance >= 5.0 && distance <= 8.0
-		code.numberValue = 4.0 + ((distance - 5.0) / 2.0).floor
+		code.numberValue = 4.0 + ((distance - 5.0).to_f / 2.0).floor
 		distanceAdditionReference.numberValue = ((distance - 5.0)%2.0).floor
 		distanceAdditionLengthReference.numberValue = 1.0
 	elsif distance >= 9.0 && distance <= 16.0
-		code.numberValue = 6.0 + ((distance - 9.0) / 4.0).floor
+		code.numberValue = 6.0 + ((distance - 9.0).to_f / 4.0).floor
 		distanceAdditionReference.numberValue = ((distance - 9.0)%4.0).floor
 		distanceAdditionLengthReference.numberValue = 2.0
 	elsif distance >= 17.0 && distance <= 32.0
-		code.numberValue = 8.0 + ((distance - 17.0) / 8.0).floor
+		code.numberValue = 8.0 + ((distance - 17.0).to_f / 8.0).floor
 		distanceAdditionReference.numberValue = ((distance - 17.0)%8.0).floor
 		distanceAdditionLengthReference.numberValue = 3.0
 	elsif distance >= 33.0 && distance <= 64.0
-		code.numberValue = 10.0 + ((distance - 33.0) / 16.0).floor
+		code.numberValue = 10.0 + ((distance - 33.0).to_f / 16.0).floor
 		distanceAdditionReference.numberValue = ((distance - 33.0)%16.0).floor
 		distanceAdditionLengthReference.numberValue = 4.0
 	elsif distance >= 65.0 && distance <= 128.0
-		code.numberValue = 12.0 + ((distance - 65.0) / 32.0).floor
+		code.numberValue = 12.0 + ((distance - 65.0).to_f / 32.0).floor
 		distanceAdditionReference.numberValue = ((distance - 65.0)%32.0).floor
 		distanceAdditionLengthReference.numberValue = 5.0
 	elsif distance >= 129.0 && distance <= 256.0
-		code.numberValue = 14.0 + ((distance - 129.0) / 64.0).floor
+		code.numberValue = 14.0 + ((distance - 129.0).to_f / 64.0).floor
 		distanceAdditionReference.numberValue = ((distance - 129.0)%64.0).floor
 		distanceAdditionLengthReference.numberValue = 6.0
 	elsif distance >= 257.0 && distance <= 512.0
-		code.numberValue = 16.0 + ((distance - 257.0) / 128.0).floor
+		code.numberValue = 16.0 + ((distance - 257.0).to_f / 128.0).floor
 		distanceAdditionReference.numberValue = ((distance - 257.0)%128.0).floor
 		distanceAdditionLengthReference.numberValue = 7.0
 	elsif distance >= 513.0 && distance <= 1024.0
-		code.numberValue = 18.0 + ((distance - 513.0) / 256.0).floor
+		code.numberValue = 18.0 + ((distance - 513.0).to_f / 256.0).floor
 		distanceAdditionReference.numberValue = ((distance - 513.0)%256.0).floor
 		distanceAdditionLengthReference.numberValue = 8.0
 	elsif distance >= 1025.0 && distance <= 2048.0
-		code.numberValue = 20.0 + ((distance - 1025.0) / 2.0**9.0).floor
+		code.numberValue = 20.0 + ((distance - 1025.0).to_f / 2.0**9.0).floor
 		distanceAdditionReference.numberValue = ((distance - 1025.0)%2.0**9.0).floor
 		distanceAdditionLengthReference.numberValue = 9.0
 	elsif distance >= 2049.0 && distance <= 4096.0
-		code.numberValue = 22.0 + ((distance - 2049.0) / 2.0**10.0).floor
+		code.numberValue = 22.0 + ((distance - 2049.0).to_f / 2.0**10.0).floor
 		distanceAdditionReference.numberValue = ((distance - 2049.0)%2.0**10.0).floor
 		distanceAdditionLengthReference.numberValue = 10.0
 	elsif distance >= 4097.0 && distance <= 8192.0
-		code.numberValue = 24.0 + ((distance - 4097.0) / 2.0**11.0).floor
+		code.numberValue = 24.0 + ((distance - 4097.0).to_f / 2.0**11.0).floor
 		distanceAdditionReference.numberValue = ((distance - 4097.0)%2.0**11.0).floor
 		distanceAdditionLengthReference.numberValue = 11.0
 	elsif distance >= 8193.0 && distance <= 16384.0
-		code.numberValue = 26.0 + ((distance - 8193.0) / 2.0**12.0).floor
+		code.numberValue = 26.0 + ((distance - 8193.0).to_f / 2.0**12.0).floor
 		distanceAdditionReference.numberValue = ((distance - 8193.0)%2.0**12.0).floor
 		distanceAdditionLengthReference.numberValue = 12.0
 	elsif distance >= 16385.0 && distance <= 32768.0
-		code.numberValue = 28.0 + ((distance - 16385.0) / 2.0**13.0).floor
+		code.numberValue = 28.0 + ((distance - 16385.0).to_f / 2.0**13.0).floor
 		distanceAdditionReference.numberValue = ((distance - 16385.0)%2.0**13.0).floor
 		distanceAdditionLengthReference.numberValue = 13.0
 	end
@@ -7295,7 +7530,7 @@ end
 def AppendBitsToBytesLeft(bytes, nextbit, data, length)
 
 	while(length > 0.0)
-		bytePos = Truncate(nextbit.numberValue / 8.0)
+		bytePos = Truncate(nextbit.numberValue.to_f / 8.0)
 		bitPos = nextbit.numberValue%8.0
 
 		if length < 8.0 - bitPos
@@ -7325,7 +7560,7 @@ end
 def AppendBitsToBytesRight(bytes, nextbit, data, length)
 
 	while(length > 0.0)
-		bytePos = Truncate(nextbit.numberValue / 8.0)
+		bytePos = Truncate(nextbit.numberValue.to_f / 8.0)
 		bitPos = nextbit.numberValue%8.0
 
 		if length < 8.0 - bitPos

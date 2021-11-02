@@ -22,8 +22,13 @@ $settings->yLabel = str_split("Y axis");
 $settings->scatterPlotSeries = array($series);
 
 $imageReference = CreateRGBABitmapImageReference();
-DrawScatterPlotFromSettings($imageReference, $settings);
+$errorMessage = new stdClass();
+$success = DrawScatterPlotFromSettings($imageReference, $settings, $errorMessage);
 
-$pngdata = ConvertToPNG($imageReference->image);
-WriteToFile($pngdata, "example2.png");
-DeleteImage($imageReference->image);
+if($success){
+    $pngdata = ConvertToPNG($imageReference->image);
+    WriteToFile($pngdata, "example2.png");
+    DeleteImage($imageReference->image);
+}else{
+    echo implode('', $errorMessage->string);
+}

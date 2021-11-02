@@ -23,8 +23,13 @@ settings.xLabel = "X axis";
 settings.yLabel = "Y axis";
 settings.scatterPlotSeries = [series];
 
-DrawScatterPlotFromSettings(imageReference, settings);
+var errorMessage = {};
+var success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-var pngdata = ConvertToPNG(imageReference.image);
-WriteToFile(pngdata, "example2.png");
-DeleteImage(imageReference.image);
+if(success){
+    var pngdata = ConvertToPNG(imageReference.image);
+    WriteToFile(pngdata, "example2.png");
+    DeleteImage(imageReference.image);
+}else{
+    console.error(errorMessage.string.join(''));
+}

@@ -1,11 +1,12 @@
 using static pbPlots;
 using static SupportLib;
+using System;
 
 public class Example1{
 
 	public static void Main(){
 	    bool success;
-	    StringReference errorMessage = new StringReference;
+	    StringReference errorMessage = new StringReference();
 		RGBABitmapImageReference imageReference = CreateRGBABitmapImageReference();
 
 		double [] xs = {-2, -1, 0, 1, 2};
@@ -17,7 +18,7 @@ public class Example1{
             WriteToFile(pngdata, "example1.png");
             DeleteImage(imageReference.image);
 		}else{
-		    Console.Error(errorMessage.string);
+		    Console.Error.WriteLine(errorMessage.stringx);
 		}
 	}
 }
