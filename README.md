@@ -179,15 +179,15 @@ success = success && DrawScatterPlot(canvasReference3, 250, 200, xs, ys3);
 success = success && DrawScatterPlot(canvasReference4, 250, 200, xs, ys4);
 
 if(success){
-	image1 = canvasReference1.image;
-	image2 = canvasReference2.image;
-	image3 = canvasReference3.image;
-	image4 = canvasReference4.image;
+  image1 = canvasReference1.image;
+  image2 = canvasReference2.image;
+  image3 = canvasReference3.image;
+  image4 = canvasReference4.image;
 
-	DrawImageOnImage(combined, image1, 0, 0);
-	DrawImageOnImage(combined, image2, 0, 200);
-	DrawImageOnImage(combined, image3, 250, 0);
-	DrawImageOnImage(combined, image4, 250, 200);
+  DrawImageOnImage(combined, image1, 0, 0);
+  DrawImageOnImage(combined, image2, 0, 200);
+  DrawImageOnImage(combined, image3, 250, 0);
+  DrawImageOnImage(combined, image4, 250, 200);
 }
 ```
 
