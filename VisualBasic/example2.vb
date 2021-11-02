@@ -19,10 +19,15 @@ Module Example2
 		settings.scatterPlotSeries = {series}
 
 		Dim imageReference As RGBABitmapImageReference = CreateRGBABitmapImageReference()
-		Call DrawScatterPlotFromSettings(imageReference, settings)
+        Dim errorMessage As StringReference = New StringReference()
+        Dim success As Boolean = DrawScatterPlotFromSettings(imageReference, settings, errorMessage)
 
-		Dim pngdata as double() = ConvertToPNG(imageReference.image)
-		Call WriteToFile(pngdata, "example2.png")
-		Call DeleteImage(imageReference.image)
+        If success
+            Dim pngdata as double() = ConvertToPNG(imageReference.image)
+            Call WriteToFile(pngdata, "example2.png")
+            Call DeleteImage(imageReference.image)
+        Else
+            Console.Error.WriteLine(errorMessage.stringx)
+        End If
 	End Sub
 End Module
