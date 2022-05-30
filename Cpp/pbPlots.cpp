@@ -2847,6 +2847,8 @@ bool CreateStringFromNumberWithCheck(double decimal, double base, StringReferenc
 
         if(success){
           decimal = decimal - d*pow(base, maximumDigits - i - 1.0);
+          decimal = fmax(decimal, 0.0);
+          decimal = round(decimal);
         }
       }
 
