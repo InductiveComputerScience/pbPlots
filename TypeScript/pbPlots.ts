@@ -100,7 +100,7 @@ class NumberReference{
 class StringArrayReference{
 	stringArray : StringReference [];
 }
-class StringReference{
+export class StringReference{
 	stringx : string [];
 }
 class Chunk{

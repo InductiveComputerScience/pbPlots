@@ -20,7 +20,7 @@ settings.yLabel = "Y axis".split('');
 settings.scatterPlotSeries = [series];
 
 var imageReference = pbPlots.CreateRGBABitmapImageReference();
-var errorMessage = {};
+var errorMessage = new pbPlots.StringReference();
 var success = pbPlots.DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
 if(success){
