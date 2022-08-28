@@ -4,8 +4,8 @@
 using namespace std;
 
 int main(){
-    bool success;
-    StringReference *errorMessage = new StringReference();
+	bool success;
+	StringReference *errorMessage = CreateStringReferenceLengthValue(0, ' ');
 	RGBABitmapImageReference *imageReference = CreateRGBABitmapImageReference();
 
 	vector<double> xs{-2, -1, 0, 1, 2};
@@ -31,17 +31,19 @@ int main(){
 
 	success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-    if(success){
-        vector<double> *pngdata = ConvertToPNG(imageReference->image);
-        WriteToFile(pngdata, "example2.png");
-        DeleteImage(imageReference->image);
+	if(success){
+		vector<double> *pngdata = ConvertToPNG(imageReference->image);
+		WriteToFile(pngdata, "example2.png");
+		DeleteImage(imageReference->image);
 	}else{
-        cerr << "Error: ";
-        for(wchar_t c : *errorMessage->string){
-            wcerr << c;
-        }
-        cerr << endl;
+		cerr << "Error: ";
+		for(wchar_t c : *errorMessage->string){
+			wcerr << c;
+		}
+		cerr << endl;
 	}
+
+	FreeAllocations();
 
 	return success ? 0 : 1;
 }

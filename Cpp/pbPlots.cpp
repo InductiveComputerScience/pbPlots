@@ -8,6 +8,73 @@ using namespace std;
 #define M_PI 3.14159265358979323846
 #endif
 
+// -------------------------
+
+typedef struct Memory{
+	void *mem;
+	int64_t size;
+	struct Memory *next;
+} Memory;
+
+Memory *memoryStart = NULL;
+Memory *memory = NULL;
+
+void FreeAllocations(){
+	Memory *cur, *prev;
+	int64_t total;
+
+	total = 0;
+	cur = memoryStart;
+
+	while(cur != NULL){
+		free(cur->mem);
+		total += cur->size;
+		prev = cur;
+		cur = cur->next;
+		free(prev);
+	}
+
+	memoryStart = NULL;
+	memory = NULL;
+
+	//printf("Freed %ld\n", total);
+}
+
+void *Allocate(int64_t size){
+	void *addr;
+
+	if(memoryStart == NULL){
+		memoryStart = (Memory*)malloc(sizeof(Memory));
+		memory = memoryStart;
+	}else{
+		memory->next = (Memory*)malloc(sizeof(Memory));
+		memory = memory->next;
+	}
+
+	memory->next = NULL;
+	addr = malloc(size);
+	memory->size = size;
+	memory->mem = addr;
+
+	return addr;
+}
+
+void *operator new[](std::size_t size) throw(std::bad_alloc){
+	return Allocate(size);
+}
+
+void * operator new(std::size_t size) throw(std::bad_alloc){
+	return Allocate(size);
+}
+
+void operator delete(void * p) throw(){
+}
+
+void operator delete[](void *p) throw(){
+}
+
+// -------------------------
+
 bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax){
   double x1, y1, x2, y2;
   bool success, p1In, p2In;

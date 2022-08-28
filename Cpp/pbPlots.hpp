@@ -7,6 +7,8 @@
 
 #define toVector(s) (new std::vector<wchar_t> ((s), (s) + wcslen(s)))
 
+void FreeAllocations();
+
 struct RGBABitmapImageReference;
 
 struct Rectangle;
