@@ -2,6 +2,63 @@
 
 #include "pbPlots.h"
 
+// -----------------
+
+typedef struct Memory{
+	void *mem;
+	int64_t size;
+	struct Memory *next;
+} Memory;
+
+Memory *memoryStart = NULL;
+Memory *memory = NULL;
+
+int FreeAllocations(){
+	Memory *cur, *prev;
+	int64_t total;
+
+	total = 0;
+	cur = memoryStart;
+
+	while(cur != NULL){
+		free(cur->mem);
+		total += cur->size;
+		prev = cur;
+		cur = cur->next;
+		free(prev);
+	}
+
+	memoryStart = NULL;
+	memory = NULL;
+
+	//printf("Freed %ld\n", total);
+}
+
+void *Allocate(int64_t size){
+	void *addr;
+
+	if(memoryStart == NULL){
+		memoryStart = malloc(sizeof(Memory));
+		memory = memoryStart;
+	}else{
+		memory->next = malloc(sizeof(Memory));
+		memory = memory->next;
+	}
+
+	memory->next = NULL;
+	addr = malloc(size);
+	memory->size = size;
+	memory->mem = addr;
+
+	return addr;
+}
+
+void Free(void *addr){
+	// This is a stack-allocator.
+}
+
+// -----------------
+
 _Bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax){
   double x1, y1, x2, y2;
   _Bool success, p1In, p2In;
@@ -118,7 +175,7 @@ double InterceptFromCoordinates(double x1, double y1, double x2, double y2){
 RGBA **Get8HighContrastColors(size_t *returnArrayLength){
   RGBA **colors;
   size_t colorsLength;
-  colors = (RGBA**)malloc(sizeof(RGBA) * 8.0);
+  colors = (RGBA**)Allocate(sizeof(RGBA) * 8.0);
   colorsLength = 8.0;
   colors[0] = CreateRGBColor(3.0/256.0, 146.0/256.0, 206.0/256.0);
   colors[1] = CreateRGBColor(253.0/256.0, 83.0/256.0, 8.0/256.0);
@@ -140,9 +197,9 @@ void DrawFilledRectangleWithBorder(RGBABitmapImage *image, double x, double y, d
 RGBABitmapImageReference *CreateRGBABitmapImageReference(){
   RGBABitmapImageReference *reference;
 
-  reference = (RGBABitmapImageReference *)malloc(sizeof(RGBABitmapImageReference));
-  reference->image = (RGBABitmapImage *)malloc(sizeof(RGBABitmapImage));
-  reference->image->x = (RGBABitmap**)malloc(sizeof(RGBABitmap) * 0.0);
+  reference = (RGBABitmapImageReference *)Allocate(sizeof(RGBABitmapImageReference));
+  reference->image = (RGBABitmapImage *)Allocate(sizeof(RGBABitmapImage));
+  reference->image->x = (RGBABitmap**)Allocate(sizeof(RGBABitmap) * 0.0);
   reference->image->xLength = 0.0;
 
   return reference;
@@ -161,7 +218,7 @@ _Bool RectanglesOverlap(Rectangle *r1, Rectangle *r2){
 }
 Rectangle *CreateRectangle(double x1, double y1, double x2, double y2){
   Rectangle *r;
-  r = (Rectangle *)malloc(sizeof(Rectangle));
+  r = (Rectangle *)Allocate(sizeof(Rectangle));
   r->x1 = x1;
   r->y1 = y1;
   r->x2 = x2;
@@ -181,7 +238,7 @@ void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, doubl
   size_t textLength;
   Rectangle *r;
 
-  r = (Rectangle *)malloc(sizeof(Rectangle));
+  r = (Rectangle *)Allocate(sizeof(Rectangle));
   padding = 10.0;
 
   overlap = false;
@@ -257,7 +314,7 @@ void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, doubl
   size_t textLength;
   Rectangle *r;
 
-  r = (Rectangle *)malloc(sizeof(Rectangle));
+  r = (Rectangle *)Allocate(sizeof(Rectangle));
   padding = 10.0;
 
   overlap = false;
@@ -372,11 +429,11 @@ double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double 
     mode = 2.0;
   }
 
-  positions = (double*)malloc(sizeof(double) * (pNum));
+  positions = (double*)Allocate(sizeof(double) * (pNum));
   positionsLength = pNum;
-  labels->stringArray = (StringReference**)malloc(sizeof(StringReference) * pNum);
+  labels->stringArray = (StringReference**)Allocate(sizeof(StringReference) * pNum);
   labels->stringArrayLength = pNum;
-  priorities->numberArray = (double*)malloc(sizeof(double) * (pNum));
+  priorities->numberArray = (double*)Allocate(sizeof(double) * (pNum));
   priorities->numberArrayLength = pNum;
 
   for(i = 0.0; i < pNum; i = i + 1.0){
@@ -416,7 +473,7 @@ double *ComputeGridLinePositions(size_t *returnArrayLength, double cMin, double 
     priorities->numberArray[(int)(i)] = priority;
 
     /* The label itself. */
-    labels->stringArray[(int)(i)] = (StringReference *)malloc(sizeof(StringReference));
+    labels->stringArray[(int)(i)] = (StringReference *)Allocate(sizeof(StringReference));
     if(p < 0.0){
       if(mode == 2.0 || mode == 3.0){
         num = RoundToDigits(num,  -(p - 1.0));
@@ -463,7 +520,7 @@ double MapXCoordinateBasedOnSettings(double x, ScatterPlotSettings *settings){
   double xMin, xMax, xPadding, xPixelMin, xPixelMax;
   Rectangle *boundaries;
 
-  boundaries = (Rectangle *)malloc(sizeof(Rectangle));
+  boundaries = (Rectangle *)Allocate(sizeof(Rectangle));
   ComputeBoundariesBasedOnSettings(settings, boundaries);
   xMin = boundaries->x1;
   xMax = boundaries->x2;
@@ -483,7 +540,7 @@ double MapYCoordinateBasedOnSettings(double y, ScatterPlotSettings *settings){
   double yMin, yMax, yPadding, yPixelMin, yPixelMax;
   Rectangle *boundaries;
 
-  boundaries = (Rectangle *)malloc(sizeof(Rectangle));
+  boundaries = (Rectangle *)Allocate(sizeof(Rectangle));
   ComputeBoundariesBasedOnSettings(settings, boundaries);
   yMin = boundaries->y1;
   yMax = boundaries->y2;
@@ -525,7 +582,7 @@ void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, wchar_t *text,
 ScatterPlotSettings *GetDefaultScatterPlotSettings(){
   ScatterPlotSettings *settings;
 
-  settings = (ScatterPlotSettings *)malloc(sizeof(ScatterPlotSettings));
+  settings = (ScatterPlotSettings *)Allocate(sizeof(ScatterPlotSettings));
 
   settings->autoBoundaries = true;
   settings->xMax = 0.0;
@@ -541,7 +598,7 @@ ScatterPlotSettings *GetDefaultScatterPlotSettings(){
   settings->xLabelLength = wcslen(settings->xLabel);
   settings->yLabel = L"";
   settings->yLabelLength = wcslen(settings->yLabel);
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 0.0);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)Allocate(sizeof(ScatterPlotSeries) * 0.0);
   settings->scatterPlotSeriesLength = 0.0;
   settings->showGrid = true;
   settings->gridColor = GetGray(0.1);
@@ -557,7 +614,7 @@ ScatterPlotSettings *GetDefaultScatterPlotSettings(){
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings(){
   ScatterPlotSeries *series;
 
-  series = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  series = (ScatterPlotSeries *)Allocate(sizeof(ScatterPlotSeries));
 
   series->linearInterpolation = true;
   series->pointType = L"pixels";
@@ -565,9 +622,9 @@ ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings(){
   series->lineType = L"solid";
   series->lineTypeLength = wcslen(series->lineType);
   series->lineThickness = 1.0;
-  series->xs = (double*)malloc(sizeof(double) * (0.0));
+  series->xs = (double*)Allocate(sizeof(double) * (0.0));
   series->xsLength = 0.0;
-  series->ys = (double*)malloc(sizeof(double) * (0.0));
+  series->ys = (double*)Allocate(sizeof(double) * (0.0));
   series->ysLength = 0.0;
   series->color = GetBlack();
 
@@ -581,13 +638,13 @@ _Bool DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, d
 
   settings->width = width;
   settings->height = height;
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 1.0);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)Allocate(sizeof(ScatterPlotSeries) * 1.0);
   settings->scatterPlotSeriesLength = 1.0;
   settings->scatterPlotSeries[0] = GetDefaultScatterPlotSeriesSettings();
-  free(settings->scatterPlotSeries[0]->xs);
+  Free(settings->scatterPlotSeries[0]->xs);
   settings->scatterPlotSeries[0]->xs = xs;
   settings->scatterPlotSeries[0]->xsLength = xsLength;
-  free(settings->scatterPlotSeries[0]->ys);
+  Free(settings->scatterPlotSeries[0]->ys);
   settings->scatterPlotSeries[0]->ys = ys;
   settings->scatterPlotSeries[0]->ysLength = ysLength;
 
@@ -626,7 +683,7 @@ _Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, Sca
 
   if(success){
 
-    boundaries = (Rectangle *)malloc(sizeof(Rectangle));
+    boundaries = (Rectangle *)Allocate(sizeof(Rectangle));
     ComputeBoundariesBasedOnSettings(settings, boundaries);
     xMin = boundaries->x1;
     yMin = boundaries->y1;
@@ -669,10 +726,10 @@ _Bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, Sca
 
     gridLabelColor = GetGray(0.5);
 
-    xLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-    xLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-    yLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-    yLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+    xLabels = (StringArrayReference *)Allocate(sizeof(StringArrayReference));
+    xLabelPriorities = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
+    yLabels = (StringArrayReference *)Allocate(sizeof(StringArrayReference));
+    yLabelPriorities = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
     xGridPositions = ComputeGridLinePositions(&xGridPositionsLength, xMin, xMax, xLabels, xLabelPriorities);
     yGridPositions = ComputeGridLinePositions(&yGridPositionsLength, yMin, yMax, yLabels, yLabelPriorities);
 
@@ -744,7 +801,7 @@ if(settings->yAxisLeft){
     originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax);
 
     /* Labels */
-    occupied = (Rectangle**)malloc(sizeof(Rectangle) * xLabels->stringArrayLength + yLabels->stringArrayLength);
+    occupied = (Rectangle**)Allocate(sizeof(Rectangle) * xLabels->stringArrayLength + yLabels->stringArrayLength);
     occupiedLength = xLabels->stringArrayLength + yLabels->stringArrayLength;
     for(i = 0.0; i < occupiedLength; i = i + 1.0){
       occupied[(int)(i)] = CreateRectangle(0.0, 0.0, 0.0, 0.0);
@@ -832,10 +889,10 @@ if(settings->yAxisLeft){
       ysLength = sp->ysLength;
       linearInterpolation = sp->linearInterpolation;
 
-      x1Ref = (NumberReference *)malloc(sizeof(NumberReference));
-      y1Ref = (NumberReference *)malloc(sizeof(NumberReference));
-      x2Ref = (NumberReference *)malloc(sizeof(NumberReference));
-      y2Ref = (NumberReference *)malloc(sizeof(NumberReference));
+      x1Ref = (NumberReference *)Allocate(sizeof(NumberReference));
+      y1Ref = (NumberReference *)Allocate(sizeof(NumberReference));
+      x2Ref = (NumberReference *)Allocate(sizeof(NumberReference));
+      y2Ref = (NumberReference *)Allocate(sizeof(NumberReference));
       if(linearInterpolation){
         prevSet = false;
         xPrev = 0.0;
@@ -1118,7 +1175,7 @@ _Bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings, StringReferenc
 BarPlotSettings *GetDefaultBarPlotSettings(){
   BarPlotSettings *settings;
 
-  settings = (BarPlotSettings *)malloc(sizeof(BarPlotSettings));
+  settings = (BarPlotSettings *)Allocate(sizeof(BarPlotSettings));
 
   settings->width = 800.0;
   settings->height = 600.0;
@@ -1132,7 +1189,7 @@ BarPlotSettings *GetDefaultBarPlotSettings(){
   settings->titleLength = wcslen(settings->title);
   settings->yLabel = L"";
   settings->yLabelLength = wcslen(settings->yLabel);
-  settings->barPlotSeries = (BarPlotSeries**)malloc(sizeof(BarPlotSeries) * 0.0);
+  settings->barPlotSeries = (BarPlotSeries**)Allocate(sizeof(BarPlotSeries) * 0.0);
   settings->barPlotSeriesLength = 0.0;
   settings->showGrid = true;
   settings->gridColor = GetGray(0.1);
@@ -1142,7 +1199,7 @@ BarPlotSettings *GetDefaultBarPlotSettings(){
   settings->groupSeparation = 0.0;
   settings->barSeparation = 0.0;
   settings->autoLabels = true;
-  settings->xLabels = (StringReference**)malloc(sizeof(StringReference) * 0.0);
+  settings->xLabels = (StringReference**)Allocate(sizeof(StringReference) * 0.0);
   settings->xLabelsLength = 0.0;
   /*settings.autoLabels = false;
         settings.xLabels = new StringReference [5];
@@ -1158,9 +1215,9 @@ BarPlotSettings *GetDefaultBarPlotSettings(){
 BarPlotSeries *GetDefaultBarPlotSeriesSettings(){
   BarPlotSeries *series;
 
-  series = (BarPlotSeries *)malloc(sizeof(BarPlotSeries));
+  series = (BarPlotSeries *)Allocate(sizeof(BarPlotSeries));
 
-  series->ys = (double*)malloc(sizeof(double) * (0.0));
+  series->ys = (double*)Allocate(sizeof(double) * (0.0));
   series->ysLength = 0.0;
   series->color = GetBlack();
 
@@ -1171,7 +1228,7 @@ RGBABitmapImage *DrawBarPlotNoErrorCheck(double width, double height, double *ys
   _Bool success;
   RGBABitmapImageReference *canvasReference;
 
-  errorMessage = (StringReference *)malloc(sizeof(StringReference));
+  errorMessage = (StringReference *)Allocate(sizeof(StringReference));
   canvasReference = CreateRGBABitmapImageReference();
 
   success = DrawBarPlot(canvasReference, width, height, ys, ysLength, errorMessage);
@@ -1184,13 +1241,13 @@ _Bool DrawBarPlot(RGBABitmapImageReference *canvasReference, double width, doubl
   BarPlotSettings *settings;
   _Bool success;
 
-  errorMessage = (StringReference *)malloc(sizeof(StringReference));
+  errorMessage = (StringReference *)Allocate(sizeof(StringReference));
   settings = GetDefaultBarPlotSettings();
 
-  settings->barPlotSeries = (BarPlotSeries**)malloc(sizeof(BarPlotSeries) * 1.0);
+  settings->barPlotSeries = (BarPlotSeries**)Allocate(sizeof(BarPlotSeries) * 1.0);
   settings->barPlotSeriesLength = 1.0;
   settings->barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
-  free(settings->barPlotSeries[0]->ys);
+  Free(settings->barPlotSeries[0]->ys);
   settings->barPlotSeries[0]->ys = ys;
   settings->barPlotSeries[0]->ysLength = ysLength;
   settings->width = width;
@@ -1274,8 +1331,8 @@ _Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlot
     DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings->gridColor);
 
     /* Draw grid lines. */
-    yLabels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-    yLabelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+    yLabels = (StringArrayReference *)Allocate(sizeof(StringArrayReference));
+    yLabelPriorities = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
     yGridPositions = ComputeGridLinePositions(&yGridPositionsLength, yMin, yMax, yLabels, yLabelPriorities);
 
     if(settings->showGrid){
@@ -1294,7 +1351,7 @@ _Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlot
     }
 
     /* Labels */
-    occupied = (Rectangle**)malloc(sizeof(Rectangle) * yLabels->stringArrayLength);
+    occupied = (Rectangle**)Allocate(sizeof(Rectangle) * yLabels->stringArrayLength);
     occupiedLength = yLabels->stringArrayLength;
     for(i = 0.0; i < occupiedLength; i = i + 1.0){
       occupied[(int)(i)] = CreateRectangle(0.0, 0.0, 0.0, 0.0);
@@ -1310,7 +1367,7 @@ _Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlot
       if( !settings->grayscaleAutoColor ){
         colors = Get8HighContrastColors(&colorsLength);
       }else{
-        colors = (RGBA**)malloc(sizeof(RGBA) * ss);
+        colors = (RGBA**)Allocate(sizeof(RGBA) * ss);
         colorsLength = ss;
         if(ss > 1.0){
           for(i = 0.0; i < ss; i = i + 1.0){
@@ -1321,7 +1378,7 @@ _Bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlot
         }
       }
     }else{
-      colors = (RGBA**)malloc(sizeof(RGBA) * 0.0);
+      colors = (RGBA**)Allocate(sizeof(RGBA) * 0.0);
       colorsLength = 0.0;
     }
 
@@ -1533,8 +1590,8 @@ double test(){
 
   imageReference = CreateRGBABitmapImageReference();
 
-  labels = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-  labelPriorities = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+  labels = (StringArrayReference *)Allocate(sizeof(StringArrayReference));
+  labelPriorities = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
 
   z = 10.0;
   gridlines = ComputeGridLinePositions(&gridlinesLength,  -z/2.0, z/2.0, labels, labelPriorities);
@@ -1572,14 +1629,14 @@ double test(){
   gridlines = ComputeGridLinePositions(&gridlinesLength,  -z/2.0, z/2.0, labels, labelPriorities);
   AssertEquals(gridlinesLength, 21.0, failures);
 
-  xs = (double*)malloc(sizeof(double) * (5.0));
+  xs = (double*)Allocate(sizeof(double) * (5.0));
   xsLength = 5.0;
   xs[0] =  -2.0;
   xs[1] =  -1.0;
   xs[2] = 0.0;
   xs[3] = 1.0;
   xs[4] = 2.0;
-  ys = (double*)malloc(sizeof(double) * (5.0));
+  ys = (double*)Allocate(sizeof(double) * (5.0));
   ysLength = 5.0;
   ys[0] = 2.0;
   ys[1] =  -1.0;
@@ -1615,14 +1672,14 @@ void TestMapping(NumberReference *failures){
 
   series = GetDefaultScatterPlotSeriesSettings();
 
-  series->xs = (double*)malloc(sizeof(double) * (5.0));
+  series->xs = (double*)Allocate(sizeof(double) * (5.0));
   series->xsLength = 5.0;
   series->xs[0] = -2.0;
   series->xs[1] = -1.0;
   series->xs[2] = 0.0;
   series->xs[3] = 1.0;
   series->xs[4] = 2.0;
-  series->ys = (double*)malloc(sizeof(double) * (5.0));
+  series->ys = (double*)Allocate(sizeof(double) * (5.0));
   series->ysLength = 5.0;
   series->ys[0] = -2.0;
   series->ys[1] = -1.0;
@@ -1646,7 +1703,7 @@ void TestMapping(NumberReference *failures){
   settings->xLabelLength = wcslen(settings->xLabel);
   settings->yLabel = L"Y axis";
   settings->yLabelLength = wcslen(settings->yLabel);
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 1.0);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)Allocate(sizeof(ScatterPlotSeries) * 1.0);
   settings->scatterPlotSeriesLength = 1.0;
   settings->scatterPlotSeries[0] = series;
 
@@ -1684,13 +1741,13 @@ void TestMapping2(NumberReference *failures){
   yMin = 0.0;
   yMax = 1.0;
 
-  xs = (double*)malloc(sizeof(double) * (points));
+  xs = (double*)Allocate(sizeof(double) * (points));
   xsLength = points;
-  ys = (double*)malloc(sizeof(double) * (points));
+  ys = (double*)Allocate(sizeof(double) * (points));
   ysLength = points;
-  xs2 = (double*)malloc(sizeof(double) * (points));
+  xs2 = (double*)Allocate(sizeof(double) * (points));
   xs2Length = points;
-  ys2 = (double*)malloc(sizeof(double) * (points));
+  ys2 = (double*)Allocate(sizeof(double) * (points));
   ys2Length = points;
 
   for(i = 0.0; i < points; i = i + 1.0){
@@ -1709,9 +1766,9 @@ void TestMapping2(NumberReference *failures){
 
   settings = GetDefaultScatterPlotSettings();
 
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 2.0);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)Allocate(sizeof(ScatterPlotSeries) * 2.0);
   settings->scatterPlotSeriesLength = 2.0;
-  settings->scatterPlotSeries[0] = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  settings->scatterPlotSeries[0] = (ScatterPlotSeries *)Allocate(sizeof(ScatterPlotSeries));
   settings->scatterPlotSeries[0]->xs = xs;
   settings->scatterPlotSeries[0]->xsLength = xsLength;
   settings->scatterPlotSeries[0]->ys = ys;
@@ -1721,7 +1778,7 @@ void TestMapping2(NumberReference *failures){
   settings->scatterPlotSeries[0]->lineTypeLength = wcslen(settings->scatterPlotSeries[0]->lineType);
   settings->scatterPlotSeries[0]->lineThickness = 3.0;
   settings->scatterPlotSeries[0]->color = CreateRGBColor(1.0, 0.0, 0.0);
-  settings->scatterPlotSeries[1] = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  settings->scatterPlotSeries[1] = (ScatterPlotSeries *)Allocate(sizeof(ScatterPlotSeries));
   settings->scatterPlotSeries[1]->xs = xs2;
   settings->scatterPlotSeries[1]->xsLength = xs2Length;
   settings->scatterPlotSeries[1]->ys = ys2;
@@ -1780,9 +1837,9 @@ void ExampleRegression(RGBABitmapImageReference *image){
 
   settings = GetDefaultScatterPlotSettings();
 
-  settings->scatterPlotSeries = (ScatterPlotSeries**)malloc(sizeof(ScatterPlotSeries) * 2.0);
+  settings->scatterPlotSeries = (ScatterPlotSeries**)Allocate(sizeof(ScatterPlotSeries) * 2.0);
   settings->scatterPlotSeriesLength = 2.0;
-  settings->scatterPlotSeries[0] = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  settings->scatterPlotSeries[0] = (ScatterPlotSeries *)Allocate(sizeof(ScatterPlotSeries));
   settings->scatterPlotSeries[0]->xs = xs;
   settings->scatterPlotSeries[0]->xsLength = xsLength;
   settings->scatterPlotSeries[0]->ys = ys;
@@ -1793,9 +1850,9 @@ void ExampleRegression(RGBABitmapImageReference *image){
   settings->scatterPlotSeries[0]->color = CreateRGBColor(1.0, 0.0, 0.0);
 
   /*OrdinaryLeastSquaresWithIntercept(); */
-  xs2 = (double*)malloc(sizeof(double) * (2.0));
+  xs2 = (double*)Allocate(sizeof(double) * (2.0));
   xs2Length = 2.0;
-  ys2 = (double*)malloc(sizeof(double) * (2.0));
+  ys2 = (double*)Allocate(sizeof(double) * (2.0));
   ys2Length = 2.0;
 
   xs2[0] = 5.0;
@@ -1803,7 +1860,7 @@ void ExampleRegression(RGBABitmapImageReference *image){
   xs2[1] = 25.0;
   ys2[1] = 39.0;
 
-  settings->scatterPlotSeries[1] = (ScatterPlotSeries *)malloc(sizeof(ScatterPlotSeries));
+  settings->scatterPlotSeries[1] = (ScatterPlotSeries *)Allocate(sizeof(ScatterPlotSeries));
   settings->scatterPlotSeries[1]->xs = xs2;
   settings->scatterPlotSeries[1]->xsLength = xs2Length;
   settings->scatterPlotSeries[1]->ys = ys2;
@@ -1833,7 +1890,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
   StringReference *errorMessage;
   _Bool success;
 
-  errorMessage = (StringReference *)malloc(sizeof(StringReference));
+  errorMessage = (StringReference *)Allocate(sizeof(StringReference));
 
   ys1 = StringToNumberArray(&ys1Length, strparam(L"1, 2, 3, 4, 5"));
   ys2 = StringToNumberArray(&ys2Length, strparam(L"5, 4, 3, 2, 1"));
@@ -1859,7 +1916,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
   /*settings.groupSeparation; */
   /*settings.barSeparation; */
   settings->autoLabels = false;
-  settings->xLabels = (StringReference**)malloc(sizeof(StringReference) * 5.0);
+  settings->xLabels = (StringReference**)Allocate(sizeof(StringReference) * 5.0);
   settings->xLabelsLength = 5.0;
   settings->xLabels[0] = CreateStringReference(strparam(L"may 20"));
   settings->xLabels[1] = CreateStringReference(strparam(L"jun 20"));
@@ -1869,7 +1926,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
   /*settings.colors; */
   settings->barBorder = true;
 
-  settings->barPlotSeries = (BarPlotSeries**)malloc(sizeof(BarPlotSeries) * 3.0);
+  settings->barPlotSeries = (BarPlotSeries**)Allocate(sizeof(BarPlotSeries) * 3.0);
   settings->barPlotSeriesLength = 3.0;
   settings->barPlotSeries[0] = GetDefaultBarPlotSeriesSettings();
   settings->barPlotSeries[0]->ys = ys1;
@@ -1885,7 +1942,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
 }
 RGBA *GetBlack(){
   RGBA *black;
-  black = (RGBA *)malloc(sizeof(RGBA));
+  black = (RGBA *)Allocate(sizeof(RGBA));
   black->a = 1.0;
   black->r = 0.0;
   black->g = 0.0;
@@ -1894,7 +1951,7 @@ RGBA *GetBlack(){
 }
 RGBA *GetWhite(){
   RGBA *white;
-  white = (RGBA *)malloc(sizeof(RGBA));
+  white = (RGBA *)Allocate(sizeof(RGBA));
   white->a = 1.0;
   white->r = 1.0;
   white->g = 1.0;
@@ -1903,7 +1960,7 @@ RGBA *GetWhite(){
 }
 RGBA *GetTransparent(){
   RGBA *transparent;
-  transparent = (RGBA *)malloc(sizeof(RGBA));
+  transparent = (RGBA *)Allocate(sizeof(RGBA));
   transparent->a = 0.0;
   transparent->r = 0.0;
   transparent->g = 0.0;
@@ -1912,7 +1969,7 @@ RGBA *GetTransparent(){
 }
 RGBA *GetGray(double percentage){
   RGBA *black;
-  black = (RGBA *)malloc(sizeof(RGBA));
+  black = (RGBA *)Allocate(sizeof(RGBA));
   black->a = 1.0;
   black->r = 1.0 - percentage;
   black->g = 1.0 - percentage;
@@ -1921,7 +1978,7 @@ RGBA *GetGray(double percentage){
 }
 RGBA *CreateRGBColor(double r, double g, double b){
   RGBA *color;
-  color = (RGBA *)malloc(sizeof(RGBA));
+  color = (RGBA *)Allocate(sizeof(RGBA));
   color->a = 1.0;
   color->r = r;
   color->g = g;
@@ -1930,7 +1987,7 @@ RGBA *CreateRGBColor(double r, double g, double b){
 }
 RGBA *CreateRGBAColor(double r, double g, double b, double a){
   RGBA *color;
-  color = (RGBA *)malloc(sizeof(RGBA));
+  color = (RGBA *)Allocate(sizeof(RGBA));
   color->a = a;
   color->r = r;
   color->g = g;
@@ -1941,15 +1998,15 @@ RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
   RGBABitmapImage *image;
   double i, j;
 
-  image = (RGBABitmapImage *)malloc(sizeof(RGBABitmapImage));
-  image->x = (RGBABitmap**)malloc(sizeof(RGBABitmap) * w);
+  image = (RGBABitmapImage *)Allocate(sizeof(RGBABitmapImage));
+  image->x = (RGBABitmap**)Allocate(sizeof(RGBABitmap) * w);
   image->xLength = w;
   for(i = 0.0; i < w; i = i + 1.0){
-    image->x[(int)(i)] = (RGBABitmap *)malloc(sizeof(RGBABitmap));
-    image->x[(int)(i)]->y = (RGBA**)malloc(sizeof(RGBA) * h);
+    image->x[(int)(i)] = (RGBABitmap *)Allocate(sizeof(RGBABitmap));
+    image->x[(int)(i)]->y = (RGBA**)Allocate(sizeof(RGBA) * h);
     image->x[(int)(i)]->yLength = h;
     for(j = 0.0; j < h; j = j + 1.0){
-      image->x[(int)(i)]->y[(int)(j)] = (RGBA *)malloc(sizeof(RGBA));
+      image->x[(int)(i)]->y[(int)(j)] = (RGBA *)Allocate(sizeof(RGBA));
       SetPixel(image, i, j, color);
     }
   }
@@ -1964,11 +2021,11 @@ void DeleteImage(RGBABitmapImage *image){
 
   for(i = 0.0; i < w; i = i + 1.0){
     for(j = 0.0; j < h; j = j + 1.0){
-      free(image->x[(int)(i)]->y[(int)(j)]);
+      Free(image->x[(int)(i)]->y[(int)(j)]);
     }
-    free(image->x[(int)(i)]);
+    Free(image->x[(int)(i)]);
   }
-  free(image);
+  Free(image);
 }
 double ImageWidth(RGBABitmapImage *image){
   return image->xLength;
@@ -2157,10 +2214,10 @@ void DrawQuadraticBezierCurve(RGBABitmapImage *image, double x0, double y0, doub
 
   dt = 1.0/sqrt(pow(dx, 2.0) + pow(dy, 2.0));
 
-  xs = (NumberReference *)malloc(sizeof(NumberReference));
-  ys = (NumberReference *)malloc(sizeof(NumberReference));
-  xe = (NumberReference *)malloc(sizeof(NumberReference));
-  ye = (NumberReference *)malloc(sizeof(NumberReference));
+  xs = (NumberReference *)Allocate(sizeof(NumberReference));
+  ys = (NumberReference *)Allocate(sizeof(NumberReference));
+  xe = (NumberReference *)Allocate(sizeof(NumberReference));
+  ye = (NumberReference *)Allocate(sizeof(NumberReference));
 
   QuadraticBezierPoint(x0, y0, cx, cy, x1, y1, 0.0, xs, ys);
   for(t = dt; t <= 1.0; t = t + dt){
@@ -2170,10 +2227,10 @@ void DrawQuadraticBezierCurve(RGBABitmapImage *image, double x0, double y0, doub
     ys->numberValue = ye->numberValue;
   }
 
-  free(xs);
-  free(ys);
-  free(xe);
-  free(ye);
+  Free(xs);
+  Free(ys);
+  Free(xe);
+  Free(ye);
 }
 void QuadraticBezierPoint(double x0, double y0, double cx, double cy, double x1, double y1, double t, NumberReference *x, NumberReference *y){
   x->numberValue = pow(1.0 - t, 2.0)*x0 + (1.0 - t)*2.0*t*cx + pow(t, 2.0)*x1;
@@ -2188,10 +2245,10 @@ void DrawCubicBezierCurve(RGBABitmapImage *image, double x0, double y0, double c
 
   dt = 1.0/sqrt(pow(dx, 2.0) + pow(dy, 2.0));
 
-  xs = (NumberReference *)malloc(sizeof(NumberReference));
-  ys = (NumberReference *)malloc(sizeof(NumberReference));
-  xe = (NumberReference *)malloc(sizeof(NumberReference));
-  ye = (NumberReference *)malloc(sizeof(NumberReference));
+  xs = (NumberReference *)Allocate(sizeof(NumberReference));
+  ys = (NumberReference *)Allocate(sizeof(NumberReference));
+  xe = (NumberReference *)Allocate(sizeof(NumberReference));
+  ye = (NumberReference *)Allocate(sizeof(NumberReference));
 
   CubicBezierPoint(x0, y0, c0x, c0y, c1x, c1y, x1, y1, 0.0, xs, ys);
   for(t = dt; t <= 1.0; t = t + dt){
@@ -2201,10 +2258,10 @@ void DrawCubicBezierCurve(RGBABitmapImage *image, double x0, double y0, double c
     ys->numberValue = ye->numberValue;
   }
 
-  free(xs);
-  free(ys);
-  free(xe);
-  free(ye);
+  Free(xs);
+  Free(ys);
+  Free(xe);
+  Free(ye);
 }
 void CubicBezierPoint(double x0, double y0, double c0x, double c0y, double c1x, double c1y, double x1, double y1, double t, NumberReference *x, NumberReference *y){
   x->numberValue = pow(1.0 - t, 3.0)*x0 + pow(1.0 - t, 2.0)*3.0*t*c0x + (1.0 - t)*3.0*pow(t, 2.0)*c1x + pow(t, 3.0)*x1;
@@ -2605,7 +2662,7 @@ _Bool *GetLinePattern5(size_t *returnArrayLength){
   _Bool *pattern;
   size_t patternLength;
 
-  pattern = (_Bool*)malloc(sizeof(_Bool) * (19.0));
+  pattern = (_Bool*)Allocate(sizeof(_Bool) * (19.0));
   patternLength = 19.0;
 
   pattern[0] = true;
@@ -2635,7 +2692,7 @@ _Bool *GetLinePattern4(size_t *returnArrayLength){
   _Bool *pattern;
   size_t patternLength;
 
-  pattern = (_Bool*)malloc(sizeof(_Bool) * (13.0));
+  pattern = (_Bool*)Allocate(sizeof(_Bool) * (13.0));
   patternLength = 13.0;
 
   pattern[0] = true;
@@ -2659,7 +2716,7 @@ _Bool *GetLinePattern3(size_t *returnArrayLength){
   _Bool *pattern;
   size_t patternLength;
 
-  pattern = (_Bool*)malloc(sizeof(_Bool) * (13.0));
+  pattern = (_Bool*)Allocate(sizeof(_Bool) * (13.0));
   patternLength = 13.0;
 
   pattern[0] = true;
@@ -2683,7 +2740,7 @@ _Bool *GetLinePattern2(size_t *returnArrayLength){
   _Bool *pattern;
   size_t patternLength;
 
-  pattern = (_Bool*)malloc(sizeof(_Bool) * (4.0));
+  pattern = (_Bool*)Allocate(sizeof(_Bool) * (4.0));
   patternLength = 4.0;
 
   pattern[0] = true;
@@ -2698,7 +2755,7 @@ _Bool *GetLinePattern1(size_t *returnArrayLength){
   _Bool *pattern;
   size_t patternLength;
 
-  pattern = (_Bool*)malloc(sizeof(_Bool) * (8.0));
+  pattern = (_Bool*)Allocate(sizeof(_Bool) * (8.0));
   patternLength = 8.0;
 
   pattern[0] = true;
@@ -2739,7 +2796,7 @@ RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels
   w = src->xLength;
   h = src->x[0]->yLength;
 
-  rgba = (RGBA *)malloc(sizeof(RGBA));
+  rgba = (RGBA *)Allocate(sizeof(RGBA));
   rgba->r = 0.0;
   rgba->g = 0.0;
   rgba->b = 0.0;
@@ -2805,9 +2862,9 @@ wchar_t *CreateStringScientificNotationDecimalFromNumberAllOptions(size_t *retur
   wchar_t *result;
   size_t resultLength;
 
-  mantissaReference = (StringReference *)malloc(sizeof(StringReference));
-  exponentReference = (StringReference *)malloc(sizeof(StringReference));
-  result = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+  mantissaReference = (StringReference *)Allocate(sizeof(StringReference));
+  exponentReference = (StringReference *)Allocate(sizeof(StringReference));
+  result = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
   resultLength = 0.0;
   done = false;
   exponent = 0.0;
@@ -2901,7 +2958,7 @@ wchar_t *CreateStringScientificNotationDecimalFromNumberAllOptions(size_t *retur
 wchar_t *CreateStringDecimalFromNumber(size_t *returnArrayLength, double decimal){
   StringReference *stringReference;
 
-  stringReference = (StringReference *)malloc(sizeof(StringReference));
+  stringReference = (StringReference *)Allocate(sizeof(StringReference));
 
   /* This will succeed because base = 10. */
   CreateStringFromNumberWithCheck(decimal, 10.0, stringReference);
@@ -2932,12 +2989,12 @@ _Bool CreateStringFromNumberWithCheck(double decimal, double base, StringReferen
     stringReference->stringLength = wcslen(stringReference->string);
     success = true;
   }else{
-    characterReference = (CharacterReference *)malloc(sizeof(CharacterReference));
+    characterReference = (CharacterReference *)Allocate(sizeof(CharacterReference));
 
     if(IsInteger(base)){
       success = true;
 
-      string = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+      string = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
       stringLength = 0.0;
 
       maximumDigits = GetMaximumDigitsForBase(base);
@@ -3071,8 +3128,8 @@ double CreateNumberFromDecimalString(wchar_t *string, size_t stringLength){
   CreateNumberFromStringWithCheck(string, stringLength, 10.0, doubleReference, stringReference);
   number = doubleReference->numberValue;
 
-  free(doubleReference);
-  free(stringReference);
+  Free(doubleReference);
+  Free(stringReference);
 
   return number;
 }
@@ -3083,9 +3140,9 @@ _Bool CreateNumberFromStringWithCheck(wchar_t *string, size_t stringLength, doub
 
   numberIsPositive = CreateBooleanReference(true);
   exponentIsPositive = CreateBooleanReference(true);
-  beforePoint = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-  afterPoint = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-  exponent = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+  beforePoint = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
+  afterPoint = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
+  exponent = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
 
   if(base >= 2.0 && base <= 36.0){
     success = ExtractPartsFromNumberString(string, stringLength, base, numberIsPositive, beforePoint, afterPoint, exponentIsPositive, exponent, errorMessage);
@@ -3178,7 +3235,7 @@ _Bool ExtractPartsFromNumberStringFromSign(wchar_t *n, size_t nLength, double ba
   }
 
   if(count >= 1.0){
-    beforePoint->numberArray = (double*)malloc(sizeof(double) * (count));
+    beforePoint->numberArray = (double*)Allocate(sizeof(double) * (count));
     beforePoint->numberArrayLength = count;
 
     for(j = 0.0; j < count; j = j + 1.0){
@@ -3190,9 +3247,9 @@ _Bool ExtractPartsFromNumberStringFromSign(wchar_t *n, size_t nLength, double ba
     if(i < nLength){
       success = ExtractPartsFromNumberStringFromPointOrExponent(n, nLength, base, i, afterPoint, exponentIsPositive, exponent, errorMessages);
     }else{
-      afterPoint->numberArray = (double*)malloc(sizeof(double) * (0.0));
+      afterPoint->numberArray = (double*)Allocate(sizeof(double) * (0.0));
       afterPoint->numberArrayLength = 0.0;
-      exponent->numberArray = (double*)malloc(sizeof(double) * (0.0));
+      exponent->numberArray = (double*)Allocate(sizeof(double) * (0.0));
       exponent->numberArrayLength = 0.0;
       success = true;
     }
@@ -3223,7 +3280,7 @@ _Bool ExtractPartsFromNumberStringFromPointOrExponent(wchar_t *n, size_t nLength
       }
 
       if(count >= 1.0){
-        afterPoint->numberArray = (double*)malloc(sizeof(double) * (count));
+        afterPoint->numberArray = (double*)Allocate(sizeof(double) * (count));
         afterPoint->numberArrayLength = count;
 
         for(j = 0.0; j < count; j = j + 1.0){
@@ -3235,7 +3292,7 @@ _Bool ExtractPartsFromNumberStringFromPointOrExponent(wchar_t *n, size_t nLength
         if(i < nLength){
           success = ExtractPartsFromNumberStringFromExponent(n, nLength, base, i, exponentIsPositive, exponent, errorMessages);
         }else{
-          exponent->numberArray = (double*)malloc(sizeof(double) * (0.0));
+          exponent->numberArray = (double*)Allocate(sizeof(double) * (0.0));
           exponent->numberArrayLength = 0.0;
           success = true;
         }
@@ -3252,7 +3309,7 @@ _Bool ExtractPartsFromNumberStringFromPointOrExponent(wchar_t *n, size_t nLength
   }else if(base <= 14.0 && (n[(int)(i)] == 'e' || n[(int)(i)] == 'E')){
     if(i < nLength){
       success = ExtractPartsFromNumberStringFromExponent(n, nLength, base, i, exponentIsPositive, exponent, errorMessages);
-      afterPoint->numberArray = (double*)malloc(sizeof(double) * (0.0));
+      afterPoint->numberArray = (double*)Allocate(sizeof(double) * (0.0));
       afterPoint->numberArrayLength = 0.0;
     }else{
       success = false;
@@ -3295,7 +3352,7 @@ _Bool ExtractPartsFromNumberStringFromExponent(wchar_t *n, size_t nLength, doubl
         }
 
         if(count >= 1.0){
-          exponent->numberArray = (double*)malloc(sizeof(double) * (count));
+          exponent->numberArray = (double*)Allocate(sizeof(double) * (count));
           exponent->numberArrayLength = count;
 
           for(j = 0.0; j < count; j = j + 1.0){
@@ -3374,16 +3431,16 @@ double *StringToNumberArray(size_t *returnArrayLength, wchar_t *str, size_t strL
   double *numbers;
   size_t numbersLength;
 
-  numberArrayReference = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-  stringReference = (StringReference *)malloc(sizeof(StringReference));
+  numberArrayReference = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
+  stringReference = (StringReference *)Allocate(sizeof(StringReference));
 
   StringToNumberArrayWithCheck(str, strLength, numberArrayReference, stringReference);
 
   numbers = numberArrayReference->numberArray;
   numbersLength = numberArrayReference->numberArrayLength;
 
-  free(numberArrayReference);
-  free(stringReference);
+  Free(numberArrayReference);
+  Free(stringReference);
 
   *returnArrayLength = numbersLength;
   return numbers;
@@ -3401,10 +3458,10 @@ _Bool StringToNumberArrayWithCheck(wchar_t *str, size_t strLength, NumberArrayRe
 
   numberStrings = SplitByString(&numberStringsLength, str, strLength, strparam(L","));
 
-  numbers = (double*)malloc(sizeof(double) * (numberStringsLength));
+  numbers = (double*)Allocate(sizeof(double) * (numberStringsLength));
   numbersLength = numberStringsLength;
   success = true;
-  numberReference = (NumberReference *)malloc(sizeof(NumberReference));
+  numberReference = (NumberReference *)Allocate(sizeof(NumberReference));
 
   for(i = 0.0; i < numberStringsLength; i = i + 1.0){
     numberString = numberStrings[(int)(i)]->string;
@@ -3414,11 +3471,11 @@ _Bool StringToNumberArrayWithCheck(wchar_t *str, size_t strLength, NumberArrayRe
     numbers[(int)(i)] = numberReference->numberValue;
 
     FreeStringReference(numberStrings[(int)(i)]);
-    free(trimmedNumberString);
+    Free(trimmedNumberString);
   }
 
-  free(numberStrings);
-  free(numberReference);
+  Free(numberStrings);
+  Free(numberReference);
 
   numberArrayReference->numberArray = numbers;
   numberArrayReference->numberArrayLength = numbersLength;
@@ -3655,7 +3712,7 @@ double LanczosApproximation(double z){
   size_t pLength;
   double i, y, t, x;
 
-  p = (double*)malloc(sizeof(double) * (8.0));
+  p = (double*)Allocate(sizeof(double) * (8.0));
   pLength = 8.0;
   p[0] = 676.5203681218851;
   p[1] =  -1259.1392167224028;
@@ -3806,7 +3863,7 @@ double AkiyamaTanigawaAlgorithm(double n){
   double *A;
   size_t ALength;
 
-  A = (double*)malloc(sizeof(double) * (n + 1.0));
+  A = (double*)Allocate(sizeof(double) * (n + 1.0));
   ALength = n + 1.0;
 
   for(m = 0.0; m <= n; m = m + 1.0){
@@ -3818,7 +3875,7 @@ double AkiyamaTanigawaAlgorithm(double n){
 
   B = A[0];
 
-  free(A);
+  Free(A);
 
   return B;
 }
@@ -3827,7 +3884,7 @@ double *aStringToNumberArray(size_t *returnArrayLength, wchar_t *string, size_t 
   double *array;
   size_t arrayLength;
 
-  array = (double*)malloc(sizeof(double) * (stringLength));
+  array = (double*)Allocate(sizeof(double) * (stringLength));
   arrayLength = stringLength;
 
   for(i = 0.0; i < stringLength; i = i + 1.0){
@@ -3841,7 +3898,7 @@ wchar_t *aNumberArrayToString(size_t *returnArrayLength, double *array, size_t a
   wchar_t *string;
   size_t stringLength;
 
-  string = (wchar_t*)malloc(sizeof(wchar_t) * (arrayLength));
+  string = (wchar_t*)Allocate(sizeof(wchar_t) * (arrayLength));
   stringLength = arrayLength;
 
   for(i = 0.0; i < arrayLength; i = i + 1.0){
@@ -3978,7 +4035,7 @@ double *aCopyNumberArray(size_t *returnArrayLength, double *a, size_t aLength){
   double *n;
   size_t nLength;
 
-  n = (double*)malloc(sizeof(double) * (aLength));
+  n = (double*)Allocate(sizeof(double) * (aLength));
   nLength = aLength;
 
   for(i = 0.0; i < aLength; i = i + 1.0){
@@ -3993,7 +4050,7 @@ _Bool *aCopyBooleanArray(size_t *returnArrayLength, _Bool *a, size_t aLength){
   _Bool *n;
   size_t nLength;
 
-  n = (_Bool*)malloc(sizeof(_Bool) * (aLength));
+  n = (_Bool*)Allocate(sizeof(_Bool) * (aLength));
   nLength = aLength;
 
   for(i = 0.0; i < aLength; i = i + 1.0){
@@ -4008,7 +4065,7 @@ wchar_t *aCopyString(size_t *returnArrayLength, wchar_t *a, size_t aLength){
   wchar_t *n;
   size_t nLength;
 
-  n = (wchar_t*)malloc(sizeof(wchar_t) * (aLength));
+  n = (wchar_t*)Allocate(sizeof(wchar_t) * (aLength));
   nLength = aLength;
 
   for(i = 0.0; i < aLength; i = i + 1.0){
@@ -4026,7 +4083,7 @@ _Bool aCopyNumberArrayRange(double *a, size_t aLength, double from, double to, N
 
   if(from >= 0.0 && from <= aLength && to >= 0.0 && to <= aLength && from <= to){
     length = to - from;
-    n = (double*)malloc(sizeof(double) * (length));
+    n = (double*)Allocate(sizeof(double) * (length));
     nLength = length;
 
     for(i = 0.0; i < length; i = i + 1.0){
@@ -4050,7 +4107,7 @@ _Bool aCopyBooleanArrayRange(_Bool *a, size_t aLength, double from, double to, B
 
   if(from >= 0.0 && from <= aLength && to >= 0.0 && to <= aLength && from <= to){
     length = to - from;
-    n = (_Bool*)malloc(sizeof(_Bool) * (length));
+    n = (_Bool*)Allocate(sizeof(_Bool) * (length));
     nLength = length;
 
     for(i = 0.0; i < length; i = i + 1.0){
@@ -4074,7 +4131,7 @@ _Bool aCopyStringRange(wchar_t *a, size_t aLength, double from, double to, Strin
 
   if(from >= 0.0 && from <= aLength && to >= 0.0 && to <= aLength && from <= to){
     length = to - from;
-    n = (wchar_t*)malloc(sizeof(wchar_t) * (length));
+    n = (wchar_t*)Allocate(sizeof(wchar_t) * (length));
     nLength = length;
 
     for(i = 0.0; i < length; i = i + 1.0){
@@ -4097,7 +4154,7 @@ double *aCreateNumberArray(size_t *returnArrayLength, double length, double valu
   double *array;
   size_t arrayLength;
 
-  array = (double*)malloc(sizeof(double) * (length));
+  array = (double*)Allocate(sizeof(double) * (length));
   arrayLength = length;
   aFillNumberArray(array, arrayLength, value);
 
@@ -4108,7 +4165,7 @@ _Bool *aCreateBooleanArray(size_t *returnArrayLength, double length, _Bool value
   _Bool *array;
   size_t arrayLength;
 
-  array = (_Bool*)malloc(sizeof(_Bool) * (length));
+  array = (_Bool*)Allocate(sizeof(_Bool) * (length));
   arrayLength = length;
   aFillBooleanArray(array, arrayLength, value);
 
@@ -4119,7 +4176,7 @@ wchar_t *aCreateString(size_t *returnArrayLength, double length, wchar_t value){
   wchar_t *array;
   size_t arrayLength;
 
-  array = (wchar_t*)malloc(sizeof(wchar_t) * (length));
+  array = (wchar_t*)Allocate(sizeof(wchar_t) * (length));
   arrayLength = length;
   aFillString(array, arrayLength, value);
 
@@ -4150,7 +4207,7 @@ void aReverseNumberArray(double *array, size_t arrayLength){
 BooleanReference *CreateBooleanReference(_Bool value){
   BooleanReference *ref;
 
-  ref = (BooleanReference *)malloc(sizeof(BooleanReference));
+  ref = (BooleanReference *)Allocate(sizeof(BooleanReference));
   ref->booleanValue = value;
 
   return ref;
@@ -4158,7 +4215,7 @@ BooleanReference *CreateBooleanReference(_Bool value){
 BooleanArrayReference *CreateBooleanArrayReference(_Bool *value, size_t valueLength){
   BooleanArrayReference *ref;
 
-  ref = (BooleanArrayReference *)malloc(sizeof(BooleanArrayReference));
+  ref = (BooleanArrayReference *)Allocate(sizeof(BooleanArrayReference));
   ref->booleanArray = value;
   ref->booleanArrayLength = valueLength;
 
@@ -4168,8 +4225,8 @@ BooleanArrayReference *CreateBooleanArrayReferenceLengthValue(double length, _Bo
   BooleanArrayReference *ref;
   double i;
 
-  ref = (BooleanArrayReference *)malloc(sizeof(BooleanArrayReference));
-  ref->booleanArray = (_Bool*)malloc(sizeof(_Bool) * (length));
+  ref = (BooleanArrayReference *)Allocate(sizeof(BooleanArrayReference));
+  ref->booleanArray = (_Bool*)Allocate(sizeof(_Bool) * (length));
   ref->booleanArrayLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -4179,13 +4236,13 @@ BooleanArrayReference *CreateBooleanArrayReferenceLengthValue(double length, _Bo
   return ref;
 }
 void FreeBooleanArrayReference(BooleanArrayReference *booleanArrayReference){
-  free(booleanArrayReference->booleanArray);
-  free(booleanArrayReference);
+  Free(booleanArrayReference->booleanArray);
+  Free(booleanArrayReference);
 }
 CharacterReference *CreateCharacterReference(wchar_t value){
   CharacterReference *ref;
 
-  ref = (CharacterReference *)malloc(sizeof(CharacterReference));
+  ref = (CharacterReference *)Allocate(sizeof(CharacterReference));
   ref->characterValue = value;
 
   return ref;
@@ -4193,7 +4250,7 @@ CharacterReference *CreateCharacterReference(wchar_t value){
 NumberReference *CreateNumberReference(double value){
   NumberReference *ref;
 
-  ref = (NumberReference *)malloc(sizeof(NumberReference));
+  ref = (NumberReference *)Allocate(sizeof(NumberReference));
   ref->numberValue = value;
 
   return ref;
@@ -4201,7 +4258,7 @@ NumberReference *CreateNumberReference(double value){
 NumberArrayReference *CreateNumberArrayReference(double *value, size_t valueLength){
   NumberArrayReference *ref;
 
-  ref = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+  ref = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
   ref->numberArray = value;
   ref->numberArrayLength = valueLength;
 
@@ -4211,8 +4268,8 @@ NumberArrayReference *CreateNumberArrayReferenceLengthValue(double length, doubl
   NumberArrayReference *ref;
   double i;
 
-  ref = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
-  ref->numberArray = (double*)malloc(sizeof(double) * (length));
+  ref = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
+  ref->numberArray = (double*)Allocate(sizeof(double) * (length));
   ref->numberArrayLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -4222,13 +4279,13 @@ NumberArrayReference *CreateNumberArrayReferenceLengthValue(double length, doubl
   return ref;
 }
 void FreeNumberArrayReference(NumberArrayReference *numberArrayReference){
-  free(numberArrayReference->numberArray);
-  free(numberArrayReference);
+  Free(numberArrayReference->numberArray);
+  Free(numberArrayReference);
 }
 StringReference *CreateStringReference(wchar_t *value, size_t valueLength){
   StringReference *ref;
 
-  ref = (StringReference *)malloc(sizeof(StringReference));
+  ref = (StringReference *)Allocate(sizeof(StringReference));
   ref->string = value;
   ref->stringLength = valueLength;
 
@@ -4238,8 +4295,8 @@ StringReference *CreateStringReferenceLengthValue(double length, wchar_t value){
   StringReference *ref;
   double i;
 
-  ref = (StringReference *)malloc(sizeof(StringReference));
-  ref->string = (wchar_t*)malloc(sizeof(wchar_t) * (length));
+  ref = (StringReference *)Allocate(sizeof(StringReference));
+  ref->string = (wchar_t*)Allocate(sizeof(wchar_t) * (length));
   ref->stringLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -4249,13 +4306,13 @@ StringReference *CreateStringReferenceLengthValue(double length, wchar_t value){
   return ref;
 }
 void FreeStringReference(StringReference *stringReference){
-  free(stringReference->string);
-  free(stringReference);
+  Free(stringReference->string);
+  Free(stringReference);
 }
 StringArrayReference *CreateStringArrayReference(StringReference **strings, size_t stringsLength){
   StringArrayReference *ref;
 
-  ref = (StringArrayReference *)malloc(sizeof(StringArrayReference));
+  ref = (StringArrayReference *)Allocate(sizeof(StringArrayReference));
   ref->stringArray = strings;
   ref->stringArrayLength = stringsLength;
 
@@ -4265,8 +4322,8 @@ StringArrayReference *CreateStringArrayReferenceLengthValue(double length, wchar
   StringArrayReference *ref;
   double i;
 
-  ref = (StringArrayReference *)malloc(sizeof(StringArrayReference));
-  ref->stringArray = (StringReference**)malloc(sizeof(StringReference) * length);
+  ref = (StringArrayReference *)Allocate(sizeof(StringArrayReference));
+  ref->stringArray = (StringReference**)Allocate(sizeof(StringReference) * length);
   ref->stringArrayLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -4279,10 +4336,10 @@ void FreeStringArrayReference(StringArrayReference *stringArrayReference){
   double i;
 
   for(i = 0.0; i < stringArrayReference->stringArrayLength; i = i + 1.0){
-    free(stringArrayReference->stringArray[(int)(i)]);
+    Free(stringArrayReference->stringArray[(int)(i)]);
   }
-  free(stringArrayReference->stringArray);
-  free(stringArrayReference);
+  Free(stringArrayReference->stringArray);
+  Free(stringArrayReference);
 }
 
 wchar_t *GetPixelFontData(size_t *returnArrayLength){
@@ -4399,7 +4456,7 @@ double *ConvertToPNGGrayscale(size_t *returnArrayLength, RGBABitmapImage *image)
 PHYS *PysicsHeader(double pixelsPerMeter){
   PHYS *phys;
 
-  phys = (PHYS *)malloc(sizeof(PHYS));
+  phys = (PHYS *)Allocate(sizeof(PHYS));
 
   phys->pixelsPerMeter = pixelsPerMeter;
 
@@ -4410,7 +4467,7 @@ double *ConvertToPNGWithOptions(size_t *returnArrayLength, RGBABitmapImage *imag
   double *pngData, *colorData;
   size_t pngDataLength, colorDataLength;
 
-  png = (PNGImage *)malloc(sizeof(PNGImage));
+  png = (PNGImage *)Allocate(sizeof(PNGImage));
 
   png->signature = PNGSignature(&png->signatureLength);
 
@@ -4441,7 +4498,7 @@ double *PNGSerializeChunks(size_t *returnArrayLength, PNGImage *png){
   if(png->physPresent){
     length = length + 4.0 + 4.0 + 1.0 + 12.0;
   }
-  data = (double*)malloc(sizeof(double) * (length));
+  data = (double*)Allocate(sizeof(double) * (length));
   dataLength = length;
   position = CreateNumberReference(0.0);
 
@@ -4511,7 +4568,7 @@ double *GetPNGColorData(size_t *returnArrayLength, RGBABitmapImage *image){
 
   length = 4.0*ImageWidth(image)*ImageHeight(image) + ImageHeight(image);
 
-  colordata = (double*)malloc(sizeof(double) * (length));
+  colordata = (double*)Allocate(sizeof(double) * (length));
   colordataLength = length;
 
   next = 0.0;
@@ -4543,7 +4600,7 @@ double *GetPNGColorDataGreyscale(size_t *returnArrayLength, RGBABitmapImage *ima
 
   length = ImageWidth(image)*ImageHeight(image) + ImageHeight(image);
 
-  colordata = (double*)malloc(sizeof(double) * (length));
+  colordata = (double*)Allocate(sizeof(double) * (length));
   colordataLength = length;
 
   next = 0.0;
@@ -4564,7 +4621,7 @@ double *GetPNGColorDataGreyscale(size_t *returnArrayLength, RGBABitmapImage *ima
 IHDR *PNGHeader(RGBABitmapImage *image, double colortype){
   IHDR *ihdr;
 
-  ihdr = (IHDR *)malloc(sizeof(IHDR));
+  ihdr = (IHDR *)Allocate(sizeof(IHDR));
   ihdr->Width = ImageWidth(image);
   ihdr->Height = ImageHeight(image);
   /* Truecolour with alpha */
@@ -4582,7 +4639,7 @@ double *PNGSignature(size_t *returnArrayLength){
   double *s;
   size_t sLength;
 
-  s = (double*)malloc(sizeof(double) * (8.0));
+  s = (double*)Allocate(sizeof(double) * (8.0));
   sLength = 8.0;
   s[0] = 137.0;
   s[1] = 80.0;
@@ -4610,7 +4667,7 @@ double *PNGReadDataChunks(size_t *returnArrayLength, Chunk **cs, size_t csLength
     }
   }
 
-  zlibData = (double*)malloc(sizeof(double) * (length));
+  zlibData = (double*)Allocate(sizeof(double) * (length));
   zlibDataLength = length;
   zlibpos = 0.0;
 
@@ -4641,7 +4698,7 @@ _Bool PNGReadHeader(RGBABitmapImage *image, Chunk **cs, size_t csLength, StringR
   for(i = 0.0; i < csLength; i = i + 1.0){
     c = cs[(int)(i)];
     if(aStringsEqual(c->type, c->typeLength, strparam(L"IHDR"))){
-      ihdr = (IHDR *)malloc(sizeof(IHDR));
+      ihdr = (IHDR *)Allocate(sizeof(IHDR));
 
       ihdr->Width = Read4bytesBE(c->data, c->dataLength, position);
       ihdr->Height = Read4bytesBE(c->data, c->dataLength, position);
@@ -4703,7 +4760,7 @@ Chunk **PNGReadChunks(size_t *returnArrayLength, double *data, size_t dataLength
     }
   }
   position->numberValue = prepos;
-  cs = (Chunk**)malloc(sizeof(Chunk) * chunks);
+  cs = (Chunk**)Allocate(sizeof(Chunk) * chunks);
   csLength = chunks;
   for(i = 0.0; i < chunks; i = i + 1.0){
     cs[(int)(i)] = PNGReadChunk(data, dataLength, position);
@@ -4715,10 +4772,10 @@ Chunk **PNGReadChunks(size_t *returnArrayLength, double *data, size_t dataLength
 Chunk *PNGReadChunk(double *data, size_t dataLength, NumberReference *position){
   Chunk *c;
 
-  c = (Chunk *)malloc(sizeof(Chunk));
+  c = (Chunk *)Allocate(sizeof(Chunk));
 
   c->length = Read4bytesBE(data, dataLength, position);
-  c->type = (wchar_t*)malloc(sizeof(wchar_t) * (4.0));
+  c->type = (wchar_t*)Allocate(sizeof(wchar_t) * (4.0));
   c->typeLength = 4.0;
   c->type[0] = ReadByte(data, dataLength, position);
   c->type[1] = ReadByte(data, dataLength, position);
@@ -4767,7 +4824,7 @@ wchar_t *Substring(size_t *returnArrayLength, wchar_t *string, size_t stringLeng
 
   length = to - from;
 
-  n = (wchar_t*)malloc(sizeof(wchar_t) * (length));
+  n = (wchar_t*)Allocate(sizeof(wchar_t) * (length));
   nLength = length;
 
   for(i = from; i < to; i = i + 1.0){
@@ -4783,7 +4840,7 @@ wchar_t *AppendString(size_t *returnArrayLength, wchar_t *s1, size_t s1Length, w
 
   newString = ConcatenateString(&newStringLength, s1, s1Length, s2, s2Length);
 
-  free(s1);
+  Free(s1);
 
   *returnArrayLength = newStringLength;
   return newString;
@@ -4793,7 +4850,7 @@ wchar_t *ConcatenateString(size_t *returnArrayLength, wchar_t *s1, size_t s1Leng
   size_t newStringLength;
   double i;
 
-  newString = (wchar_t*)malloc(sizeof(wchar_t) * (s1Length + s2Length));
+  newString = (wchar_t*)Allocate(sizeof(wchar_t) * (s1Length + s2Length));
   newStringLength = s1Length + s2Length;
 
   for(i = 0.0; i < s1Length; i = i + 1.0){
@@ -4813,7 +4870,7 @@ wchar_t *AppendCharacter(size_t *returnArrayLength, wchar_t *string, size_t stri
 
   newString = ConcatenateCharacter(&newStringLength, string, stringLength, c);
 
-  free(string);
+  Free(string);
 
   *returnArrayLength = newStringLength;
   return newString;
@@ -4822,7 +4879,7 @@ wchar_t *ConcatenateCharacter(size_t *returnArrayLength, wchar_t *string, size_t
   wchar_t *newString;
   size_t newStringLength;
   double i;
-  newString = (wchar_t*)malloc(sizeof(wchar_t) * (stringLength + 1.0));
+  newString = (wchar_t*)Allocate(sizeof(wchar_t) * (stringLength + 1.0));
   newStringLength = stringLength + 1.0;
 
   for(i = 0.0; i < stringLength; i = i + 1.0){
@@ -4840,13 +4897,13 @@ StringReference **SplitByCharacter(size_t *returnArrayLength, wchar_t *toSplit, 
   wchar_t *stringToSplitBy;
   size_t stringToSplitByLength;
 
-  stringToSplitBy = (wchar_t*)malloc(sizeof(wchar_t) * (1.0));
+  stringToSplitBy = (wchar_t*)Allocate(sizeof(wchar_t) * (1.0));
   stringToSplitByLength = 1.0;
   stringToSplitBy[0] = splitBy;
 
   split = SplitByString(&splitLength, toSplit, toSplitLength, stringToSplitBy, stringToSplitByLength);
 
-  free(stringToSplitBy);
+  Free(stringToSplitBy);
 
   *returnArrayLength = splitLength;
   return split;
@@ -4922,7 +4979,7 @@ _Bool ContainsCharacter(wchar_t *string, size_t stringLength, wchar_t character)
   return found;
 }
 _Bool ContainsString(wchar_t *string, size_t stringLength, wchar_t *substring, size_t substringLength){
-  return IndexOfString(string, stringLength, substring, substringLength, (NumberReference *)malloc(sizeof(NumberReference)));
+  return IndexOfString(string, stringLength, substring, substringLength, (NumberReference *)Allocate(sizeof(NumberReference)));
 }
 void ToUpperCase(wchar_t *string, size_t stringLength){
   double i;
@@ -4962,8 +5019,8 @@ wchar_t *ReplaceString(size_t *returnArrayLength, wchar_t *string, size_t string
   BooleanReference *equalsReference;
   _Bool success;
 
-  equalsReference = (BooleanReference *)malloc(sizeof(BooleanReference));
-  result = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+  equalsReference = (BooleanReference *)Allocate(sizeof(BooleanReference));
+  result = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
   resultLength = 0.0;
 
   for(i = 0.0; i < stringLength; ){
@@ -4989,7 +5046,7 @@ wchar_t *ReplaceCharacter(size_t *returnArrayLength, wchar_t *string, size_t str
   size_t resultLength;
   double i;
 
-  result = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+  result = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
   resultLength = 0.0;
 
   for(i = 0.0; i < stringLength; i = i + 1.0){
@@ -5034,7 +5091,7 @@ wchar_t *Trim(size_t *returnArrayLength, wchar_t *string, size_t stringLength){
   if(lastWhitespaceLocationStart < lastWhitespaceLocationEnd){
     result = Substring(&resultLength, string, stringLength, lastWhitespaceLocationStart + 1.0, lastWhitespaceLocationEnd);
   }else{
-    result = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+    result = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
     resultLength = 0.0;
   }
 
@@ -5070,20 +5127,20 @@ StringReference **SplitByString(size_t *returnArrayLength, wchar_t *toSplit, siz
   wchar_t c;
   StringReference *n;
 
-  split = (StringReference**)malloc(sizeof(StringReference) * 0.0);
+  split = (StringReference**)Allocate(sizeof(StringReference) * 0.0);
   splitLength = 0.0;
 
-  next = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+  next = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
   nextLength = 0.0;
   for(i = 0.0; i < toSplitLength; ){
     c = toSplit[(int)(i)];
 
     if(SubstringEquals(toSplit, toSplitLength, i, splitBy, splitByLength)){
-      n = (StringReference *)malloc(sizeof(StringReference));
+      n = (StringReference *)Allocate(sizeof(StringReference));
       n->string = next;
       n->stringLength = nextLength;
       split = AddString(&splitLength, split, splitLength, n);
-      next = (wchar_t*)malloc(sizeof(wchar_t) * (0.0));
+      next = (wchar_t*)Allocate(sizeof(wchar_t) * (0.0));
       nextLength = 0.0;
       i = i + splitByLength;
     }else{
@@ -5092,7 +5149,7 @@ StringReference **SplitByString(size_t *returnArrayLength, wchar_t *toSplit, siz
     }
   }
 
-  n = (StringReference *)malloc(sizeof(StringReference));
+  n = (StringReference *)Allocate(sizeof(StringReference));
   n->string = next;
   n->stringLength = nextLength;
   split = AddString(&splitLength, split, splitLength, n);
@@ -5137,7 +5194,7 @@ double *ReadXbytes(size_t *returnArrayLength, double *data, size_t dataLength, N
   size_t rLength;
   double i;
 
-  r = (double*)malloc(sizeof(double) * (length));
+  r = (double*)Allocate(sizeof(double) * (length));
   rLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -5235,7 +5292,7 @@ double *MakeCRC32Table(size_t *returnArrayLength){
   double *crcTable;
   size_t crcTableLength;
 
-  crcTable = (double*)malloc(sizeof(double) * (256.0));
+  crcTable = (double*)Allocate(sizeof(double) * (256.0));
   crcTableLength = 256.0;
 
   for(n = 0.0; n < 256.0; n = n + 1.0){
@@ -5280,7 +5337,7 @@ double CRC32OfInterval(double *data, size_t dataLength, double from, double leng
   size_t crcBaseLength;
   double i, crc;
 
-  crcBase = (double*)malloc(sizeof(double) * (length));
+  crcBase = (double*)Allocate(sizeof(double) * (length));
   crcBaseLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -5289,14 +5346,14 @@ double CRC32OfInterval(double *data, size_t dataLength, double from, double leng
 
   crc = CalculateCRC32(crcBase, crcBaseLength);
 
-  free(crcBase);
+  Free(crcBase);
 
   return crc;
 }
 ZLIBStruct *ZLibCompressNoCompression(double *data, size_t dataLength){
   ZLIBStruct *zlibStruct;
 
-  zlibStruct = (ZLIBStruct *)malloc(sizeof(ZLIBStruct));
+  zlibStruct = (ZLIBStruct *)Allocate(sizeof(ZLIBStruct));
 
   zlibStruct->CMF = 120.0;
   zlibStruct->FLG = 1.0;
@@ -5308,7 +5365,7 @@ ZLIBStruct *ZLibCompressNoCompression(double *data, size_t dataLength){
 ZLIBStruct *ZLibCompressStaticHuffman(double *data, size_t dataLength, double level){
   ZLIBStruct *zlibStruct;
 
-  zlibStruct = (ZLIBStruct *)malloc(sizeof(ZLIBStruct));
+  zlibStruct = (ZLIBStruct *)Allocate(sizeof(ZLIBStruct));
 
   zlibStruct->CMF = 120.0;
   zlibStruct->FLG = 1.0;
@@ -5322,14 +5379,14 @@ double *AddNumber(size_t *returnArrayLength, double *list, size_t listLength, do
   size_t newlistLength;
   double i;
 
-  newlist = (double*)malloc(sizeof(double) * (listLength + 1.0));
+  newlist = (double*)Allocate(sizeof(double) * (listLength + 1.0));
   newlistLength = listLength + 1.0;
   for(i = 0.0; i < listLength; i = i + 1.0){
     newlist[(int)(i)] = list[(int)(i)];
   }
   newlist[(int)(listLength)] = a;
 		
-  free(list);
+  Free(list);
 		
   *returnArrayLength = newlistLength;
   return newlist;
@@ -5342,7 +5399,7 @@ double *RemoveNumber(size_t *returnArrayLength, double *list, size_t listLength,
   size_t newlistLength;
   double i;
 
-  newlist = (double*)malloc(sizeof(double) * (listLength - 1.0));
+  newlist = (double*)Allocate(sizeof(double) * (listLength - 1.0));
   newlistLength = listLength - 1.0;
 
   if(n >= 0.0 && n < listLength){
@@ -5355,9 +5412,9 @@ double *RemoveNumber(size_t *returnArrayLength, double *list, size_t listLength,
       }
     }
 
-    free(list);
+    Free(list);
   }else{
-    free(newlist);
+    Free(newlist);
   }
 		
   *returnArrayLength = newlistLength;
@@ -5374,7 +5431,7 @@ StringReference **AddString(size_t *returnArrayLength, StringReference **list, s
   size_t newlistLength;
   double i;
 
-  newlist = (StringReference**)malloc(sizeof(StringReference) * listLength + 1.0);
+  newlist = (StringReference**)Allocate(sizeof(StringReference) * listLength + 1.0);
   newlistLength = listLength + 1.0;
 
   for(i = 0.0; i < listLength; i = i + 1.0){
@@ -5382,7 +5439,7 @@ StringReference **AddString(size_t *returnArrayLength, StringReference **list, s
   }
   newlist[(int)(listLength)] = a;
 		
-  free(list);
+  Free(list);
 		
   *returnArrayLength = newlistLength;
   return newlist;
@@ -5395,7 +5452,7 @@ StringReference **RemoveString(size_t *returnArrayLength, StringReference **list
   size_t newlistLength;
   double i;
 
-  newlist = (StringReference**)malloc(sizeof(StringReference) * listLength - 1.0);
+  newlist = (StringReference**)Allocate(sizeof(StringReference) * listLength - 1.0);
   newlistLength = listLength - 1.0;
 
   if(n >= 0.0 && n < listLength){
@@ -5408,9 +5465,9 @@ StringReference **RemoveString(size_t *returnArrayLength, StringReference **list
       }
     }
 
-    free(list);
+    Free(list);
   }else{
-    free(newlist);
+    Free(newlist);
   }
 		
   *returnArrayLength = newlistLength;
@@ -5427,14 +5484,14 @@ _Bool *AddBoolean(size_t *returnArrayLength, _Bool *list, size_t listLength, _Bo
   size_t newlistLength;
   double i;
 
-  newlist = (_Bool*)malloc(sizeof(_Bool) * (listLength + 1.0));
+  newlist = (_Bool*)Allocate(sizeof(_Bool) * (listLength + 1.0));
   newlistLength = listLength + 1.0;
   for(i = 0.0; i < listLength; i = i + 1.0){
     newlist[(int)(i)] = list[(int)(i)];
   }
   newlist[(int)(listLength)] = a;
 		
-  free(list);
+  Free(list);
 		
   *returnArrayLength = newlistLength;
   return newlist;
@@ -5447,7 +5504,7 @@ _Bool *RemoveBoolean(size_t *returnArrayLength, _Bool *list, size_t listLength, 
   size_t newlistLength;
   double i;
 
-  newlist = (_Bool*)malloc(sizeof(_Bool) * (listLength - 1.0));
+  newlist = (_Bool*)Allocate(sizeof(_Bool) * (listLength - 1.0));
   newlistLength = listLength - 1.0;
 
   if(n >= 0.0 && n < listLength){
@@ -5460,9 +5517,9 @@ _Bool *RemoveBoolean(size_t *returnArrayLength, _Bool *list, size_t listLength, 
       }
     }
 
-    free(list);
+    Free(list);
   }else{
-    free(newlist);
+    Free(newlist);
   }
 		
   *returnArrayLength = newlistLength;
@@ -5477,8 +5534,8 @@ void RemoveDecimalRef(BooleanArrayReference *list, double i){
 LinkedListStrings *CreateLinkedListString(){
   LinkedListStrings *ll;
 
-  ll = (LinkedListStrings *)malloc(sizeof(LinkedListStrings));
-  ll->first = (LinkedListNodeStrings *)malloc(sizeof(LinkedListNodeStrings));
+  ll = (LinkedListStrings *)Allocate(sizeof(LinkedListStrings));
+  ll->first = (LinkedListNodeStrings *)Allocate(sizeof(LinkedListNodeStrings));
   ll->last = ll->first;
   ll->last->end = true;
 
@@ -5488,7 +5545,7 @@ void LinkedListAddString(LinkedListStrings *ll, wchar_t *value, size_t valueLeng
   ll->last->end = false;
   ll->last->value = value;
   ll->last->valueLength = valueLength;
-  ll->last->next = (LinkedListNodeStrings *)malloc(sizeof(LinkedListNodeStrings));
+  ll->last->next = (LinkedListNodeStrings *)Allocate(sizeof(LinkedListNodeStrings));
   ll->last->next->end = true;
   ll->last = ll->last->next;
 }
@@ -5502,11 +5559,11 @@ StringReference **LinkedListStringsToArray(size_t *returnArrayLength, LinkedList
 
   length = LinkedListStringsLength(ll);
 
-  array = (StringReference**)malloc(sizeof(StringReference) * length);
+  array = (StringReference**)Allocate(sizeof(StringReference) * length);
   arrayLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
-    array[(int)(i)] = (StringReference *)malloc(sizeof(StringReference));
+    array[(int)(i)] = (StringReference *)Allocate(sizeof(StringReference));
     array[(int)(i)]->string = node->value;
     array[(int)(i)]->stringLength = node->valueLength;
     node = node->next;
@@ -5536,16 +5593,16 @@ void FreeLinkedListString(LinkedListStrings *ll){
   for(;  !node->end ; ){
     prev = node;
     node = node->next;
-    free(prev);
+    Free(prev);
   }
 
-  free(node);
+  Free(node);
 }
 LinkedListNumbers *CreateLinkedListNumbers(){
   LinkedListNumbers *ll;
 
-  ll = (LinkedListNumbers *)malloc(sizeof(LinkedListNumbers));
-  ll->first = (LinkedListNodeNumbers *)malloc(sizeof(LinkedListNodeNumbers));
+  ll = (LinkedListNumbers *)Allocate(sizeof(LinkedListNumbers));
+  ll->first = (LinkedListNodeNumbers *)Allocate(sizeof(LinkedListNodeNumbers));
   ll->last = ll->first;
   ll->last->end = true;
 
@@ -5556,7 +5613,7 @@ LinkedListNumbers **CreateLinkedListNumbersArray(size_t *returnArrayLength, doub
   size_t llsLength;
   double i;
 
-  lls = (LinkedListNumbers**)malloc(sizeof(LinkedListNumbers) * length);
+  lls = (LinkedListNumbers**)Allocate(sizeof(LinkedListNumbers) * length);
   llsLength = length;
   for(i = 0.0; i < llsLength; i = i + 1.0){
     lls[(int)(i)] = CreateLinkedListNumbers();
@@ -5568,7 +5625,7 @@ LinkedListNumbers **CreateLinkedListNumbersArray(size_t *returnArrayLength, doub
 void LinkedListAddNumber(LinkedListNumbers *ll, double value){
   ll->last->end = false;
   ll->last->value = value;
-  ll->last->next = (LinkedListNodeNumbers *)malloc(sizeof(LinkedListNodeNumbers));
+  ll->last->next = (LinkedListNodeNumbers *)Allocate(sizeof(LinkedListNodeNumbers));
   ll->last->next->end = true;
   ll->last = ll->last->next;
 }
@@ -5602,7 +5659,7 @@ void LinkedListInsertNumber(LinkedListNumbers *ll, double index, double value){
 
   if(index == 0.0){
     tmp = ll->first;
-    ll->first = (LinkedListNodeNumbers *)malloc(sizeof(LinkedListNodeNumbers));
+    ll->first = (LinkedListNodeNumbers *)Allocate(sizeof(LinkedListNodeNumbers));
     ll->first->next = tmp;
     ll->first->value = value;
     ll->first->end = false;
@@ -5613,7 +5670,7 @@ void LinkedListInsertNumber(LinkedListNumbers *ll, double index, double value){
     }
 
     tmp = node->next;
-    node->next = (LinkedListNodeNumbers *)malloc(sizeof(LinkedListNodeNumbers));
+    node->next = (LinkedListNodeNumbers *)Allocate(sizeof(LinkedListNodeNumbers));
     node->next->next = tmp;
     node->next->value = value;
     node->next->end = false;
@@ -5657,10 +5714,10 @@ void FreeLinkedListNumbers(LinkedListNumbers *ll){
   for(;  !node->end ; ){
     prev = node;
     node = node->next;
-    free(prev);
+    Free(prev);
   }
 
-  free(node);
+  Free(node);
 }
 void FreeLinkedListNumbersArray(LinkedListNumbers **lls, size_t llsLength){
   double i;
@@ -5668,7 +5725,7 @@ void FreeLinkedListNumbersArray(LinkedListNumbers **lls, size_t llsLength){
   for(i = 0.0; i < llsLength; i = i + 1.0){
     FreeLinkedListNumbers(lls[(int)(i)]);
   }
-  free(lls);
+  Free(lls);
 }
 double *LinkedListNumbersToArray(size_t *returnArrayLength, LinkedListNumbers *ll){
   double *array;
@@ -5680,7 +5737,7 @@ double *LinkedListNumbersToArray(size_t *returnArrayLength, LinkedListNumbers *l
 
   length = LinkedListNumbersLength(ll);
 
-  array = (double*)malloc(sizeof(double) * (length));
+  array = (double*)Allocate(sizeof(double) * (length));
   arrayLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -5732,8 +5789,8 @@ _Bool LinkedListNumbersEqual(LinkedListNumbers *a, LinkedListNumbers *b){
 LinkedListCharacters *CreateLinkedListCharacter(){
   LinkedListCharacters *ll;
 
-  ll = (LinkedListCharacters *)malloc(sizeof(LinkedListCharacters));
-  ll->first = (LinkedListNodeCharacters *)malloc(sizeof(LinkedListNodeCharacters));
+  ll = (LinkedListCharacters *)Allocate(sizeof(LinkedListCharacters));
+  ll->first = (LinkedListNodeCharacters *)Allocate(sizeof(LinkedListNodeCharacters));
   ll->last = ll->first;
   ll->last->end = true;
 
@@ -5742,7 +5799,7 @@ LinkedListCharacters *CreateLinkedListCharacter(){
 void LinkedListAddCharacter(LinkedListCharacters *ll, wchar_t value){
   ll->last->end = false;
   ll->last->value = value;
-  ll->last->next = (LinkedListNodeCharacters *)malloc(sizeof(LinkedListNodeCharacters));
+  ll->last->next = (LinkedListNodeCharacters *)Allocate(sizeof(LinkedListNodeCharacters));
   ll->last->next->end = true;
   ll->last = ll->last->next;
 }
@@ -5756,7 +5813,7 @@ wchar_t *LinkedListCharactersToArray(size_t *returnArrayLength, LinkedListCharac
 
   length = LinkedListCharactersLength(ll);
 
-  array = (wchar_t*)malloc(sizeof(wchar_t) * (length));
+  array = (wchar_t*)Allocate(sizeof(wchar_t) * (length));
   arrayLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -5788,16 +5845,16 @@ void FreeLinkedListCharacter(LinkedListCharacters *ll){
   for(;  !node->end ; ){
     prev = node;
     node = node->next;
-    free(prev);
+    Free(prev);
   }
 
-  free(node);
+  Free(node);
 }
 DynamicArrayNumbers *CreateDynamicArrayNumbers(){
   DynamicArrayNumbers *da;
 
-  da = (DynamicArrayNumbers *)malloc(sizeof(DynamicArrayNumbers));
-  da->array = (double*)malloc(sizeof(double) * (10.0));
+  da = (DynamicArrayNumbers *)Allocate(sizeof(DynamicArrayNumbers));
+  da->array = (double*)Allocate(sizeof(double) * (10.0));
   da->arrayLength = 10.0;
   da->length = 0.0;
 
@@ -5806,8 +5863,8 @@ DynamicArrayNumbers *CreateDynamicArrayNumbers(){
 DynamicArrayNumbers *CreateDynamicArrayNumbersWithInitialCapacity(double capacity){
   DynamicArrayNumbers *da;
 
-  da = (DynamicArrayNumbers *)malloc(sizeof(DynamicArrayNumbers));
-  da->array = (double*)malloc(sizeof(double) * (capacity));
+  da = (DynamicArrayNumbers *)Allocate(sizeof(DynamicArrayNumbers));
+  da->array = (double*)Allocate(sizeof(double) * (capacity));
   da->arrayLength = capacity;
   da->length = 0.0;
 
@@ -5827,14 +5884,14 @@ void DynamicArrayNumbersIncreaseSize(DynamicArrayNumbers *da){
   size_t newArrayLength;
 
   newLength = round(da->arrayLength*3.0/2.0);
-  newArray = (double*)malloc(sizeof(double) * (newLength));
+  newArray = (double*)Allocate(sizeof(double) * (newLength));
   newArrayLength = newLength;
 
   for(i = 0.0; i < da->arrayLength; i = i + 1.0){
     newArray[(int)(i)] = da->array[(int)(i)];
   }
 
-  free(da->array);
+  Free(da->array);
 
   da->array = newArray;
   da->arrayLength = newArrayLength;
@@ -5856,14 +5913,14 @@ void DynamicArrayNumbersDecreaseSize(DynamicArrayNumbers *da){
   size_t newArrayLength;
 
   newLength = round(da->arrayLength*2.0/3.0);
-  newArray = (double*)malloc(sizeof(double) * (newLength));
+  newArray = (double*)Allocate(sizeof(double) * (newLength));
   newArrayLength = newLength;
 
   for(i = 0.0; i < newLength; i = i + 1.0){
     newArray[(int)(i)] = da->array[(int)(i)];
   }
 
-  free(da->array);
+  Free(da->array);
 
   da->array = newArray;
   da->arrayLength = newArrayLength;
@@ -5906,15 +5963,15 @@ void DynamicArrayRemoveNumber(DynamicArrayNumbers *da, double index){
   }
 }
 void FreeDynamicArrayNumbers(DynamicArrayNumbers *da){
-  free(da->array);
-  free(da);
+  Free(da->array);
+  Free(da);
 }
 double *DynamicArrayNumbersToArray(size_t *returnArrayLength, DynamicArrayNumbers *da){
   double *array;
   size_t arrayLength;
   double i;
 
-  array = (double*)malloc(sizeof(double) * (da->length));
+  array = (double*)Allocate(sizeof(double) * (da->length));
   arrayLength = da->length;
 
   for(i = 0.0; i < da->length; i = i + 1.0){
@@ -5953,7 +6010,7 @@ DynamicArrayNumbers *ArrayToDynamicArrayNumbersWithOptimalSize(double *array, si
 DynamicArrayNumbers *ArrayToDynamicArrayNumbers(double *array, size_t arrayLength){
   DynamicArrayNumbers *da;
 
-  da = (DynamicArrayNumbers *)malloc(sizeof(DynamicArrayNumbers));
+  da = (DynamicArrayNumbers *)Allocate(sizeof(DynamicArrayNumbers));
   da->array = aCopyNumberArray(&da->arrayLength, array, arrayLength);
   da->length = arrayLength;
 
@@ -5995,10 +6052,10 @@ DynamicArrayNumbers *LinkedListToDynamicArrayNumbers(LinkedListNumbers *ll){
 
   node = ll->first;
 
-  da = (DynamicArrayNumbers *)malloc(sizeof(DynamicArrayNumbers));
+  da = (DynamicArrayNumbers *)Allocate(sizeof(DynamicArrayNumbers));
   da->length = LinkedListNumbersLength(ll);
 
-  da->array = (double*)malloc(sizeof(double) * (da->length));
+  da->array = (double*)Allocate(sizeof(double) * (da->length));
   da->arrayLength = da->length;
 
   for(i = 0.0; i < da->length; i = i + 1.0){
@@ -6013,14 +6070,14 @@ wchar_t *AddCharacter(size_t *returnArrayLength, wchar_t *list, size_t listLengt
   size_t newlistLength;
   double i;
 
-  newlist = (wchar_t*)malloc(sizeof(wchar_t) * (listLength + 1.0));
+  newlist = (wchar_t*)Allocate(sizeof(wchar_t) * (listLength + 1.0));
   newlistLength = listLength + 1.0;
   for(i = 0.0; i < listLength; i = i + 1.0){
     newlist[(int)(i)] = list[(int)(i)];
   }
   newlist[(int)(listLength)] = a;
 		
-  free(list);
+  Free(list);
 		
   *returnArrayLength = newlistLength;
   return newlist;
@@ -6033,7 +6090,7 @@ wchar_t *RemoveCharacter(size_t *returnArrayLength, wchar_t *list, size_t listLe
   size_t newlistLength;
   double i;
 
-  newlist = (wchar_t*)malloc(sizeof(wchar_t) * (listLength - 1.0));
+  newlist = (wchar_t*)Allocate(sizeof(wchar_t) * (listLength - 1.0));
   newlistLength = listLength - 1.0;
 
   if(n >= 0.0 && n < listLength){
@@ -6046,9 +6103,9 @@ wchar_t *RemoveCharacter(size_t *returnArrayLength, wchar_t *list, size_t listLe
       }
     }
 
-    free(list);
+    Free(list);
   }else{
-    free(newlist);
+    Free(newlist);
   }
 
   *returnArrayLength = newlistLength;
@@ -6763,9 +6820,9 @@ double *DeflateDataStaticHuffman(size_t *returnArrayLength, double *data, size_t
   lengthAddition = CreateNumberReference(0.0);
   distanceAdditionReference = CreateNumberReference(0.0);
   distanceAdditionLengthReference = CreateNumberReference(0.0);
-  match = (BooleanReference *)malloc(sizeof(BooleanReference));
+  match = (BooleanReference *)Allocate(sizeof(BooleanReference));
 
-  bytes = (double*)malloc(sizeof(double) * (fmax(dataLength*2.0, 100.0)));
+  bytes = (double*)Allocate(sizeof(double) * (fmax(dataLength*2.0, 100.0)));
   bytesLength = fmax(dataLength*2.0, 100.0);
   aFillNumberArray(bytes, bytesLength, 0.0);
   currentBit = CreateNumberReference(0.0);
@@ -6803,9 +6860,9 @@ double *DeflateDataStaticHuffman(size_t *returnArrayLength, double *data, size_t
   GetDeflateStaticHuffmanCode(256.0, code, length, bitReverseLookupTable, bitReverseLookupTableLength);
   AppendBitsToBytesRight(bytes, bytesLength, currentBit, code->numberValue, length->numberValue);
 
-  copy = (NumberArrayReference *)malloc(sizeof(NumberArrayReference));
+  copy = (NumberArrayReference *)Allocate(sizeof(NumberArrayReference));
   aCopyNumberArrayRange(bytes, bytesLength, 0.0, ceil(currentBit->numberValue/8.0), copy);
-  free(bytes);
+  Free(bytes);
   bytes = copy->numberArray;
   bytesLength = copy->numberArrayLength;
 
@@ -6866,7 +6923,7 @@ double *GenerateBitReverseLookupTable(size_t *returnArrayLength, double bits){
   size_t tableLength;
   double i;
 
-  table = (double*)malloc(sizeof(double) * (pow(2.0, bits)));
+  table = (double*)Allocate(sizeof(double) * (pow(2.0, bits)));
   tableLength = pow(2.0, bits);
 
   for(i = 0.0; i < tableLength; i = i + 1.0){
@@ -6901,7 +6958,7 @@ double *DeflateDataNoCompression(size_t *returnArrayLength, double *data, size_t
 
   position = CreateNumberReference(0.0);
 
-  deflated = (double*)malloc(sizeof(double) * ((1.0 + 4.0)*blocks + dataLength));
+  deflated = (double*)Allocate(sizeof(double) * ((1.0 + 4.0)*blocks + dataLength));
   deflatedLength = (1.0 + 4.0)*blocks + dataLength;
 
   for(block = 0.0; block < blocks; block = block + 1.0){

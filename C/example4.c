@@ -2,8 +2,9 @@
 #include "supportLib.h"
 
 int main(){
-    _Bool success;
-    StringReference *errorMessage;
+	_Bool success;
+	StringReference *errorMessage;
+
 	RGBABitmapImageReference *imageReference = CreateRGBABitmapImageReference();
 
 	double xs [] = {20.1, 7.1, 16.1, 14.9, 16.7, 8.8, 9.7, 10.3, 22, 16.2, 12.1, 10.3, 14.5, 12.4, 9.6, 12.2, 10.8, 14.7, 19.7, 11.2, 10.1, 11, 12.2, 9.2, 23.5, 9.4, 15.3, 9.6, 11.1, 5.3, 7.8, 25.3, 16.5, 12.6, 12, 11.5, 17.1, 11.2, 12.2, 10.6, 19.9, 14.5, 15.5, 17.4, 8.4, 10.3, 10.2, 12.5, 16.7, 8.5, 12.2};
@@ -48,21 +49,23 @@ int main(){
 	settings->scatterPlotSeries = s;
 	settings->scatterPlotSeriesLength = 2;
 
-    errorMessage = (StringReference *)malloc(sizeof(StringReference));
+	errorMessage = (StringReference *)malloc(sizeof(StringReference));
 	success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
-    if(success){
-        size_t length;
-        double *pngdata = ConvertToPNG(&length, imageReference->image);
-        WriteToFile(pngdata, length, "example4.png");
-        DeleteImage(imageReference->image);
+	if(success){
+		size_t length;
+		double *pngdata = ConvertToPNG(&length, imageReference->image);
+		WriteToFile(pngdata, length, "example4.png");
+		DeleteImage(imageReference->image);
 	}else{
-	    fprintf(stderr, "Error: ");
-        for(int i = 0; i < errorMessage->stringLength; i++){
-            fprintf(stderr, "%c", errorMessage->string[i]);
-        }
-        fprintf(stderr, "\n");
+		fprintf(stderr, "Error: ");
+		for(int i = 0; i < errorMessage->stringLength; i++){
+			fprintf(stderr, "%c", errorMessage->string[i]);
+		}
+		fprintf(stderr, "\n");
 	}
+
+	FreeAllocations();
 
 	return success ? 0 : 1;
 }

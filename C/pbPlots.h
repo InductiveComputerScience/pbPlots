@@ -3,12 +3,17 @@
 #include <math.h>
 #include <string.h>
 #include <wchar.h>
+#include <stdint.h>
 
 #define strparam(str) (str), wcslen(str)
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+int FreeAllocations();
+void *Allocate(int64_t size);
+void Free(void *addr);
 
 struct RGBABitmapImageReference;
 typedef struct RGBABitmapImageReference RGBABitmapImageReference;
