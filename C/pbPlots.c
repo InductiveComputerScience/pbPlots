@@ -54,7 +54,6 @@ void *Allocate(int64_t size){
 }
 
 void Free(void *addr){
-	// This is a stack-allocator.
 }
 
 // -----------------

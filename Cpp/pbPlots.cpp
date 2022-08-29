@@ -8,6 +8,94 @@ using namespace std;
 #define M_PI 3.14159265358979323846
 #endif
 
+// -----------------
+typedef struct Memory{
+	void *mem;
+	int64_t size;
+	bool isArray;
+	struct Memory *next;
+} Memory;
+
+Memory *memoryStart = NULL;
+Memory *memory = NULL;
+
+int FreeAllocations(){
+	Memory *cur, *prev;
+	int64_t total;
+
+	total = 0;
+	cur = memoryStart;
+
+	while(cur != NULL){
+		if(cur->isArray){
+			vector<void*> *x = (vector<void*> *)cur->mem;
+			delete x;
+		}else{
+			free(cur->mem);
+		}
+		total += cur->size;
+		prev = cur;
+		cur = cur->next;
+		delete prev;
+	}
+
+	memoryStart = NULL;
+	memory = NULL;
+
+	//printf("Freed %ld\n", total);
+}
+
+void FreeArenaMemory(void *addr){
+}
+
+template<typename T>
+T *Allocate(){
+	T *addr;
+
+	if(memoryStart == NULL){
+		memoryStart = new Memory;
+		memory = memoryStart;
+	}else{
+		memory->next = new Memory;
+		memory = memory->next;
+	}
+
+	memory->next = NULL;
+	addr = new T;
+	memory->size = sizeof(T);
+	memory->mem = (void*)addr;
+	memory->isArray = false;
+
+	return addr;
+}
+
+template<typename T>
+std::vector<T> *Allocate(size_t length){
+	std::vector<T> *addr;
+
+	if(memoryStart == NULL){
+		memoryStart = new Memory;
+		memory = memoryStart;
+	}else{
+		memory->next = new Memory;
+		memory = memory->next;
+	}
+
+	memory->next = NULL;
+	addr = new std::vector<T>(length);
+	memory->size = length * sizeof(T);
+	memory->mem = (void*)addr;
+	memory->isArray = true;
+
+	return addr;
+}
+
+template<typename T>
+void Free(T *t){
+	FreeArenaMemory(t);
+}
+// -----------------
+
 vector<wchar_t> *toVector(const wchar_t *str){
 	vector<wchar_t> *v;
 	size_t len;
