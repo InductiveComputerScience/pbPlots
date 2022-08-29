@@ -19,7 +19,7 @@ typedef struct Memory{
 Memory *memoryStart = NULL;
 Memory *memory = NULL;
 
-int FreeAllocations(){
+void FreeAllocations(){
 	Memory *cur, *prev;
 	int64_t total;
 
@@ -61,7 +61,7 @@ T *Allocate(){
 	}
 
 	memory->next = NULL;
-	addr = new T;
+	addr = (T*)malloc(sizeof(T));
 	memory->size = sizeof(T);
 	memory->mem = (void*)addr;
 	memory->isArray = false;

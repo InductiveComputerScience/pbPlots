@@ -5,7 +5,7 @@
 #include <vector>
 #include <cwchar>
 
-int FreeAllocations();
+void FreeAllocations();
 
 std::vector<wchar_t> *toVector(const wchar_t *str);
 
