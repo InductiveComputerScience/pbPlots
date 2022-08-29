@@ -5,7 +5,7 @@ using namespace std;
 
 int main(){
 	bool success;
-	StringReference *errorMessage = CreateStringReferenceLengthValue(0, ' ');
+	StringReference *errorMessage = CreateStringReferenceLengthValue(0, L' ');
 	RGBABitmapImageReference *imageReference = CreateRGBABitmapImageReference();
 
 	double xsa[] = {-2, -1, 0, 1, 2};

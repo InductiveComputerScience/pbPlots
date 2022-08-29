@@ -8,18 +8,18 @@ using namespace std;
 #define M_PI 3.14159265358979323846
 #endif
 
-// -------------------------
-
+// -----------------
 typedef struct Memory{
 	void *mem;
 	int64_t size;
+	bool isArray;
 	struct Memory *next;
 } Memory;
 
 Memory *memoryStart = NULL;
 Memory *memory = NULL;
 
-void FreeAllocations(){
+int FreeAllocations(){
 	Memory *cur, *prev;
 	int64_t total;
 
@@ -27,11 +27,16 @@ void FreeAllocations(){
 	cur = memoryStart;
 
 	while(cur != NULL){
-		free(cur->mem);
+		if(cur->isArray){
+			vector<void*> *x = (vector<void*> *)cur->mem;
+			delete x;
+		}else{
+			free(cur->mem);
+		}
 		total += cur->size;
 		prev = cur;
 		cur = cur->next;
-		free(prev);
+		delete prev;
 	}
 
 	memoryStart = NULL;
@@ -40,40 +45,71 @@ void FreeAllocations(){
 	//printf("Freed %ld\n", total);
 }
 
-void *Allocate(int64_t size){
-	void *addr;
+void FreeArenaMemory(void *addr){
+}
+
+template<typename T>
+T *Allocate(){
+	T *addr;
 
 	if(memoryStart == NULL){
-		memoryStart = (Memory*)malloc(sizeof(Memory));
+		memoryStart = new Memory;
 		memory = memoryStart;
 	}else{
-		memory->next = (Memory*)malloc(sizeof(Memory));
+		memory->next = new Memory;
 		memory = memory->next;
 	}
 
 	memory->next = NULL;
-	addr = malloc(size);
-	memory->size = size;
-	memory->mem = addr;
+	addr = new T;
+	memory->size = sizeof(T);
+	memory->mem = (void*)addr;
+	memory->isArray = false;
 
 	return addr;
 }
 
-void *operator new[](std::size_t size) throw(std::bad_alloc){
-	return Allocate(size);
+template<typename T>
+std::vector<T> *Allocate(size_t length){
+	std::vector<T> *addr;
+
+	if(memoryStart == NULL){
+		memoryStart = new Memory;
+		memory = memoryStart;
+	}else{
+		memory->next = new Memory;
+		memory = memory->next;
+	}
+
+	memory->next = NULL;
+	addr = new std::vector<T>(length);
+	memory->size = length * sizeof(T);
+	memory->mem = (void*)addr;
+	memory->isArray = true;
+
+	return addr;
 }
 
-void * operator new(std::size_t size) throw(std::bad_alloc){
-	return Allocate(size);
+template<typename T>
+void Free(T *t){
+	FreeArenaMemory(t);
 }
+// -----------------
 
-void operator delete(void * p) throw(){
+vector<wchar_t> *toVector(const wchar_t *str){
+	vector<wchar_t> *v;
+	size_t len;
+
+	len = wcslen(str);
+
+	v = Allocate<wchar_t>(len);
+
+	for(int i = 0; i < len ; i++){
+		v->at(i) = str[i];
+	}
+
+	return v;
 }
-
-void operator delete[](void *p) throw(){
-}
-
-// -------------------------
 
 bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax){
   double x1, y1, x2, y2;
@@ -190,7 +226,7 @@ double InterceptFromCoordinates(double x1, double y1, double x2, double y2){
 }
 vector<RGBA*> *Get8HighContrastColors(){
   vector<RGBA*> *colors;
-  colors = new vector<RGBA*> (8.0);
+  colors = Allocate<RGBA*>(8.0);
   colors->at(0) = CreateRGBColor(3.0/256.0, 146.0/256.0, 206.0/256.0);
   colors->at(1) = CreateRGBColor(253.0/256.0, 83.0/256.0, 8.0/256.0);
   colors->at(2) = CreateRGBColor(102.0/256.0, 176.0/256.0, 50.0/256.0);
@@ -210,9 +246,9 @@ void DrawFilledRectangleWithBorder(RGBABitmapImage *image, double x, double y, d
 RGBABitmapImageReference *CreateRGBABitmapImageReference(){
   RGBABitmapImageReference *reference;
 
-  reference = new RGBABitmapImageReference();
-  reference->image = new RGBABitmapImage();
-  reference->image->x = new vector<RGBABitmap*> (0.0);
+  reference = Allocate<RGBABitmapImageReference>();
+  reference->image = Allocate<RGBABitmapImage>();
+  reference->image->x = Allocate<RGBABitmap*>(0.0);
 
   return reference;
 }
@@ -230,7 +266,7 @@ bool RectanglesOverlap(Rectangle *r1, Rectangle *r2){
 }
 Rectangle *CreateRectangle(double x1, double y1, double x2, double y2){
   Rectangle *r;
-  r = new Rectangle();
+  r = Allocate<Rectangle>();
   r->x1 = x1;
   r->y1 = y1;
   r->x2 = x2;
@@ -249,7 +285,7 @@ void DrawXLabelsForPriority(double p, double xMin, double oy, double xMax, doubl
   vector<wchar_t> *text;
   Rectangle *r;
 
-  r = new Rectangle();
+  r = Allocate<Rectangle>();
   padding = 10.0;
 
   overlap = false;
@@ -322,7 +358,7 @@ void DrawYLabelsForPriority(double p, double yMin, double ox, double yMax, doubl
   vector<wchar_t> *text;
   Rectangle *r;
 
-  r = new Rectangle();
+  r = Allocate<Rectangle>();
   padding = 10.0;
 
   overlap = false;
@@ -434,9 +470,9 @@ vector<double> *ComputeGridLinePositions(double cMin, double cMax, StringArrayRe
     mode = 2.0;
   }
 
-  positions = new vector<double> (pNum);
-  labels->stringArray = new vector<StringReference*> (pNum);
-  priorities->numberArray = new vector<double> (pNum);
+  positions = Allocate<double>(pNum);
+  labels->stringArray = Allocate<StringReference*>(pNum);
+  priorities->numberArray = Allocate<double>(pNum);
 
   for(i = 0.0; i < pNum; i = i + 1.0){
     num = pMin + pInterval*i;
@@ -475,7 +511,7 @@ vector<double> *ComputeGridLinePositions(double cMin, double cMax, StringArrayRe
     priorities->numberArray->at(i) = priority;
 
     /* The label itself. */
-    labels->stringArray->at(i) = new StringReference();
+    labels->stringArray->at(i) = Allocate<StringReference>();
     if(p < 0.0){
       if(mode == 2.0 || mode == 3.0){
         num = RoundToDigits(num,  -(p - 1.0));
@@ -521,7 +557,7 @@ double MapXCoordinateBasedOnSettings(double x, ScatterPlotSettings *settings){
   double xMin, xMax, xPadding, xPixelMin, xPixelMax;
   Rectangle *boundaries;
 
-  boundaries = new Rectangle();
+  boundaries = Allocate<Rectangle>();
   ComputeBoundariesBasedOnSettings(settings, boundaries);
   xMin = boundaries->x1;
   xMax = boundaries->x2;
@@ -541,7 +577,7 @@ double MapYCoordinateBasedOnSettings(double y, ScatterPlotSettings *settings){
   double yMin, yMax, yPadding, yPixelMin, yPixelMax;
   Rectangle *boundaries;
 
-  boundaries = new Rectangle();
+  boundaries = Allocate<Rectangle>();
   ComputeBoundariesBasedOnSettings(settings, boundaries);
   yMin = boundaries->y1;
   yMax = boundaries->y2;
@@ -583,7 +619,7 @@ void DrawTextUpwards(RGBABitmapImage *canvas, double x, double y, vector<wchar_t
 ScatterPlotSettings *GetDefaultScatterPlotSettings(){
   ScatterPlotSettings *settings;
 
-  settings = new ScatterPlotSettings();
+  settings = Allocate<ScatterPlotSettings>();
 
   settings->autoBoundaries = true;
   settings->xMax = 0.0;
@@ -596,7 +632,7 @@ ScatterPlotSettings *GetDefaultScatterPlotSettings(){
   settings->title = toVector(L"");
   settings->xLabel = toVector(L"");
   settings->yLabel = toVector(L"");
-  settings->scatterPlotSeries = new vector<ScatterPlotSeries*> (0.0);
+  settings->scatterPlotSeries = Allocate<ScatterPlotSeries*>(0.0);
   settings->showGrid = true;
   settings->gridColor = GetGray(0.1);
   settings->xAxisAuto = true;
@@ -611,14 +647,14 @@ ScatterPlotSettings *GetDefaultScatterPlotSettings(){
 ScatterPlotSeries *GetDefaultScatterPlotSeriesSettings(){
   ScatterPlotSeries *series;
 
-  series = new ScatterPlotSeries();
+  series = Allocate<ScatterPlotSeries>();
 
   series->linearInterpolation = true;
   series->pointType = toVector(L"pixels");
   series->lineType = toVector(L"solid");
   series->lineThickness = 1.0;
-  series->xs = new vector<double> (0.0);
-  series->ys = new vector<double> (0.0);
+  series->xs = Allocate<double>(0.0);
+  series->ys = Allocate<double>(0.0);
   series->color = GetBlack();
 
   return series;
@@ -631,11 +667,11 @@ bool DrawScatterPlot(RGBABitmapImageReference *canvasReference, double width, do
 
   settings->width = width;
   settings->height = height;
-  settings->scatterPlotSeries = new vector<ScatterPlotSeries*> (1.0);
+  settings->scatterPlotSeries = Allocate<ScatterPlotSeries*>(1.0);
   settings->scatterPlotSeries->at(0) = GetDefaultScatterPlotSeriesSettings();
-  delete settings->scatterPlotSeries->at(0)->xs;
+  Free(settings->scatterPlotSeries->at(0)->xs);
   settings->scatterPlotSeries->at(0)->xs = xs;
-  delete settings->scatterPlotSeries->at(0)->ys;
+  Free(settings->scatterPlotSeries->at(0)->ys);
   settings->scatterPlotSeries->at(0)->ys = ys;
 
   success = DrawScatterPlotFromSettings(canvasReference, settings, errorMessage);
@@ -669,7 +705,7 @@ bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, Scat
 
   if(success){
 
-    boundaries = new Rectangle();
+    boundaries = Allocate<Rectangle>();
     ComputeBoundariesBasedOnSettings(settings, boundaries);
     xMin = boundaries->x1;
     yMin = boundaries->y1;
@@ -712,10 +748,10 @@ bool DrawScatterPlotFromSettings(RGBABitmapImageReference *canvasReference, Scat
 
     gridLabelColor = GetGray(0.5);
 
-    xLabels = new StringArrayReference();
-    xLabelPriorities = new NumberArrayReference();
-    yLabels = new StringArrayReference();
-    yLabelPriorities = new NumberArrayReference();
+    xLabels = Allocate<StringArrayReference>();
+    xLabelPriorities = Allocate<NumberArrayReference>();
+    yLabels = Allocate<StringArrayReference>();
+    yLabelPriorities = Allocate<NumberArrayReference>();
     xGridPositions = ComputeGridLinePositions(xMin, xMax, xLabels, xLabelPriorities);
     yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
 
@@ -787,7 +823,7 @@ if(settings->yAxisLeft){
     originTextXPixels = MapXCoordinate(originTextX, xMin, xMax, xPixelMin, xPixelMax);
 
     /* Labels */
-    occupied = new vector<Rectangle*> (xLabels->stringArray->size() + yLabels->stringArray->size());
+    occupied = Allocate<Rectangle*>(xLabels->stringArray->size() + yLabels->stringArray->size());
     for(i = 0.0; i < occupied->size(); i = i + 1.0){
       occupied->at(i) = CreateRectangle(0.0, 0.0, 0.0, 0.0);
     }
@@ -872,10 +908,10 @@ if(settings->yAxisLeft){
       ys = sp->ys;
       linearInterpolation = sp->linearInterpolation;
 
-      x1Ref = new NumberReference();
-      y1Ref = new NumberReference();
-      x2Ref = new NumberReference();
-      y2Ref = new NumberReference();
+      x1Ref = Allocate<NumberReference>();
+      y1Ref = Allocate<NumberReference>();
+      x2Ref = Allocate<NumberReference>();
+      y2Ref = Allocate<NumberReference>();
       if(linearInterpolation){
         prevSet = false;
         xPrev = 0.0;
@@ -1142,7 +1178,7 @@ bool ScatterPlotFromSettingsValid(ScatterPlotSettings *settings, StringReference
 BarPlotSettings *GetDefaultBarPlotSettings(){
   BarPlotSettings *settings;
 
-  settings = new BarPlotSettings();
+  settings = Allocate<BarPlotSettings>();
 
   settings->width = 800.0;
   settings->height = 600.0;
@@ -1154,7 +1190,7 @@ BarPlotSettings *GetDefaultBarPlotSettings(){
   settings->yPadding = 0.0;
   settings->title = toVector(L"");
   settings->yLabel = toVector(L"");
-  settings->barPlotSeries = new vector<BarPlotSeries*> (0.0);
+  settings->barPlotSeries = Allocate<BarPlotSeries*>(0.0);
   settings->showGrid = true;
   settings->gridColor = GetGray(0.1);
   settings->autoColor = true;
@@ -1163,7 +1199,7 @@ BarPlotSettings *GetDefaultBarPlotSettings(){
   settings->groupSeparation = 0.0;
   settings->barSeparation = 0.0;
   settings->autoLabels = true;
-  settings->xLabels = new vector<StringReference*> (0.0);
+  settings->xLabels = Allocate<StringReference*>(0.0);
   /*settings.autoLabels = false;
         settings.xLabels = new StringReference [5];
         settings.xLabels[0] = CreateStringReference("may 20".toCharArray());
@@ -1178,9 +1214,9 @@ BarPlotSettings *GetDefaultBarPlotSettings(){
 BarPlotSeries *GetDefaultBarPlotSeriesSettings(){
   BarPlotSeries *series;
 
-  series = new BarPlotSeries();
+  series = Allocate<BarPlotSeries>();
 
-  series->ys = new vector<double> (0.0);
+  series->ys = Allocate<double>(0.0);
   series->color = GetBlack();
 
   return series;
@@ -1190,7 +1226,7 @@ RGBABitmapImage *DrawBarPlotNoErrorCheck(double width, double height, vector<dou
   bool success;
   RGBABitmapImageReference *canvasReference;
 
-  errorMessage = new StringReference();
+  errorMessage = Allocate<StringReference>();
   canvasReference = CreateRGBABitmapImageReference();
 
   success = DrawBarPlot(canvasReference, width, height, ys, errorMessage);
@@ -1203,12 +1239,12 @@ bool DrawBarPlot(RGBABitmapImageReference *canvasReference, double width, double
   BarPlotSettings *settings;
   bool success;
 
-  errorMessage = new StringReference();
+  errorMessage = Allocate<StringReference>();
   settings = GetDefaultBarPlotSettings();
 
-  settings->barPlotSeries = new vector<BarPlotSeries*> (1.0);
+  settings->barPlotSeries = Allocate<BarPlotSeries*>(1.0);
   settings->barPlotSeries->at(0) = GetDefaultBarPlotSeriesSettings();
-  delete settings->barPlotSeries->at(0)->ys;
+  Free(settings->barPlotSeries->at(0)->ys);
   settings->barPlotSeries->at(0)->ys = ys;
   settings->width = width;
   settings->height = height;
@@ -1287,8 +1323,8 @@ bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotS
     DrawRectangle1px(canvas, xPixelMin, yPixelMin, xLengthPixels, yLengthPixels, settings->gridColor);
 
     /* Draw grid lines. */
-    yLabels = new StringArrayReference();
-    yLabelPriorities = new NumberArrayReference();
+    yLabels = Allocate<StringArrayReference>();
+    yLabelPriorities = Allocate<NumberArrayReference>();
     yGridPositions = ComputeGridLinePositions(yMin, yMax, yLabels, yLabelPriorities);
 
     if(settings->showGrid){
@@ -1307,7 +1343,7 @@ bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotS
     }
 
     /* Labels */
-    occupied = new vector<Rectangle*> (yLabels->stringArray->size());
+    occupied = Allocate<Rectangle*>(yLabels->stringArray->size());
     for(i = 0.0; i < occupied->size(); i = i + 1.0){
       occupied->at(i) = CreateRectangle(0.0, 0.0, 0.0, 0.0);
     }
@@ -1322,7 +1358,7 @@ bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotS
       if( !settings->grayscaleAutoColor ){
         colors = Get8HighContrastColors();
       }else{
-        colors = new vector<RGBA*> (ss);
+        colors = Allocate<RGBA*>(ss);
         if(ss > 1.0){
           for(i = 0.0; i < ss; i = i + 1.0){
             colors->at(i) = GetGray(0.7 - (i/ss)*0.7);
@@ -1332,7 +1368,7 @@ bool DrawBarPlotFromSettings(RGBABitmapImageReference *canvasReference, BarPlotS
         }
       }
     }else{
-      colors = new vector<RGBA*> (0.0);
+      colors = Allocate<RGBA*>(0.0);
     }
 
     /* distances */
@@ -1531,8 +1567,8 @@ double test(){
 
   imageReference = CreateRGBABitmapImageReference();
 
-  labels = new StringArrayReference();
-  labelPriorities = new NumberArrayReference();
+  labels = Allocate<StringArrayReference>();
+  labelPriorities = Allocate<NumberArrayReference>();
 
   z = 10.0;
   gridlines = ComputeGridLinePositions( -z/2.0, z/2.0, labels, labelPriorities);
@@ -1570,13 +1606,13 @@ double test(){
   gridlines = ComputeGridLinePositions( -z/2.0, z/2.0, labels, labelPriorities);
   AssertEquals(gridlines->size(), 21.0, failures);
 
-  xs = new vector<double> (5.0);
+  xs = Allocate<double>(5.0);
   xs->at(0) =  -2.0;
   xs->at(1) =  -1.0;
   xs->at(2) = 0.0;
   xs->at(3) = 1.0;
   xs->at(4) = 2.0;
-  ys = new vector<double> (5.0);
+  ys = Allocate<double>(5.0);
   ys->at(0) = 2.0;
   ys->at(1) =  -1.0;
   ys->at(2) =  -2.0;
@@ -1611,13 +1647,13 @@ void TestMapping(NumberReference *failures){
 
   series = GetDefaultScatterPlotSeriesSettings();
 
-  series->xs = new vector<double> (5.0);
+  series->xs = Allocate<double>(5.0);
   series->xs->at(0) = -2.0;
   series->xs->at(1) = -1.0;
   series->xs->at(2) = 0.0;
   series->xs->at(3) = 1.0;
   series->xs->at(4) = 2.0;
-  series->ys = new vector<double> (5.0);
+  series->ys = Allocate<double>(5.0);
   series->ys->at(0) = -2.0;
   series->ys->at(1) = -1.0;
   series->ys->at(2) = -2.0;
@@ -1636,7 +1672,7 @@ void TestMapping(NumberReference *failures){
   settings->title = toVector(L"x^2 - 2");
   settings->xLabel = toVector(L"X axis");
   settings->yLabel = toVector(L"Y axis");
-  settings->scatterPlotSeries = new vector<ScatterPlotSeries*> (1.0);
+  settings->scatterPlotSeries = Allocate<ScatterPlotSeries*>(1.0);
   settings->scatterPlotSeries->at(0) = series;
 
   imageReference = CreateRGBABitmapImageReference();
@@ -1672,10 +1708,10 @@ void TestMapping2(NumberReference *failures){
   yMin = 0.0;
   yMax = 1.0;
 
-  xs = new vector<double> (points);
-  ys = new vector<double> (points);
-  xs2 = new vector<double> (points);
-  ys2 = new vector<double> (points);
+  xs = Allocate<double>(points);
+  ys = Allocate<double>(points);
+  xs2 = Allocate<double>(points);
+  ys2 = Allocate<double>(points);
 
   for(i = 0.0; i < points; i = i + 1.0){
     x = xMin + (xMax - xMin)/(points - 1.0)*i;
@@ -1693,15 +1729,15 @@ void TestMapping2(NumberReference *failures){
 
   settings = GetDefaultScatterPlotSettings();
 
-  settings->scatterPlotSeries = new vector<ScatterPlotSeries*> (2.0);
-  settings->scatterPlotSeries->at(0) = new ScatterPlotSeries();
+  settings->scatterPlotSeries = Allocate<ScatterPlotSeries*>(2.0);
+  settings->scatterPlotSeries->at(0) = Allocate<ScatterPlotSeries>();
   settings->scatterPlotSeries->at(0)->xs = xs;
   settings->scatterPlotSeries->at(0)->ys = ys;
   settings->scatterPlotSeries->at(0)->linearInterpolation = true;
   settings->scatterPlotSeries->at(0)->lineType = toVector(L"solid");
   settings->scatterPlotSeries->at(0)->lineThickness = 3.0;
   settings->scatterPlotSeries->at(0)->color = CreateRGBColor(1.0, 0.0, 0.0);
-  settings->scatterPlotSeries->at(1) = new ScatterPlotSeries();
+  settings->scatterPlotSeries->at(1) = Allocate<ScatterPlotSeries>();
   settings->scatterPlotSeries->at(1)->xs = xs2;
   settings->scatterPlotSeries->at(1)->ys = ys2;
   settings->scatterPlotSeries->at(1)->linearInterpolation = true;
@@ -1750,8 +1786,8 @@ void ExampleRegression(RGBABitmapImageReference *image){
 
   settings = GetDefaultScatterPlotSettings();
 
-  settings->scatterPlotSeries = new vector<ScatterPlotSeries*> (2.0);
-  settings->scatterPlotSeries->at(0) = new ScatterPlotSeries();
+  settings->scatterPlotSeries = Allocate<ScatterPlotSeries*>(2.0);
+  settings->scatterPlotSeries->at(0) = Allocate<ScatterPlotSeries>();
   settings->scatterPlotSeries->at(0)->xs = xs;
   settings->scatterPlotSeries->at(0)->ys = ys;
   settings->scatterPlotSeries->at(0)->linearInterpolation = false;
@@ -1759,15 +1795,15 @@ void ExampleRegression(RGBABitmapImageReference *image){
   settings->scatterPlotSeries->at(0)->color = CreateRGBColor(1.0, 0.0, 0.0);
 
   /*OrdinaryLeastSquaresWithIntercept(); */
-  xs2 = new vector<double> (2.0);
-  ys2 = new vector<double> (2.0);
+  xs2 = Allocate<double>(2.0);
+  ys2 = Allocate<double>(2.0);
 
   xs2->at(0) = 5.0;
   ys2->at(0) = 12.0;
   xs2->at(1) = 25.0;
   ys2->at(1) = 39.0;
 
-  settings->scatterPlotSeries->at(1) = new ScatterPlotSeries();
+  settings->scatterPlotSeries->at(1) = Allocate<ScatterPlotSeries>();
   settings->scatterPlotSeries->at(1)->xs = xs2;
   settings->scatterPlotSeries->at(1)->ys = ys2;
   settings->scatterPlotSeries->at(1)->linearInterpolation = true;
@@ -1790,7 +1826,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
   StringReference *errorMessage;
   bool success;
 
-  errorMessage = new StringReference();
+  errorMessage = Allocate<StringReference>();
 
   ys1 = StringToNumberArray(toVector(L"1, 2, 3, 4, 5"));
   ys2 = StringToNumberArray(toVector(L"5, 4, 3, 2, 1"));
@@ -1814,7 +1850,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
   /*settings.groupSeparation; */
   /*settings.barSeparation; */
   settings->autoLabels = false;
-  settings->xLabels = new vector<StringReference*> (5.0);
+  settings->xLabels = Allocate<StringReference*>(5.0);
   settings->xLabels->at(0) = CreateStringReference(toVector(L"may 20"));
   settings->xLabels->at(1) = CreateStringReference(toVector(L"jun 20"));
   settings->xLabels->at(2) = CreateStringReference(toVector(L"jul 20"));
@@ -1823,7 +1859,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
   /*settings.colors; */
   settings->barBorder = true;
 
-  settings->barPlotSeries = new vector<BarPlotSeries*> (3.0);
+  settings->barPlotSeries = Allocate<BarPlotSeries*>(3.0);
   settings->barPlotSeries->at(0) = GetDefaultBarPlotSeriesSettings();
   settings->barPlotSeries->at(0)->ys = ys1;
   settings->barPlotSeries->at(1) = GetDefaultBarPlotSeriesSettings();
@@ -1835,7 +1871,7 @@ void BarPlotExample(RGBABitmapImageReference *imageReference){
 }
 RGBA *GetBlack(){
   RGBA *black;
-  black = new RGBA();
+  black = Allocate<RGBA>();
   black->a = 1.0;
   black->r = 0.0;
   black->g = 0.0;
@@ -1844,7 +1880,7 @@ RGBA *GetBlack(){
 }
 RGBA *GetWhite(){
   RGBA *white;
-  white = new RGBA();
+  white = Allocate<RGBA>();
   white->a = 1.0;
   white->r = 1.0;
   white->g = 1.0;
@@ -1853,7 +1889,7 @@ RGBA *GetWhite(){
 }
 RGBA *GetTransparent(){
   RGBA *transparent;
-  transparent = new RGBA();
+  transparent = Allocate<RGBA>();
   transparent->a = 0.0;
   transparent->r = 0.0;
   transparent->g = 0.0;
@@ -1862,7 +1898,7 @@ RGBA *GetTransparent(){
 }
 RGBA *GetGray(double percentage){
   RGBA *black;
-  black = new RGBA();
+  black = Allocate<RGBA>();
   black->a = 1.0;
   black->r = 1.0 - percentage;
   black->g = 1.0 - percentage;
@@ -1871,7 +1907,7 @@ RGBA *GetGray(double percentage){
 }
 RGBA *CreateRGBColor(double r, double g, double b){
   RGBA *color;
-  color = new RGBA();
+  color = Allocate<RGBA>();
   color->a = 1.0;
   color->r = r;
   color->g = g;
@@ -1880,7 +1916,7 @@ RGBA *CreateRGBColor(double r, double g, double b){
 }
 RGBA *CreateRGBAColor(double r, double g, double b, double a){
   RGBA *color;
-  color = new RGBA();
+  color = Allocate<RGBA>();
   color->a = a;
   color->r = r;
   color->g = g;
@@ -1891,13 +1927,13 @@ RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
   RGBABitmapImage *image;
   double i, j;
 
-  image = new RGBABitmapImage();
-  image->x = new vector<RGBABitmap*> (w);
+  image = Allocate<RGBABitmapImage>();
+  image->x = Allocate<RGBABitmap*>(w);
   for(i = 0.0; i < w; i = i + 1.0){
-    image->x->at(i) = new RGBABitmap();
-    image->x->at(i)->y = new vector<RGBA*> (h);
+    image->x->at(i) = Allocate<RGBABitmap>();
+    image->x->at(i)->y = Allocate<RGBA*>(h);
     for(j = 0.0; j < h; j = j + 1.0){
-      image->x->at(i)->y->at(j) = new RGBA();
+      image->x->at(i)->y->at(j) = Allocate<RGBA>();
       SetPixel(image, i, j, color);
     }
   }
@@ -1912,11 +1948,11 @@ void DeleteImage(RGBABitmapImage *image){
 
   for(i = 0.0; i < w; i = i + 1.0){
     for(j = 0.0; j < h; j = j + 1.0){
-      delete image->x->at(i)->y->at(j);
+      Free(image->x->at(i)->y->at(j));
     }
-    delete image->x->at(i);
+    Free(image->x->at(i));
   }
-  delete image;
+  Free(image);
 }
 double ImageWidth(RGBABitmapImage *image){
   return image->x->size();
@@ -2105,10 +2141,10 @@ void DrawQuadraticBezierCurve(RGBABitmapImage *image, double x0, double y0, doub
 
   dt = 1.0/sqrt(pow(dx, 2.0) + pow(dy, 2.0));
 
-  xs = new NumberReference();
-  ys = new NumberReference();
-  xe = new NumberReference();
-  ye = new NumberReference();
+  xs = Allocate<NumberReference>();
+  ys = Allocate<NumberReference>();
+  xe = Allocate<NumberReference>();
+  ye = Allocate<NumberReference>();
 
   QuadraticBezierPoint(x0, y0, cx, cy, x1, y1, 0.0, xs, ys);
   for(t = dt; t <= 1.0; t = t + dt){
@@ -2118,10 +2154,10 @@ void DrawQuadraticBezierCurve(RGBABitmapImage *image, double x0, double y0, doub
     ys->numberValue = ye->numberValue;
   }
 
-  delete xs;
-  delete ys;
-  delete xe;
-  delete ye;
+  Free(xs);
+  Free(ys);
+  Free(xe);
+  Free(ye);
 }
 void QuadraticBezierPoint(double x0, double y0, double cx, double cy, double x1, double y1, double t, NumberReference *x, NumberReference *y){
   x->numberValue = pow(1.0 - t, 2.0)*x0 + (1.0 - t)*2.0*t*cx + pow(t, 2.0)*x1;
@@ -2136,10 +2172,10 @@ void DrawCubicBezierCurve(RGBABitmapImage *image, double x0, double y0, double c
 
   dt = 1.0/sqrt(pow(dx, 2.0) + pow(dy, 2.0));
 
-  xs = new NumberReference();
-  ys = new NumberReference();
-  xe = new NumberReference();
-  ye = new NumberReference();
+  xs = Allocate<NumberReference>();
+  ys = Allocate<NumberReference>();
+  xe = Allocate<NumberReference>();
+  ye = Allocate<NumberReference>();
 
   CubicBezierPoint(x0, y0, c0x, c0y, c1x, c1y, x1, y1, 0.0, xs, ys);
   for(t = dt; t <= 1.0; t = t + dt){
@@ -2149,10 +2185,10 @@ void DrawCubicBezierCurve(RGBABitmapImage *image, double x0, double y0, double c
     ys->numberValue = ye->numberValue;
   }
 
-  delete xs;
-  delete ys;
-  delete xe;
-  delete ye;
+  Free(xs);
+  Free(ys);
+  Free(xe);
+  Free(ye);
 }
 void CubicBezierPoint(double x0, double y0, double c0x, double c0y, double c1x, double c1y, double x1, double y1, double t, NumberReference *x, NumberReference *y){
   x->numberValue = pow(1.0 - t, 3.0)*x0 + pow(1.0 - t, 2.0)*3.0*t*c0x + (1.0 - t)*3.0*pow(t, 2.0)*c1x + pow(t, 3.0)*x1;
@@ -2552,7 +2588,7 @@ void DrawLineBresenhamsAlgorithmThickPatterned(RGBABitmapImage *canvas, double x
 vector<bool> *GetLinePattern5(){
   vector<bool> *pattern;
 
-  pattern = new vector<bool> (19.0);
+  pattern = Allocate<bool>(19.0);
 
   pattern->at(0) = true;
   pattern->at(1) = true;
@@ -2579,7 +2615,7 @@ vector<bool> *GetLinePattern5(){
 vector<bool> *GetLinePattern4(){
   vector<bool> *pattern;
 
-  pattern = new vector<bool> (13.0);
+  pattern = Allocate<bool>(13.0);
 
   pattern->at(0) = true;
   pattern->at(1) = true;
@@ -2600,7 +2636,7 @@ vector<bool> *GetLinePattern4(){
 vector<bool> *GetLinePattern3(){
   vector<bool> *pattern;
 
-  pattern = new vector<bool> (13.0);
+  pattern = Allocate<bool>(13.0);
 
   pattern->at(0) = true;
   pattern->at(1) = true;
@@ -2621,7 +2657,7 @@ vector<bool> *GetLinePattern3(){
 vector<bool> *GetLinePattern2(){
   vector<bool> *pattern;
 
-  pattern = new vector<bool> (4.0);
+  pattern = Allocate<bool>(4.0);
 
   pattern->at(0) = true;
   pattern->at(1) = true;
@@ -2633,7 +2669,7 @@ vector<bool> *GetLinePattern2(){
 vector<bool> *GetLinePattern1(){
   vector<bool> *pattern;
 
-  pattern = new vector<bool> (8.0);
+  pattern = Allocate<bool>(8.0);
 
   pattern->at(0) = true;
   pattern->at(1) = true;
@@ -2672,7 +2708,7 @@ RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels
   w = src->x->size();
   h = src->x->at(0)->y->size();
 
-  rgba = new RGBA();
+  rgba = Allocate<RGBA>();
   rgba->r = 0.0;
   rgba->g = 0.0;
   rgba->b = 0.0;
@@ -2737,9 +2773,9 @@ vector<wchar_t> *CreateStringScientificNotationDecimalFromNumberAllOptions(doubl
   bool done, isPositive, isPositiveExponent;
   vector<wchar_t> *result;
 
-  mantissaReference = new StringReference();
-  exponentReference = new StringReference();
-  result = new vector<wchar_t> (0.0);
+  mantissaReference = Allocate<StringReference>();
+  exponentReference = Allocate<StringReference>();
+  result = Allocate<wchar_t>(0.0);
   done = false;
   exponent = 0.0;
 
@@ -2831,7 +2867,7 @@ vector<wchar_t> *CreateStringScientificNotationDecimalFromNumberAllOptions(doubl
 vector<wchar_t> *CreateStringDecimalFromNumber(double decimal){
   StringReference *stringReference;
 
-  stringReference = new StringReference();
+  stringReference = Allocate<StringReference>();
 
   /* This will succeed because base = 10. */
   CreateStringFromNumberWithCheck(decimal, 10.0, stringReference);
@@ -2859,12 +2895,12 @@ bool CreateStringFromNumberWithCheck(double decimal, double base, StringReferenc
     stringReference->string = toVector(L"0");
     success = true;
   }else{
-    characterReference = new CharacterReference();
+    characterReference = Allocate<CharacterReference>();
 
     if(IsInteger(base)){
       success = true;
 
-      string = new vector<wchar_t> (0.0);
+      string = Allocate<wchar_t>(0.0);
 
       maximumDigits = GetMaximumDigitsForBase(base);
 
@@ -2992,8 +3028,8 @@ double CreateNumberFromDecimalString(vector<wchar_t> *string){
   CreateNumberFromStringWithCheck(string, 10.0, doubleReference, stringReference);
   number = doubleReference->numberValue;
 
-  delete doubleReference;
-  delete stringReference;
+  Free(doubleReference);
+  Free(stringReference);
 
   return number;
 }
@@ -3004,9 +3040,9 @@ bool CreateNumberFromStringWithCheck(vector<wchar_t> *string, double base, Numbe
 
   numberIsPositive = CreateBooleanReference(true);
   exponentIsPositive = CreateBooleanReference(true);
-  beforePoint = new NumberArrayReference();
-  afterPoint = new NumberArrayReference();
-  exponent = new NumberArrayReference();
+  beforePoint = Allocate<NumberArrayReference>();
+  afterPoint = Allocate<NumberArrayReference>();
+  exponent = Allocate<NumberArrayReference>();
 
   if(base >= 2.0 && base <= 36.0){
     success = ExtractPartsFromNumberString(string, base, numberIsPositive, beforePoint, afterPoint, exponentIsPositive, exponent, errorMessage);
@@ -3097,7 +3133,7 @@ bool ExtractPartsFromNumberStringFromSign(vector<wchar_t> *n, double base, doubl
   }
 
   if(count >= 1.0){
-    beforePoint->numberArray = new vector<double> (count);
+    beforePoint->numberArray = Allocate<double>(count);
 
     for(j = 0.0; j < count; j = j + 1.0){
       beforePoint->numberArray->at(j) = GetNumberFromNumberCharacterForBase(n->at(i + j), base);
@@ -3108,8 +3144,8 @@ bool ExtractPartsFromNumberStringFromSign(vector<wchar_t> *n, double base, doubl
     if(i < n->size()){
       success = ExtractPartsFromNumberStringFromPointOrExponent(n, base, i, afterPoint, exponentIsPositive, exponent, errorMessages);
     }else{
-      afterPoint->numberArray = new vector<double> (0.0);
-      exponent->numberArray = new vector<double> (0.0);
+      afterPoint->numberArray = Allocate<double>(0.0);
+      exponent->numberArray = Allocate<double>(0.0);
       success = true;
     }
   }else{
@@ -3138,7 +3174,7 @@ bool ExtractPartsFromNumberStringFromPointOrExponent(vector<wchar_t> *n, double 
       }
 
       if(count >= 1.0){
-        afterPoint->numberArray = new vector<double> (count);
+        afterPoint->numberArray = Allocate<double>(count);
 
         for(j = 0.0; j < count; j = j + 1.0){
           afterPoint->numberArray->at(j) = GetNumberFromNumberCharacterForBase(n->at(i + j), base);
@@ -3149,7 +3185,7 @@ bool ExtractPartsFromNumberStringFromPointOrExponent(vector<wchar_t> *n, double 
         if(i < n->size()){
           success = ExtractPartsFromNumberStringFromExponent(n, base, i, exponentIsPositive, exponent, errorMessages);
         }else{
-          exponent->numberArray = new vector<double> (0.0);
+          exponent->numberArray = Allocate<double>(0.0);
           success = true;
         }
       }else{
@@ -3163,7 +3199,7 @@ bool ExtractPartsFromNumberStringFromPointOrExponent(vector<wchar_t> *n, double 
   }else if(base <= 14.0 && (n->at(i) == 'e' || n->at(i) == 'E')){
     if(i < n->size()){
       success = ExtractPartsFromNumberStringFromExponent(n, base, i, exponentIsPositive, exponent, errorMessages);
-      afterPoint->numberArray = new vector<double> (0.0);
+      afterPoint->numberArray = Allocate<double>(0.0);
     }else{
       success = false;
       errorMessages->string = toVector(L"There must be at least one digit after the exponent.");
@@ -3203,7 +3239,7 @@ bool ExtractPartsFromNumberStringFromExponent(vector<wchar_t> *n, double base, d
         }
 
         if(count >= 1.0){
-          exponent->numberArray = new vector<double> (count);
+          exponent->numberArray = Allocate<double>(count);
 
           for(j = 0.0; j < count; j = j + 1.0){
             exponent->numberArray->at(j) = GetNumberFromNumberCharacterForBase(n->at(i + j), base);
@@ -3273,15 +3309,15 @@ vector<double> *StringToNumberArray(vector<wchar_t> *str){
   StringReference *stringReference;
   vector<double> *numbers;
 
-  numberArrayReference = new NumberArrayReference();
-  stringReference = new StringReference();
+  numberArrayReference = Allocate<NumberArrayReference>();
+  stringReference = Allocate<StringReference>();
 
   StringToNumberArrayWithCheck(str, numberArrayReference, stringReference);
 
   numbers = numberArrayReference->numberArray;
 
-  delete numberArrayReference;
-  delete stringReference;
+  Free(numberArrayReference);
+  Free(stringReference);
 
   return numbers;
 }
@@ -3295,9 +3331,9 @@ bool StringToNumberArrayWithCheck(vector<wchar_t> *str, NumberArrayReference *nu
 
   numberStrings = SplitByString(str, toVector(L","));
 
-  numbers = new vector<double> (numberStrings->size());
+  numbers = Allocate<double>(numberStrings->size());
   success = true;
-  numberReference = new NumberReference();
+  numberReference = Allocate<NumberReference>();
 
   for(i = 0.0; i < numberStrings->size(); i = i + 1.0){
     numberString = numberStrings->at(i)->string;
@@ -3306,11 +3342,11 @@ bool StringToNumberArrayWithCheck(vector<wchar_t> *str, NumberArrayReference *nu
     numbers->at(i) = numberReference->numberValue;
 
     FreeStringReference(numberStrings->at(i));
-    delete trimmedNumberString;
+    Free(trimmedNumberString);
   }
 
-  delete numberStrings;
-  delete numberReference;
+  Free(numberStrings);
+  Free(numberReference);
 
   numberArrayReference->numberArray = numbers;
 
@@ -3545,7 +3581,7 @@ double LanczosApproximation(double z){
   vector<double> *p;
   double i, y, t, x;
 
-  p = new vector<double> (8.0);
+  p = Allocate<double>(8.0);
   p->at(0) = 676.5203681218851;
   p->at(1) =  -1259.1392167224028;
   p->at(2) = 771.32342877765313;
@@ -3694,7 +3730,7 @@ double AkiyamaTanigawaAlgorithm(double n){
   double m, j, B;
   vector<double> *A;
 
-  A = new vector<double> (n + 1.0);
+  A = Allocate<double>(n + 1.0);
 
   for(m = 0.0; m <= n; m = m + 1.0){
     A->at(m) = 1.0/(m + 1.0);
@@ -3705,7 +3741,7 @@ double AkiyamaTanigawaAlgorithm(double n){
 
   B = A->at(0);
 
-  delete A;
+  Free(A);
 
   return B;
 }
@@ -3713,7 +3749,7 @@ vector<double> *aStringToNumberArray(vector<wchar_t> *string){
   double i;
   vector<double> *array;
 
-  array = new vector<double> (string->size());
+  array = Allocate<double>(string->size());
 
   for(i = 0.0; i < string->size(); i = i + 1.0){
     array->at(i) = string->at(i);
@@ -3724,7 +3760,7 @@ vector<wchar_t> *aNumberArrayToString(vector<double> *array){
   double i;
   vector<wchar_t> *string;
 
-  string = new vector<wchar_t> (array->size());
+  string = Allocate<wchar_t>(array->size());
 
   for(i = 0.0; i < array->size(); i = i + 1.0){
     string->at(i) = array->at(i);
@@ -3858,7 +3894,7 @@ vector<double> *aCopyNumberArray(vector<double> *a){
   double i;
   vector<double> *n;
 
-  n = new vector<double> (a->size());
+  n = Allocate<double>(a->size());
 
   for(i = 0.0; i < a->size(); i = i + 1.0){
     n->at(i) = a->at(i);
@@ -3870,7 +3906,7 @@ vector<bool> *aCopyBooleanArray(vector<bool> *a){
   double i;
   vector<bool> *n;
 
-  n = new vector<bool> (a->size());
+  n = Allocate<bool>(a->size());
 
   for(i = 0.0; i < a->size(); i = i + 1.0){
     n->at(i) = a->at(i);
@@ -3882,7 +3918,7 @@ vector<wchar_t> *aCopyString(vector<wchar_t> *a){
   double i;
   vector<wchar_t> *n;
 
-  n = new vector<wchar_t> (a->size());
+  n = Allocate<wchar_t>(a->size());
 
   for(i = 0.0; i < a->size(); i = i + 1.0){
     n->at(i) = a->at(i);
@@ -3897,7 +3933,7 @@ bool aCopyNumberArrayRange(vector<double> *a, double from, double to, NumberArra
 
   if(from >= 0.0 && from <= a->size() && to >= 0.0 && to <= a->size() && from <= to){
     length = to - from;
-    n = new vector<double> (length);
+    n = Allocate<double>(length);
 
     for(i = 0.0; i < length; i = i + 1.0){
       n->at(i) = a->at(from + i);
@@ -3918,7 +3954,7 @@ bool aCopyBooleanArrayRange(vector<bool> *a, double from, double to, BooleanArra
 
   if(from >= 0.0 && from <= a->size() && to >= 0.0 && to <= a->size() && from <= to){
     length = to - from;
-    n = new vector<bool> (length);
+    n = Allocate<bool>(length);
 
     for(i = 0.0; i < length; i = i + 1.0){
       n->at(i) = a->at(from + i);
@@ -3939,7 +3975,7 @@ bool aCopyStringRange(vector<wchar_t> *a, double from, double to, StringReferenc
 
   if(from >= 0.0 && from <= a->size() && to >= 0.0 && to <= a->size() && from <= to){
     length = to - from;
-    n = new vector<wchar_t> (length);
+    n = Allocate<wchar_t>(length);
 
     for(i = 0.0; i < length; i = i + 1.0){
       n->at(i) = a->at(from + i);
@@ -3959,7 +3995,7 @@ bool aIsLastElement(double length, double index){
 vector<double> *aCreateNumberArray(double length, double value){
   vector<double> *array;
 
-  array = new vector<double> (length);
+  array = Allocate<double>(length);
   aFillNumberArray(array, value);
 
   return array;
@@ -3967,7 +4003,7 @@ vector<double> *aCreateNumberArray(double length, double value){
 vector<bool> *aCreateBooleanArray(double length, bool value){
   vector<bool> *array;
 
-  array = new vector<bool> (length);
+  array = Allocate<bool>(length);
   aFillBooleanArray(array, value);
 
   return array;
@@ -3975,7 +4011,7 @@ vector<bool> *aCreateBooleanArray(double length, bool value){
 vector<wchar_t> *aCreateString(double length, wchar_t value){
   vector<wchar_t> *array;
 
-  array = new vector<wchar_t> (length);
+  array = Allocate<wchar_t>(length);
   aFillString(array, value);
 
   return array;
@@ -4004,7 +4040,7 @@ void aReverseNumberArray(vector<double> *array){
 BooleanReference *CreateBooleanReference(bool value){
   BooleanReference *ref;
 
-  ref = new BooleanReference();
+  ref = Allocate<BooleanReference>();
   ref->booleanValue = value;
 
   return ref;
@@ -4012,7 +4048,7 @@ BooleanReference *CreateBooleanReference(bool value){
 BooleanArrayReference *CreateBooleanArrayReference(vector<bool> *value){
   BooleanArrayReference *ref;
 
-  ref = new BooleanArrayReference();
+  ref = Allocate<BooleanArrayReference>();
   ref->booleanArray = value;
 
   return ref;
@@ -4021,8 +4057,8 @@ BooleanArrayReference *CreateBooleanArrayReferenceLengthValue(double length, boo
   BooleanArrayReference *ref;
   double i;
 
-  ref = new BooleanArrayReference();
-  ref->booleanArray = new vector<bool> (length);
+  ref = Allocate<BooleanArrayReference>();
+  ref->booleanArray = Allocate<bool>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     ref->booleanArray->at(i) = value;
@@ -4031,13 +4067,13 @@ BooleanArrayReference *CreateBooleanArrayReferenceLengthValue(double length, boo
   return ref;
 }
 void FreeBooleanArrayReference(BooleanArrayReference *booleanArrayReference){
-  delete booleanArrayReference->booleanArray;
-  delete booleanArrayReference;
+  Free(booleanArrayReference->booleanArray);
+  Free(booleanArrayReference);
 }
 CharacterReference *CreateCharacterReference(wchar_t value){
   CharacterReference *ref;
 
-  ref = new CharacterReference();
+  ref = Allocate<CharacterReference>();
   ref->characterValue = value;
 
   return ref;
@@ -4045,7 +4081,7 @@ CharacterReference *CreateCharacterReference(wchar_t value){
 NumberReference *CreateNumberReference(double value){
   NumberReference *ref;
 
-  ref = new NumberReference();
+  ref = Allocate<NumberReference>();
   ref->numberValue = value;
 
   return ref;
@@ -4053,7 +4089,7 @@ NumberReference *CreateNumberReference(double value){
 NumberArrayReference *CreateNumberArrayReference(vector<double> *value){
   NumberArrayReference *ref;
 
-  ref = new NumberArrayReference();
+  ref = Allocate<NumberArrayReference>();
   ref->numberArray = value;
 
   return ref;
@@ -4062,8 +4098,8 @@ NumberArrayReference *CreateNumberArrayReferenceLengthValue(double length, doubl
   NumberArrayReference *ref;
   double i;
 
-  ref = new NumberArrayReference();
-  ref->numberArray = new vector<double> (length);
+  ref = Allocate<NumberArrayReference>();
+  ref->numberArray = Allocate<double>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     ref->numberArray->at(i) = value;
@@ -4072,13 +4108,13 @@ NumberArrayReference *CreateNumberArrayReferenceLengthValue(double length, doubl
   return ref;
 }
 void FreeNumberArrayReference(NumberArrayReference *numberArrayReference){
-  delete numberArrayReference->numberArray;
-  delete numberArrayReference;
+  Free(numberArrayReference->numberArray);
+  Free(numberArrayReference);
 }
 StringReference *CreateStringReference(vector<wchar_t> *value){
   StringReference *ref;
 
-  ref = new StringReference();
+  ref = Allocate<StringReference>();
   ref->string = value;
 
   return ref;
@@ -4087,8 +4123,8 @@ StringReference *CreateStringReferenceLengthValue(double length, wchar_t value){
   StringReference *ref;
   double i;
 
-  ref = new StringReference();
-  ref->string = new vector<wchar_t> (length);
+  ref = Allocate<StringReference>();
+  ref->string = Allocate<wchar_t>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     ref->string->at(i) = value;
@@ -4097,13 +4133,13 @@ StringReference *CreateStringReferenceLengthValue(double length, wchar_t value){
   return ref;
 }
 void FreeStringReference(StringReference *stringReference){
-  delete stringReference->string;
-  delete stringReference;
+  Free(stringReference->string);
+  Free(stringReference);
 }
 StringArrayReference *CreateStringArrayReference(vector<StringReference*> *strings){
   StringArrayReference *ref;
 
-  ref = new StringArrayReference();
+  ref = Allocate<StringArrayReference>();
   ref->stringArray = strings;
 
   return ref;
@@ -4112,8 +4148,8 @@ StringArrayReference *CreateStringArrayReferenceLengthValue(double length, vecto
   StringArrayReference *ref;
   double i;
 
-  ref = new StringArrayReference();
-  ref->stringArray = new vector<StringReference*> (length);
+  ref = Allocate<StringArrayReference>();
+  ref->stringArray = Allocate<StringReference*>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     ref->stringArray->at(i) = CreateStringReference(value);
@@ -4125,10 +4161,10 @@ void FreeStringArrayReference(StringArrayReference *stringArrayReference){
   double i;
 
   for(i = 0.0; i < stringArrayReference->stringArray->size(); i = i + 1.0){
-    delete stringArrayReference->stringArray->at(i);
+    Free(stringArrayReference->stringArray->at(i));
   }
-  delete stringArrayReference->stringArray;
-  delete stringArrayReference;
+  Free(stringArrayReference->stringArray);
+  Free(stringArrayReference);
 }
 vector<wchar_t> *GetPixelFontData(){
   return toVector(L"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000001100000000000000000000001100000011000000110000001100000011000000110000001100000000000000000000000000000000000000000000000000000000000000000000000000001101100011011000110110001101100000000000000000000000000011001100110011011111111011001100110011011111111011001100110011000000000000000000000000000000000000110000111111011111111110110001111100001111110000111110001101111111111011111100001100000000000000000000111000011011000110110110111011000001100000110000011000001101110110110110001101100001110000000000000000011111110011000111111001100011011000011100000111000011011001100110011001100110110000111000000000000000000000000000000000000000000000000000000000000000000000000000001100000111000001100000111000000000000000000000011000000011000000011000000110000001100000011000000110000001100000011000001100000110000000000000000000000001100000110000011000000110000001100000011000000110000001100000011000000011000000011000000000000000000000000000000000010011001010110100011110011111111001111000101101010011001000000000000000000000000000000000000000000011000000110000001100011111111111111110001100000011000000110000000000000000000000000000000000000001100000110000011100000111000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000000000000000000000011100000111000000000000000000000000000000000000000000000000000000000000000000000000000000011000000110000011000000110000011000000110000011000000110000011000000110000011000000110000000000000000000000001111000110011011000011110001111100111111011011111100111110001111000011011001100011110000000000000000000111111000011000000110000001100000011000000110000001100000011000000111100001110000011000000000000000000011111111000000110000001100000110000011000001100000110000011000001100000011100111011111100000000000000000011111101110011111000000110000001110000001111110111000001100000011000000111001110111111000000000000000000011000000110000001100000011000000110000111111110011001100110110001111000011100000110000000000000000000001111110111001111100000011000000111000000111111100000011000000110000001100000011111111110000000000000000011111101110011111000011110000111110001101111111000000110000001100000011111001110111111000000000000000000000110000001100000011000000110000011000001100000110000011000000110000001100000011111111000000000000000001111110111001111100001111000011111001110111111011100111110000111100001111100111011111100000000000000000011111101110011111000000110000001100000011111110111001111100001111000011111001110111111000000000000000000000000000011100000111000000000000000000000111000001110000000000000000000000000000000000000000000000000000001100000110000011100000111000000000000000000000111000001110000000000000000000000000000000000000000000011000000011000000011000000011000000011000000011000001100000110000011000001100000110000000000000000000000000000000000000111111111111111100000000111111111111111100000000000000000000000000000000000000000000000000000110000011000001100000110000011000001100000001100000001100000001100000001100000001100000000000000000000110000000000000000000000110000001100000110000011000001100000011000011110000110111111000000000000000001111110000000110111100111101101111001011101110111100001101111110000000000000000000000000000000000000000011000011110000111100001111000011111111111100001111000011110000110110011000111100000110000000000000000000011111111110001111000011110000111110001101111111111000111100001111000011111000110111111100000000000000000111111011100111000000110000001100000011000000110000001100000011000000111110011101111110000000000000000000111111011100111110001111000011110000111100001111000011110000111110001101110011001111110000000000000000111111110000001100000011000000110000001100111111000000110000001100000011000000111111111100000000000000000000001100000011000000110000001100000011000000110011111100000011000000110000001111111111000000000000000001111110111001111100001111000011111100110000001100000011000000110000001111100111011111100000000000000000110000111100001111000011110000111100001111111111110000111100001111000011110000111100001100000000000000000111111000011000000110000001100000011000000110000001100000011000000110000001100001111110000000000000000000111110011101110110001101100000011000000110000001100000011000000110000001100000011000000000000000000000110000110110001100110011000110110000111100000111000011110001101100110011011000111100001100000000000000001111111100000011000000110000001100000011000000110000001100000""01100000011000000110000001100000000000000001100001111000011110000111100001111000011110000111101101111111111111111111110011111000011000000000000000011100011111000111111001111110011111110111101101111011111110011111100111111000111110001110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011111001110111111000000000000000000000001100000011000000110000001100000011011111111110001111000011110000111110001101111111000000000000000011111100011101101111101111011011110000111100001111000011110000111100001101100110001111000000000000000000110000110110001100110011000110110000111101111111111000111100001111000011111000110111111100000000000000000111111011100111110000001100000011100000011111100000011100000011000000111110011101111110000000000000000000011000000110000001100000011000000110000001100000011000000110000001100000011000111111110000000000000000011111101110011111000011110000111100001111000011110000111100001111000011110000111100001100000000000000000001100000111100001111000110011001100110110000111100001111000011110000111100001111000011000000000000000011000011111001111111111111111111110110111101101111000011110000111100001111000011110000110000000000000000110000110110011001100110001111000011110000011000001111000011110001100110011001101100001100000000000000000001100000011000000110000001100000011000000110000011110000111100011001100110011011000011000000000000000011111111000000110000001100000110000011000111111000110000011000001100000011000000111111110000000000000000001111000000110000001100000011000000110000001100000011000000110000001100000011000011110000000000110000001100000001100000011000000011000000110000000110000001100000001100000011000000011000000110000000000000000000111100001100000011000000110000001100000011000000110000001100000011000000110000001111000000000000000000000000000000000000000000000000000000000000000000000000001100001101100110001111000001100011111111111111110000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000110000001110000001100000011100000000000000000111111101100001111000011111111101100000011000011011111100000000000000000000000000000000000000000000000000111111111000011110000111100001111000011011111110000001100000011000000110000001100000011000000000000000001111110110000110000001100000011000000111100001101111110000000000000000000000000000000000000000000000000111111101100001111000011110000111100001111111110110000001100000011000000110000001100000000000000000000001111111000000011000000110111111111000011110000110111111000000000000000000000000000000000000000000000000000001100000011000000110000001100000011000011111100001100000011000000110011001100011110000111111011000011110000001100000011111110110000111100001111000011011111100000000000000000000000000000000000000000000000001100001111000011110000111100001111000011110000110111111100000011000000110000001100000011000000000000000000011000000110000001100000011000000110000001100000011000000000000000000000011000000000000001110000110110001100000011000000110000001100000011000000110000001100000000000000000000001100000000000000000000000000000110001100110011000111110000111100011011001100110110001100000011000000110000001100000011000000000000000001111110000110000001100000011000000110000001100000011000000110000001100000011000000111100000000000000000110110111101101111011011110110111101101111011011011111110000000000000000000000000000000000000000000000000110001101100011011000110110001101100011011000110011111100000000000000000000000000000000000000000000000000111110011000110110001101100011011000110110001100111110000000000000000000000000000000000000001100000011000000110111111111000011110000111100001111000011011111110000000000000000000000000000000011000000110000001100000011111110110000111100001111000011110000111111111000000000000000000000000000000000000000000000000000000011000000110000001100000011000000110000011101111111000000000000000000000000000000000000000000000000011111111100000011000000011111100000001100000011111111100000000000000000000000000000000000000000000000000011100001101100000011000000110000001100000011000011111100001100000011000000110000000000000000000000000001111110011000110110001101100011011000110110001101100011000000000000000000000000000000000000000000000000000110000011110000111100011001100110011011000011110000110000000000000000000000000000000000000000000000001100001111100111111111111101101111000011110000111100001100000000000000000000000000000000000000000000000011000011011001100011110000011000001111000110011011000011000000000000000000000000000000000000001100000110000001100000110000011000001111000110011001100110110000110000000000000000000000000000000000000000000000001111111100000110000011000001100000110000011000001111111100000000000000000000000000000000000000000000000011110000000110000001100000011000000111000000111100011100000110000001100000011000111100000001100000011000000110000001100000011000000110000001100000011000000110000001100000011000000110000001100000000000000000000000111100011000000110000001100000111000111100000011100000011000000110000001100000001111");
@@ -4242,7 +4278,7 @@ vector<double> *ConvertToPNGGrayscale(RGBABitmapImage *image){
 PHYS *PysicsHeader(double pixelsPerMeter){
   PHYS *phys;
 
-  phys = new PHYS();
+  phys = Allocate<PHYS>();
 
   phys->pixelsPerMeter = pixelsPerMeter;
 
@@ -4252,7 +4288,7 @@ vector<double> *ConvertToPNGWithOptions(RGBABitmapImage *image, double colorType
   PNGImage *png;
   vector<double> *pngData, *colorData;
 
-  png = new PNGImage();
+  png = Allocate<PNGImage>();
 
   png->signature = PNGSignature();
 
@@ -4281,7 +4317,7 @@ vector<double> *PNGSerializeChunks(PNGImage *png){
   if(png->physPresent){
     length = length + 4.0 + 4.0 + 1.0 + 12.0;
   }
-  data = new vector<double> (length);
+  data = Allocate<double>(length);
   position = CreateNumberReference(0.0);
 
   /* Signature */
@@ -4348,7 +4384,7 @@ vector<double> *GetPNGColorData(RGBABitmapImage *image){
 
   length = 4.0*ImageWidth(image)*ImageHeight(image) + ImageHeight(image);
 
-  colordata = new vector<double> (length);
+  colordata = Allocate<double>(length);
 
   next = 0.0;
 
@@ -4377,7 +4413,7 @@ vector<double> *GetPNGColorDataGreyscale(RGBABitmapImage *image){
 
   length = ImageWidth(image)*ImageHeight(image) + ImageHeight(image);
 
-  colordata = new vector<double> (length);
+  colordata = Allocate<double>(length);
 
   next = 0.0;
 
@@ -4396,7 +4432,7 @@ vector<double> *GetPNGColorDataGreyscale(RGBABitmapImage *image){
 IHDR *PNGHeader(RGBABitmapImage *image, double colortype){
   IHDR *ihdr;
 
-  ihdr = new IHDR();
+  ihdr = Allocate<IHDR>();
   ihdr->Width = ImageWidth(image);
   ihdr->Height = ImageHeight(image);
   /* Truecolour with alpha */
@@ -4413,7 +4449,7 @@ IHDR *PNGHeader(RGBABitmapImage *image, double colortype){
 vector<double> *PNGSignature(){
   vector<double> *s;
 
-  s = new vector<double> (8.0);
+  s = Allocate<double>(8.0);
   s->at(0) = 137.0;
   s->at(1) = 80.0;
   s->at(2) = 78.0;
@@ -4438,7 +4474,7 @@ vector<double> *PNGReadDataChunks(vector<Chunk*> *cs){
     }
   }
 
-  zlibData = new vector<double> (length);
+  zlibData = Allocate<double>(length);
   zlibpos = 0.0;
 
   for(i = 0.0; i < cs->size(); i = i + 1.0){
@@ -4467,7 +4503,7 @@ bool PNGReadHeader(RGBABitmapImage *image, vector<Chunk*> *cs, StringReference *
   for(i = 0.0; i < cs->size(); i = i + 1.0){
     c = cs->at(i);
     if(aStringsEqual(c->type, toVector(L"IHDR"))){
-      ihdr = new IHDR();
+      ihdr = Allocate<IHDR>();
 
       ihdr->Width = Read4bytesBE(c->data, position);
       ihdr->Height = Read4bytesBE(c->data, position);
@@ -4527,7 +4563,7 @@ vector<Chunk*> *PNGReadChunks(vector<double> *data, NumberReference *position){
     }
   }
   position->numberValue = prepos;
-  cs = new vector<Chunk*> (chunks);
+  cs = Allocate<Chunk*>(chunks);
   for(i = 0.0; i < chunks; i = i + 1.0){
     cs->at(i) = PNGReadChunk(data, position);
   }
@@ -4537,10 +4573,10 @@ vector<Chunk*> *PNGReadChunks(vector<double> *data, NumberReference *position){
 Chunk *PNGReadChunk(vector<double> *data, NumberReference *position){
   Chunk *c;
 
-  c = new Chunk();
+  c = Allocate<Chunk>();
 
   c->length = Read4bytesBE(data, position);
-  c->type = new vector<wchar_t> (4.0);
+  c->type = Allocate<wchar_t>(4.0);
   c->type->at(0) = ReadByte(data, position);
   c->type->at(1) = ReadByte(data, position);
   c->type->at(2) = ReadByte(data, position);
@@ -4587,7 +4623,7 @@ vector<wchar_t> *Substring(vector<wchar_t> *string, double from, double to){
 
   length = to - from;
 
-  n = new vector<wchar_t> (length);
+  n = Allocate<wchar_t>(length);
 
   for(i = from; i < to; i = i + 1.0){
     n->at(i - from) = string->at(i);
@@ -4600,7 +4636,7 @@ vector<wchar_t> *AppendString(vector<wchar_t> *s1, vector<wchar_t> *s2){
 
   newString = ConcatenateString(s1, s2);
 
-  delete s1;
+  Free(s1);
 
   return newString;
 }
@@ -4608,7 +4644,7 @@ vector<wchar_t> *ConcatenateString(vector<wchar_t> *s1, vector<wchar_t> *s2){
   vector<wchar_t> *newString;
   double i;
 
-  newString = new vector<wchar_t> (s1->size() + s2->size());
+  newString = Allocate<wchar_t>(s1->size() + s2->size());
 
   for(i = 0.0; i < s1->size(); i = i + 1.0){
     newString->at(i) = s1->at(i);
@@ -4625,14 +4661,14 @@ vector<wchar_t> *AppendCharacter(vector<wchar_t> *string, wchar_t c){
 
   newString = ConcatenateCharacter(string, c);
 
-  delete string;
+  Free(string);
 
   return newString;
 }
 vector<wchar_t> *ConcatenateCharacter(vector<wchar_t> *string, wchar_t c){
   vector<wchar_t> *newString;
   double i;
-  newString = new vector<wchar_t> (string->size() + 1.0);
+  newString = Allocate<wchar_t>(string->size() + 1.0);
 
   for(i = 0.0; i < string->size(); i = i + 1.0){
     newString->at(i) = string->at(i);
@@ -4646,12 +4682,12 @@ vector<StringReference*> *SplitByCharacter(vector<wchar_t> *toSplit, wchar_t spl
   vector<StringReference*> *split;
   vector<wchar_t> *stringToSplitBy;
 
-  stringToSplitBy = new vector<wchar_t> (1.0);
+  stringToSplitBy = Allocate<wchar_t>(1.0);
   stringToSplitBy->at(0) = splitBy;
 
   split = SplitByString(toSplit, stringToSplitBy);
 
-  delete stringToSplitBy;
+  Free(stringToSplitBy);
 
   return split;
 }
@@ -4726,7 +4762,7 @@ bool ContainsCharacter(vector<wchar_t> *string, wchar_t character){
   return found;
 }
 bool ContainsString(vector<wchar_t> *string, vector<wchar_t> *substring){
-  return IndexOfString(string, substring, new NumberReference());
+  return IndexOfString(string, substring, Allocate<NumberReference>());
 }
 void ToUpperCase(vector<wchar_t> *string){
   double i;
@@ -4765,8 +4801,8 @@ vector<wchar_t> *ReplaceString(vector<wchar_t> *string, vector<wchar_t> *toRepla
   BooleanReference *equalsReference;
   bool success;
 
-  equalsReference = new BooleanReference();
-  result = new vector<wchar_t> (0.0);
+  equalsReference = Allocate<BooleanReference>();
+  result = Allocate<wchar_t>(0.0);
 
   for(i = 0.0; i < string->size(); ){
     success = SubstringEqualsWithCheck(string, i, toReplace, equalsReference);
@@ -4789,7 +4825,7 @@ vector<wchar_t> *ReplaceCharacter(vector<wchar_t> *string, wchar_t toReplace, wc
   vector<wchar_t> *result;
   double i;
 
-  result = new vector<wchar_t> (0.0);
+  result = Allocate<wchar_t>(0.0);
 
   for(i = 0.0; i < string->size(); i = i + 1.0){
     if(string->at(i) == toReplace){
@@ -4831,7 +4867,7 @@ vector<wchar_t> *Trim(vector<wchar_t> *string){
   if(lastWhitespaceLocationStart < lastWhitespaceLocationEnd){
     result = Substring(string, lastWhitespaceLocationStart + 1.0, lastWhitespaceLocationEnd);
   }else{
-    result = new vector<wchar_t> (0.0);
+    result = Allocate<wchar_t>(0.0);
   }
 
   return result;
@@ -4863,17 +4899,17 @@ vector<StringReference*> *SplitByString(vector<wchar_t> *toSplit, vector<wchar_t
   wchar_t c;
   StringReference *n;
 
-  split = new vector<StringReference*> (0.0);
+  split = Allocate<StringReference*>(0.0);
 
-  next = new vector<wchar_t> (0.0);
+  next = Allocate<wchar_t>(0.0);
   for(i = 0.0; i < toSplit->size(); ){
     c = toSplit->at(i);
 
     if(SubstringEquals(toSplit, i, splitBy)){
-      n = new StringReference();
+      n = Allocate<StringReference>();
       n->string = next;
       split = AddString(split, n);
-      next = new vector<wchar_t> (0.0);
+      next = Allocate<wchar_t>(0.0);
       i = i + splitBy->size();
     }else{
       next = AppendCharacter(next, c);
@@ -4881,7 +4917,7 @@ vector<StringReference*> *SplitByString(vector<wchar_t> *toSplit, vector<wchar_t
     }
   }
 
-  n = new StringReference();
+  n = Allocate<StringReference>();
   n->string = next;
   split = AddString(split, n);
 
@@ -4923,7 +4959,7 @@ vector<double> *ReadXbytes(vector<double> *data, NumberReference *position, doub
   vector<double> *r;
   double i;
 
-  r = new vector<double> (length);
+  r = Allocate<double>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     r->at(i) = ReadByte(data, position);
@@ -5018,7 +5054,7 @@ vector<double> *MakeCRC32Table(){
   double c, n, k;
   vector<double> *crcTable;
 
-  crcTable = new vector<double> (256.0);
+  crcTable = Allocate<double>(256.0);
 
   for(n = 0.0; n < 256.0; n = n + 1.0){
     c = n;
@@ -5059,7 +5095,7 @@ double CRC32OfInterval(vector<double> *data, double from, double length){
   vector<double> *crcBase;
   double i, crc;
 
-  crcBase = new vector<double> (length);
+  crcBase = Allocate<double>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     crcBase->at(i) = data->at(from + i);
@@ -5067,14 +5103,14 @@ double CRC32OfInterval(vector<double> *data, double from, double length){
 
   crc = CalculateCRC32(crcBase);
 
-  delete crcBase;
+  Free(crcBase);
 
   return crc;
 }
 ZLIBStruct *ZLibCompressNoCompression(vector<double> *data){
   ZLIBStruct *zlibStruct;
 
-  zlibStruct = new ZLIBStruct();
+  zlibStruct = Allocate<ZLIBStruct>();
 
   zlibStruct->CMF = 120.0;
   zlibStruct->FLG = 1.0;
@@ -5086,7 +5122,7 @@ ZLIBStruct *ZLibCompressNoCompression(vector<double> *data){
 ZLIBStruct *ZLibCompressStaticHuffman(vector<double> *data, double level){
   ZLIBStruct *zlibStruct;
 
-  zlibStruct = new ZLIBStruct();
+  zlibStruct = Allocate<ZLIBStruct>();
 
   zlibStruct->CMF = 120.0;
   zlibStruct->FLG = 1.0;
@@ -5099,13 +5135,13 @@ vector<double> *AddNumber(vector<double> *list, double a){
   vector<double> *newlist;
   double i;
 
-  newlist = new vector<double> (list->size() + 1.0);
+  newlist = Allocate<double>(list->size() + 1.0);
   for(i = 0.0; i < list->size(); i = i + 1.0){
     newlist->at(i) = list->at(i);
   }
   newlist->at(list->size()) = a;
 		
-  delete list;
+  Free(list);
 		
   return newlist;
 }
@@ -5116,7 +5152,7 @@ vector<double> *RemoveNumber(vector<double> *list, double n){
   vector<double> *newlist;
   double i;
 
-  newlist = new vector<double> (list->size() - 1.0);
+  newlist = Allocate<double>(list->size() - 1.0);
 
   if(n >= 0.0 && n < list->size()){
     for(i = 0.0; i < list->size(); i = i + 1.0){
@@ -5128,9 +5164,9 @@ vector<double> *RemoveNumber(vector<double> *list, double n){
       }
     }
 
-    delete list;
+    Free(list);
   }else{
-    delete newlist;
+    Free(newlist);
   }
 		
   return newlist;
@@ -5145,14 +5181,14 @@ vector<StringReference*> *AddString(vector<StringReference*> *list, StringRefere
   vector<StringReference*> *newlist;
   double i;
 
-  newlist = new vector<StringReference*> (list->size() + 1.0);
+  newlist = Allocate<StringReference*>(list->size() + 1.0);
 
   for(i = 0.0; i < list->size(); i = i + 1.0){
     newlist->at(i) = list->at(i);
   }
   newlist->at(list->size()) = a;
 		
-  delete list;
+  Free(list);
 		
   return newlist;
 }
@@ -5163,7 +5199,7 @@ vector<StringReference*> *RemoveString(vector<StringReference*> *list, double n)
   vector<StringReference*> *newlist;
   double i;
 
-  newlist = new vector<StringReference*> (list->size() - 1.0);
+  newlist = Allocate<StringReference*>(list->size() - 1.0);
 
   if(n >= 0.0 && n < list->size()){
     for(i = 0.0; i < list->size(); i = i + 1.0){
@@ -5175,9 +5211,9 @@ vector<StringReference*> *RemoveString(vector<StringReference*> *list, double n)
       }
     }
 
-    delete list;
+    Free(list);
   }else{
-    delete newlist;
+    Free(newlist);
   }
 		
   return newlist;
@@ -5192,13 +5228,13 @@ vector<bool> *AddBoolean(vector<bool> *list, bool a){
   vector<bool> *newlist;
   double i;
 
-  newlist = new vector<bool> (list->size() + 1.0);
+  newlist = Allocate<bool>(list->size() + 1.0);
   for(i = 0.0; i < list->size(); i = i + 1.0){
     newlist->at(i) = list->at(i);
   }
   newlist->at(list->size()) = a;
 		
-  delete list;
+  Free(list);
 		
   return newlist;
 }
@@ -5209,7 +5245,7 @@ vector<bool> *RemoveBoolean(vector<bool> *list, double n){
   vector<bool> *newlist;
   double i;
 
-  newlist = new vector<bool> (list->size() - 1.0);
+  newlist = Allocate<bool>(list->size() - 1.0);
 
   if(n >= 0.0 && n < list->size()){
     for(i = 0.0; i < list->size(); i = i + 1.0){
@@ -5221,9 +5257,9 @@ vector<bool> *RemoveBoolean(vector<bool> *list, double n){
       }
     }
 
-    delete list;
+    Free(list);
   }else{
-    delete newlist;
+    Free(newlist);
   }
 		
   return newlist;
@@ -5237,8 +5273,8 @@ void RemoveDecimalRef(BooleanArrayReference *list, double i){
 LinkedListStrings *CreateLinkedListString(){
   LinkedListStrings *ll;
 
-  ll = new LinkedListStrings();
-  ll->first = new LinkedListNodeStrings();
+  ll = Allocate<LinkedListStrings>();
+  ll->first = Allocate<LinkedListNodeStrings>();
   ll->last = ll->first;
   ll->last->end = true;
 
@@ -5247,7 +5283,7 @@ LinkedListStrings *CreateLinkedListString(){
 void LinkedListAddString(LinkedListStrings *ll, vector<wchar_t> *value){
   ll->last->end = false;
   ll->last->value = value;
-  ll->last->next = new LinkedListNodeStrings();
+  ll->last->next = Allocate<LinkedListNodeStrings>();
   ll->last->next->end = true;
   ll->last = ll->last->next;
 }
@@ -5260,10 +5296,10 @@ vector<StringReference*> *LinkedListStringsToArray(LinkedListStrings *ll){
 
   length = LinkedListStringsLength(ll);
 
-  array = new vector<StringReference*> (length);
+  array = Allocate<StringReference*>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
-    array->at(i) = new StringReference();
+    array->at(i) = Allocate<StringReference>();
     array->at(i)->string = node->value;
     node = node->next;
   }
@@ -5291,16 +5327,16 @@ void FreeLinkedListString(LinkedListStrings *ll){
   for(;  !node->end ; ){
     prev = node;
     node = node->next;
-    delete prev;
+    Free(prev);
   }
 
-  delete node;
+  Free(node);
 }
 LinkedListNumbers *CreateLinkedListNumbers(){
   LinkedListNumbers *ll;
 
-  ll = new LinkedListNumbers();
-  ll->first = new LinkedListNodeNumbers();
+  ll = Allocate<LinkedListNumbers>();
+  ll->first = Allocate<LinkedListNodeNumbers>();
   ll->last = ll->first;
   ll->last->end = true;
 
@@ -5310,7 +5346,7 @@ vector<LinkedListNumbers*> *CreateLinkedListNumbersArray(double length){
   vector<LinkedListNumbers*> *lls;
   double i;
 
-  lls = new vector<LinkedListNumbers*> (length);
+  lls = Allocate<LinkedListNumbers*>(length);
   for(i = 0.0; i < lls->size(); i = i + 1.0){
     lls->at(i) = CreateLinkedListNumbers();
   }
@@ -5320,7 +5356,7 @@ vector<LinkedListNumbers*> *CreateLinkedListNumbersArray(double length){
 void LinkedListAddNumber(LinkedListNumbers *ll, double value){
   ll->last->end = false;
   ll->last->value = value;
-  ll->last->next = new LinkedListNodeNumbers();
+  ll->last->next = Allocate<LinkedListNodeNumbers>();
   ll->last->next->end = true;
   ll->last = ll->last->next;
 }
@@ -5354,7 +5390,7 @@ void LinkedListInsertNumber(LinkedListNumbers *ll, double index, double value){
 
   if(index == 0.0){
     tmp = ll->first;
-    ll->first = new LinkedListNodeNumbers();
+    ll->first = Allocate<LinkedListNodeNumbers>();
     ll->first->next = tmp;
     ll->first->value = value;
     ll->first->end = false;
@@ -5365,7 +5401,7 @@ void LinkedListInsertNumber(LinkedListNumbers *ll, double index, double value){
     }
 
     tmp = node->next;
-    node->next = new LinkedListNodeNumbers();
+    node->next = Allocate<LinkedListNodeNumbers>();
     node->next->next = tmp;
     node->next->value = value;
     node->next->end = false;
@@ -5409,10 +5445,10 @@ void FreeLinkedListNumbers(LinkedListNumbers *ll){
   for(;  !node->end ; ){
     prev = node;
     node = node->next;
-    delete prev;
+    Free(prev);
   }
 
-  delete node;
+  Free(node);
 }
 void FreeLinkedListNumbersArray(vector<LinkedListNumbers*> *lls){
   double i;
@@ -5420,7 +5456,7 @@ void FreeLinkedListNumbersArray(vector<LinkedListNumbers*> *lls){
   for(i = 0.0; i < lls->size(); i = i + 1.0){
     FreeLinkedListNumbers(lls->at(i));
   }
-  delete lls;
+  Free(lls);
 }
 vector<double> *LinkedListNumbersToArray(LinkedListNumbers *ll){
   vector<double> *array;
@@ -5431,7 +5467,7 @@ vector<double> *LinkedListNumbersToArray(LinkedListNumbers *ll){
 
   length = LinkedListNumbersLength(ll);
 
-  array = new vector<double> (length);
+  array = Allocate<double>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     array->at(i) = node->value;
@@ -5481,8 +5517,8 @@ bool LinkedListNumbersEqual(LinkedListNumbers *a, LinkedListNumbers *b){
 LinkedListCharacters *CreateLinkedListCharacter(){
   LinkedListCharacters *ll;
 
-  ll = new LinkedListCharacters();
-  ll->first = new LinkedListNodeCharacters();
+  ll = Allocate<LinkedListCharacters>();
+  ll->first = Allocate<LinkedListNodeCharacters>();
   ll->last = ll->first;
   ll->last->end = true;
 
@@ -5491,7 +5527,7 @@ LinkedListCharacters *CreateLinkedListCharacter(){
 void LinkedListAddCharacter(LinkedListCharacters *ll, wchar_t value){
   ll->last->end = false;
   ll->last->value = value;
-  ll->last->next = new LinkedListNodeCharacters();
+  ll->last->next = Allocate<LinkedListNodeCharacters>();
   ll->last->next->end = true;
   ll->last = ll->last->next;
 }
@@ -5504,7 +5540,7 @@ vector<wchar_t> *LinkedListCharactersToArray(LinkedListCharacters *ll){
 
   length = LinkedListCharactersLength(ll);
 
-  array = new vector<wchar_t> (length);
+  array = Allocate<wchar_t>(length);
 
   for(i = 0.0; i < length; i = i + 1.0){
     array->at(i) = node->value;
@@ -5534,16 +5570,16 @@ void FreeLinkedListCharacter(LinkedListCharacters *ll){
   for(;  !node->end ; ){
     prev = node;
     node = node->next;
-    delete prev;
+    Free(prev);
   }
 
-  delete node;
+  Free(node);
 }
 DynamicArrayNumbers *CreateDynamicArrayNumbers(){
   DynamicArrayNumbers *da;
 
-  da = new DynamicArrayNumbers();
-  da->array = new vector<double> (10.0);
+  da = Allocate<DynamicArrayNumbers>();
+  da->array = Allocate<double>(10.0);
   da->length = 0.0;
 
   return da;
@@ -5551,8 +5587,8 @@ DynamicArrayNumbers *CreateDynamicArrayNumbers(){
 DynamicArrayNumbers *CreateDynamicArrayNumbersWithInitialCapacity(double capacity){
   DynamicArrayNumbers *da;
 
-  da = new DynamicArrayNumbers();
-  da->array = new vector<double> (capacity);
+  da = Allocate<DynamicArrayNumbers>();
+  da->array = Allocate<double>(capacity);
   da->length = 0.0;
 
   return da;
@@ -5570,13 +5606,13 @@ void DynamicArrayNumbersIncreaseSize(DynamicArrayNumbers *da){
   vector<double> *newArray;
 
   newLength = round(da->array->size()*3.0/2.0);
-  newArray = new vector<double> (newLength);
+  newArray = Allocate<double>(newLength);
 
   for(i = 0.0; i < da->array->size(); i = i + 1.0){
     newArray->at(i) = da->array->at(i);
   }
 
-  delete da->array;
+  Free(da->array);
 
   da->array = newArray;
 }
@@ -5596,13 +5632,13 @@ void DynamicArrayNumbersDecreaseSize(DynamicArrayNumbers *da){
   vector<double> *newArray;
 
   newLength = round(da->array->size()*2.0/3.0);
-  newArray = new vector<double> (newLength);
+  newArray = Allocate<double>(newLength);
 
   for(i = 0.0; i < newLength; i = i + 1.0){
     newArray->at(i) = da->array->at(i);
   }
 
-  delete da->array;
+  Free(da->array);
 
   da->array = newArray;
 }
@@ -5644,14 +5680,14 @@ void DynamicArrayRemoveNumber(DynamicArrayNumbers *da, double index){
   }
 }
 void FreeDynamicArrayNumbers(DynamicArrayNumbers *da){
-  delete da->array;
-  delete da;
+  Free(da->array);
+  Free(da);
 }
 vector<double> *DynamicArrayNumbersToArray(DynamicArrayNumbers *da){
   vector<double> *array;
   double i;
 
-  array = new vector<double> (da->length);
+  array = Allocate<double>(da->length);
 
   for(i = 0.0; i < da->length; i = i + 1.0){
     array->at(i) = da->array->at(i);
@@ -5688,7 +5724,7 @@ DynamicArrayNumbers *ArrayToDynamicArrayNumbersWithOptimalSize(vector<double> *a
 DynamicArrayNumbers *ArrayToDynamicArrayNumbers(vector<double> *array){
   DynamicArrayNumbers *da;
 
-  da = new DynamicArrayNumbers();
+  da = Allocate<DynamicArrayNumbers>();
   da->array = aCopyNumberArray(array);
   da->length = array->size();
 
@@ -5730,10 +5766,10 @@ DynamicArrayNumbers *LinkedListToDynamicArrayNumbers(LinkedListNumbers *ll){
 
   node = ll->first;
 
-  da = new DynamicArrayNumbers();
+  da = Allocate<DynamicArrayNumbers>();
   da->length = LinkedListNumbersLength(ll);
 
-  da->array = new vector<double> (da->length);
+  da->array = Allocate<double>(da->length);
 
   for(i = 0.0; i < da->length; i = i + 1.0){
     da->array->at(i) = node->value;
@@ -5746,13 +5782,13 @@ vector<wchar_t> *AddCharacter(vector<wchar_t> *list, wchar_t a){
   vector<wchar_t> *newlist;
   double i;
 
-  newlist = new vector<wchar_t> (list->size() + 1.0);
+  newlist = Allocate<wchar_t>(list->size() + 1.0);
   for(i = 0.0; i < list->size(); i = i + 1.0){
     newlist->at(i) = list->at(i);
   }
   newlist->at(list->size()) = a;
 		
-  delete list;
+  Free(list);
 		
   return newlist;
 }
@@ -5763,7 +5799,7 @@ vector<wchar_t> *RemoveCharacter(vector<wchar_t> *list, double n){
   vector<wchar_t> *newlist;
   double i;
 
-  newlist = new vector<wchar_t> (list->size() - 1.0);
+  newlist = Allocate<wchar_t>(list->size() - 1.0);
 
   if(n >= 0.0 && n < list->size()){
     for(i = 0.0; i < list->size(); i = i + 1.0){
@@ -5775,9 +5811,9 @@ vector<wchar_t> *RemoveCharacter(vector<wchar_t> *list, double n){
       }
     }
 
-    delete list;
+    Free(list);
   }else{
-    delete newlist;
+    Free(newlist);
   }
 
   return newlist;
@@ -6489,9 +6525,9 @@ vector<double> *DeflateDataStaticHuffman(vector<double> *data, double level){
   lengthAddition = CreateNumberReference(0.0);
   distanceAdditionReference = CreateNumberReference(0.0);
   distanceAdditionLengthReference = CreateNumberReference(0.0);
-  match = new BooleanReference();
+  match = Allocate<BooleanReference>();
 
-  bytes = new vector<double> (fmax(data->size()*2.0, 100.0));
+  bytes = Allocate<double>(fmax(data->size()*2.0, 100.0));
   aFillNumberArray(bytes, 0.0);
   currentBit = CreateNumberReference(0.0);
 
@@ -6528,9 +6564,9 @@ vector<double> *DeflateDataStaticHuffman(vector<double> *data, double level){
   GetDeflateStaticHuffmanCode(256.0, code, length, bitReverseLookupTable);
   AppendBitsToBytesRight(bytes, currentBit, code->numberValue, length->numberValue);
 
-  copy = new NumberArrayReference();
+  copy = Allocate<NumberArrayReference>();
   aCopyNumberArrayRange(bytes, 0.0, ceil(currentBit->numberValue/8.0), copy);
-  delete bytes;
+  Free(bytes);
   bytes = copy->numberArray;
 
   return bytes;
@@ -6588,7 +6624,7 @@ vector<double> *GenerateBitReverseLookupTable(double bits){
   vector<double> *table;
   double i;
 
-  table = new vector<double> (pow(2.0, bits));
+  table = Allocate<double>(pow(2.0, bits));
 
   for(i = 0.0; i < table->size(); i = i + 1.0){
     table->at(i) = ReverseBits(i, 32.0);
@@ -6620,7 +6656,7 @@ vector<double> *DeflateDataNoCompression(vector<double> *data){
 
   position = CreateNumberReference(0.0);
 
-  deflated = new vector<double> ((1.0 + 4.0)*blocks + data->size());
+  deflated = Allocate<double>((1.0 + 4.0)*blocks + data->size());
 
   for(block = 0.0; block < blocks; block = block + 1.0){
     if(block + 1.0 == blocks){
