@@ -5,7 +5,22 @@
 #include <vector>
 #include <cwchar>
 
-#define toVector(s) (new std::vector<wchar_t> ((s), (s) + wcslen(s)))
+template<typename T>
+T *Allocate(){
+	return new T();
+}
+
+template<typename T>
+std::vector<T> *Allocate(size_t length){
+	return new std::vector<T>(length);
+}
+
+template<typename T>
+void Free(T *t){
+	delete t;
+}
+
+std::vector<wchar_t> *toVector(const wchar_t *str);
 
 struct RGBABitmapImageReference;
 

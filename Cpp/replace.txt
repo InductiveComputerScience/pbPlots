@@ -1,0 +1,40 @@
+
+cat pbPlots-org.cpp \
+	| sed "s/new \([a-zA-Z0-9]*\)()/Allocate<\1>()/g" \
+	| sed "s/delete \(.*\);/Free(\1);/g" \
+	| sed "s/new vector<\(.*\)> /Allocate<\1>/g" \
+	> pbPlots.cpp
+
+
+
+template<typename T>
+T *Allocate(){
+	return new T();
+}
+
+template<typename T>
+std::vector<T> *Allocate(size_t length){
+	return new std::vector<T>(length);
+}
+
+template<typename T>
+void Free(T *t){
+	delete t;
+}
+
+std::vector<wchar_t> *toVector(const wchar_t *str);
+
+vector<wchar_t> *toVector(const wchar_t *str){
+	vector<wchar_t> *v;
+	size_t len;
+
+	len = wcslen(str);
+
+	v = Allocate<wchar_t>(len);
+
+	for(int i = 0; i < len ; i++){
+		v->at(i) = str[i];
+	}
+
+	return v;
+}

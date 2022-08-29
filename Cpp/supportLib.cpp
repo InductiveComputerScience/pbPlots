@@ -24,7 +24,7 @@ void WriteToFile(vector<double> *data, string filename){
 	file.write(reinterpret_cast<char *>(bytes), data->size());
 	file.close();
 
-	delete bytes;
+	delete [] bytes;
 }
 
 vector<double> *ByteArrayToDoubleArray(vector<unsigned char> *data){
