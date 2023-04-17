@@ -75,8 +75,8 @@ typedef struct PHYS PHYS;
 struct PNGImage;
 typedef struct PNGImage PNGImage;
 
-struct ZLIBStruct;
-typedef struct ZLIBStruct ZLIBStruct;
+struct DynamicArrayCharacters;
+typedef struct DynamicArrayCharacters DynamicArrayCharacters;
 
 struct LinkedListNodeStrings;
 typedef struct LinkedListNodeStrings LinkedListNodeStrings;
@@ -98,6 +98,9 @@ typedef struct LinkedListNodeCharacters LinkedListNodeCharacters;
 
 struct DynamicArrayNumbers;
 typedef struct DynamicArrayNumbers DynamicArrayNumbers;
+
+struct ZLIBStruct;
+typedef struct ZLIBStruct ZLIBStruct;
 
 struct RGBABitmapImageReference{
   RGBABitmapImage *image;
@@ -268,17 +271,10 @@ struct PNGImage{
   PHYS *phys;
 };
 
-struct ZLIBStruct{
-  double CMF;
-  double CM;
-  double CINFO;
-  double FLG;
-  double FCHECK;
-  double FDICT;
-  double FLEVEL;
-  double *CompressedDataBlocks;
-  size_t CompressedDataBlocksLength;
-  double Adler32CheckValue;
+struct DynamicArrayCharacters{
+  wchar_t *array;
+  size_t arrayLength;
+  double length;
 };
 
 struct LinkedListNodeStrings{
@@ -320,6 +316,26 @@ struct DynamicArrayNumbers{
   size_t arrayLength;
   double length;
 };
+
+struct ZLIBStruct{
+  double CMF;
+  double CM;
+  double CINFO;
+  double FLG;
+  double FCHECK;
+  double FDICT;
+  double FLEVEL;
+  double *CompressedDataBlocks;
+  size_t CompressedDataBlocksLength;
+  double Adler32CheckValue;
+};
+
+_Bool Loess(double *xs, size_t xsLength, double *ys, size_t ysLength, double bandwidth, double robustnessIters, double accuracy, NumberArrayReference *resultXs, StringReference *errorMessage);
+_Bool Lowess(double *xs, size_t xsLength, double *ys, size_t ysLength, double *weights, size_t weightsLength, double bandwidth, double robustnessIters, double accuracy, NumberArrayReference *resultXs, StringReference *errorMessage);
+void RearrangeArray(double *as, size_t asLength, double *indexes, size_t indexesLength);
+void AssignNumberArray(double *as, size_t asLength, double *bs, size_t bsLength);
+double FindNextNonZeroElement(double *array, size_t arrayLength, double offset);
+double Tricube(double x);
 
 _Bool CropLineWithinBoundary(NumberReference *x1Ref, NumberReference *y1Ref, NumberReference *x2Ref, NumberReference *y2Ref, double xMin, double xMax, double yMin, double yMax);
 double IncrementFromCoordinates(double x1, double y1, double x2, double y2);
@@ -371,6 +387,7 @@ double test();
 void TestMapping(NumberReference *failures);
 void TestMapping2(NumberReference *failures);
 void ExampleRegression(RGBABitmapImageReference *image);
+void ExampleRegression2(RGBABitmapImageReference *image);
 void BarPlotExample(RGBABitmapImageReference *imageReference);
 
 RGBA *GetBlack();
@@ -430,8 +447,6 @@ RGBABitmapImage *Blur(RGBABitmapImage *src, double pixels);
 RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels);
 
 wchar_t *CreateStringScientificNotationDecimalFromNumber(size_t *returnArrayLength, double decimal);
-wchar_t *CreateStringScientificNotationDecimalFromNumber15d2e(size_t *returnArrayLength, double decimal);
-wchar_t *CreateStringScientificNotationDecimalFromNumberAllOptions(size_t *returnArrayLength, double decimal, _Bool complete);
 wchar_t *CreateStringDecimalFromNumber(size_t *returnArrayLength, double decimal);
 _Bool CreateStringFromNumberWithCheck(double decimal, double base, StringReference *stringReference);
 double GetMaximumDigitsForBase(double base);
@@ -444,13 +459,24 @@ double CreateNumberFromDecimalString(wchar_t *string, size_t stringLength);
 _Bool CreateNumberFromStringWithCheck(wchar_t *string, size_t stringLength, double base, NumberReference *numberReference, StringReference *errorMessage);
 double CreateNumberFromParts(double base, _Bool numberIsPositive, double *beforePoint, size_t beforePointLength, double *afterPoint, size_t afterPointLength, _Bool exponentIsPositive, double *exponent, size_t exponentLength);
 _Bool ExtractPartsFromNumberString(wchar_t *n, size_t nLength, double base, BooleanReference *numberIsPositive, NumberArrayReference *beforePoint, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
-_Bool ExtractPartsFromNumberStringFromSign(wchar_t *n, size_t nLength, double base, double i, NumberArrayReference *beforePoint, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
-_Bool ExtractPartsFromNumberStringFromPointOrExponent(wchar_t *n, size_t nLength, double base, double i, NumberArrayReference *afterPoint, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
-_Bool ExtractPartsFromNumberStringFromExponent(wchar_t *n, size_t nLength, double base, double i, BooleanReference *exponentIsPositive, NumberArrayReference *exponent, StringReference *errorMessages);
 double GetNumberFromNumberCharacterForBase(wchar_t c, double base);
 _Bool CharacterIsNumberCharacterInBase(wchar_t c, double base);
 double *StringToNumberArray(size_t *returnArrayLength, wchar_t *str, size_t strLength);
 _Bool StringToNumberArrayWithCheck(wchar_t *str, size_t strLength, NumberArrayReference *numberArrayReference, StringReference *errorMessage);
+
+void QuickSortStrings(StringArrayReference *list);
+void QuickSortStringsBounds(StringArrayReference *A, double lo, double hi);
+double QuickSortStringsPartition(StringArrayReference *A, double lo, double hi);
+double *QuickSortStringsWithIndexes(size_t *returnArrayLength, StringArrayReference *A);
+void QuickSortStringsBoundsWithIndexes(StringArrayReference *A, double *indexes, size_t indexesLength, double lo, double hi);
+double QuickSortStringsPartitionWithIndexes(StringArrayReference *A, double *indexes, size_t indexesLength, double lo, double hi);
+
+void QuickSortNumbers(double *list, size_t listLength);
+void QuickSortNumbersBounds(double *A, size_t ALength, double lo, double hi);
+double QuickSortNumbersPartition(double *A, size_t ALength, double lo, double hi);
+double *QuickSortNumbersWithIndexes(size_t *returnArrayLength, double *A, size_t ALength);
+void QuickSortNumbersBoundsWithIndexes(double *A, size_t ALength, double *indexes, size_t indexesLength, double lo, double hi);
+double QuickSortNumbersPartitionWithIndexes(double *A, size_t ALength, double *indexes, size_t indexesLength, double lo, double hi);
 
 double Negate(double x);
 double Positive(double x);
@@ -604,32 +630,13 @@ void ToUpperCase(wchar_t *string, size_t stringLength);
 void ToLowerCase(wchar_t *string, size_t stringLength);
 _Bool EqualsIgnoreCase(wchar_t *a, size_t aLength, wchar_t *b, size_t bLength);
 wchar_t *ReplaceString(size_t *returnArrayLength, wchar_t *string, size_t stringLength, wchar_t *toReplace, size_t toReplaceLength, wchar_t *replaceWith, size_t replaceWithLength);
-wchar_t *ReplaceCharacter(size_t *returnArrayLength, wchar_t *string, size_t stringLength, wchar_t toReplace, wchar_t replaceWith);
+wchar_t *ReplaceCharacterToNew(size_t *returnArrayLength, wchar_t *string, size_t stringLength, wchar_t toReplace, wchar_t replaceWith);
+void ReplaceCharacter(wchar_t *string, size_t stringLength, wchar_t toReplace, wchar_t replaceWith);
 wchar_t *Trim(size_t *returnArrayLength, wchar_t *string, size_t stringLength);
 _Bool StartsWith(wchar_t *string, size_t stringLength, wchar_t *start, size_t startLength);
 _Bool EndsWith(wchar_t *string, size_t stringLength, wchar_t *end, size_t endLength);
 StringReference **SplitByString(size_t *returnArrayLength, wchar_t *toSplit, size_t toSplitLength, wchar_t *splitBy, size_t splitByLength);
 _Bool StringIsBefore(wchar_t *a, size_t aLength, wchar_t *b, size_t bLength);
-
-double *ReadXbytes(size_t *returnArrayLength, double *data, size_t dataLength, NumberReference *position, double length);
-double Read4bytesBE(double *data, size_t dataLength, NumberReference *position);
-double Read2bytesBE(double *data, size_t dataLength, NumberReference *position);
-double ReadByte(double *data, size_t dataLength, NumberReference *position);
-double Read4bytesLE(double *data, size_t dataLength, NumberReference *position);
-void WriteByte(double *data, size_t dataLength, double b, NumberReference *position);
-void Write2BytesLE(double *data, size_t dataLength, double b, NumberReference *position);
-void Write4BytesLE(double *data, size_t dataLength, double b, NumberReference *position);
-void Write2BytesBE(double *data, size_t dataLength, double b, NumberReference *position);
-void Write4BytesBE(double *data, size_t dataLength, double b, NumberReference *position);
-void WriteStringBytes(double *data, size_t dataLength, wchar_t *cs, size_t csLength, NumberReference *position);
-
-double *MakeCRC32Table(size_t *returnArrayLength);
-double UpdateCRC32(double crc, double *buf, size_t bufLength, double *crc_table, size_t crc_tableLength);
-double CalculateCRC32(double *buf, size_t bufLength);
-double CRC32OfInterval(double *data, size_t dataLength, double from, double length);
-
-ZLIBStruct *ZLibCompressNoCompression(double *data, size_t dataLength);
-ZLIBStruct *ZLibCompressStaticHuffman(double *data, size_t dataLength, double level);
 
 double *AddNumber(size_t *returnArrayLength, double *list, size_t listLength, double a);
 void AddNumberRef(NumberArrayReference *list, double i);
@@ -642,6 +649,26 @@ void AddStringRef(StringArrayReference *list, StringReference *i);
 StringReference **RemoveString(size_t *returnArrayLength, StringReference **list, size_t listLength, double n);
 StringReference *GetStringRef(StringArrayReference *list, double i);
 void RemoveStringRef(StringArrayReference *list, double i);
+
+
+DynamicArrayCharacters *CreateDynamicArrayCharacters();
+DynamicArrayCharacters *CreateDynamicArrayCharactersWithInitialCapacity(double capacity);
+void DynamicArrayAddCharacter(DynamicArrayCharacters *da, wchar_t value);
+void DynamicArrayCharactersIncreaseSize(DynamicArrayCharacters *da);
+_Bool DynamicArrayCharactersDecreaseSizeNecessary(DynamicArrayCharacters *da);
+void DynamicArrayCharactersDecreaseSize(DynamicArrayCharacters *da);
+double DynamicArrayCharactersIndex(DynamicArrayCharacters *da, double index);
+double DynamicArrayCharactersLength(DynamicArrayCharacters *da);
+void DynamicArrayInsertCharacter(DynamicArrayCharacters *da, double index, wchar_t value);
+_Bool DynamicArrayCharacterSet(DynamicArrayCharacters *da, double index, wchar_t value);
+void DynamicArrayRemoveCharacter(DynamicArrayCharacters *da, double index);
+void FreeDynamicArrayCharacters(DynamicArrayCharacters *da);
+wchar_t *DynamicArrayCharactersToArray(size_t *returnArrayLength, DynamicArrayCharacters *da);
+DynamicArrayCharacters *ArrayToDynamicArrayCharactersWithOptimalSize(wchar_t *array, size_t arrayLength);
+DynamicArrayCharacters *ArrayToDynamicArrayCharacters(wchar_t *array, size_t arrayLength);
+_Bool DynamicArrayCharactersEqual(DynamicArrayCharacters *a, DynamicArrayCharacters *b);
+LinkedListCharacters *DynamicArrayCharactersToLinkedList(DynamicArrayCharacters *da);
+DynamicArrayCharacters *LinkedListToDynamicArrayCharacters(LinkedListCharacters *ll);
 
 _Bool *AddBoolean(size_t *returnArrayLength, _Bool *list, size_t listLength, _Bool a);
 void AddBooleanRef(BooleanArrayReference *list, _Bool i);
@@ -676,6 +703,7 @@ void LinkedListAddCharacter(LinkedListCharacters *ll, wchar_t value);
 wchar_t *LinkedListCharactersToArray(size_t *returnArrayLength, LinkedListCharacters *ll);
 double LinkedListCharactersLength(LinkedListCharacters *ll);
 void FreeLinkedListCharacter(LinkedListCharacters *ll);
+void LinkedListCharactersAddString(LinkedListCharacters *ll, wchar_t *str, size_t strLength);
 
 
 
@@ -688,7 +716,7 @@ void DynamicArrayNumbersDecreaseSize(DynamicArrayNumbers *da);
 double DynamicArrayNumbersIndex(DynamicArrayNumbers *da, double index);
 double DynamicArrayNumbersLength(DynamicArrayNumbers *da);
 void DynamicArrayInsertNumber(DynamicArrayNumbers *da, double index, double value);
-void DynamicArraySet(DynamicArrayNumbers *da, double index, double value);
+_Bool DynamicArrayNumberSet(DynamicArrayNumbers *da, double index, double value);
 void DynamicArrayRemoveNumber(DynamicArrayNumbers *da, double index);
 void FreeDynamicArrayNumbers(DynamicArrayNumbers *da);
 double *DynamicArrayNumbersToArray(size_t *returnArrayLength, DynamicArrayNumbers *da);
@@ -697,12 +725,34 @@ DynamicArrayNumbers *ArrayToDynamicArrayNumbers(double *array, size_t arrayLengt
 _Bool DynamicArrayNumbersEqual(DynamicArrayNumbers *a, DynamicArrayNumbers *b);
 LinkedListNumbers *DynamicArrayNumbersToLinkedList(DynamicArrayNumbers *da);
 DynamicArrayNumbers *LinkedListToDynamicArrayNumbers(LinkedListNumbers *ll);
+double DynamicArrayNumbersIndexOf(DynamicArrayNumbers *arr, double n, BooleanReference *foundReference);
+_Bool DynamicArrayNumbersIsInArray(DynamicArrayNumbers *arr, double n);
 
 wchar_t *AddCharacter(size_t *returnArrayLength, wchar_t *list, size_t listLength, wchar_t a);
 void AddCharacterRef(StringReference *list, wchar_t i);
 wchar_t *RemoveCharacter(size_t *returnArrayLength, wchar_t *list, size_t listLength, double n);
 wchar_t GetCharacterRef(StringReference *list, double i);
 void RemoveCharacterRef(StringReference *list, double i);
+
+double *ReadXbytes(size_t *returnArrayLength, double *data, size_t dataLength, NumberReference *position, double length);
+double Read4bytesBE(double *data, size_t dataLength, NumberReference *position);
+double Read2bytesBE(double *data, size_t dataLength, NumberReference *position);
+double ReadByte(double *data, size_t dataLength, NumberReference *position);
+double Read4bytesLE(double *data, size_t dataLength, NumberReference *position);
+void WriteByte(double *data, size_t dataLength, double b, NumberReference *position);
+void Write2BytesLE(double *data, size_t dataLength, double b, NumberReference *position);
+void Write4BytesLE(double *data, size_t dataLength, double b, NumberReference *position);
+void Write2BytesBE(double *data, size_t dataLength, double b, NumberReference *position);
+void Write4BytesBE(double *data, size_t dataLength, double b, NumberReference *position);
+void WriteStringBytes(double *data, size_t dataLength, wchar_t *cs, size_t csLength, NumberReference *position);
+
+double *MakeCRC32Table(size_t *returnArrayLength);
+double UpdateCRC32(double crc, double *buf, size_t bufLength, double *crc_table, size_t crc_tableLength);
+double CalculateCRC32(double *buf, size_t bufLength);
+double CRC32OfInterval(double *data, size_t dataLength, double from, double length);
+
+ZLIBStruct *ZLibCompressNoCompression(double *data, size_t dataLength);
+ZLIBStruct *ZLibCompressStaticHuffman(double *data, size_t dataLength, double level);
 
 wchar_t charToLowerCase(wchar_t character);
 wchar_t charToUpperCase(wchar_t character);
@@ -713,6 +763,8 @@ _Bool charIsNumber(wchar_t character);
 _Bool charIsWhiteSpace(wchar_t character);
 _Bool charIsSymbol(wchar_t character);
 _Bool charCharacterIsBefore(wchar_t a, wchar_t b);
+wchar_t charDecimalDigitToCharacter(double digit);
+double charCharacterToDecimalDigit(wchar_t c);
 
 double And4Byte(double n1, double n2);
 double And2Byte(double n1, double n2);
@@ -758,3 +810,4 @@ void GetDeflateLengthCode(double length, NumberReference *code, NumberReference 
 void GetDeflateDistanceCode(double distance, NumberReference *code, NumberReference *distanceAdditionReference, NumberReference *distanceAdditionLengthReference, double *bitReverseLookupTable, size_t bitReverseLookupTableLength);
 void AppendBitsToBytesLeft(double *bytes, size_t bytesLength, NumberReference *nextbit, double data, double length);
 void AppendBitsToBytesRight(double *bytes, size_t bytesLength, NumberReference *nextbit, double data, double length);
+

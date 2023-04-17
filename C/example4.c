@@ -19,8 +19,9 @@ int main(){
 	series->ys = ys;
 	series->ysLength = sizeof(ys)/sizeof(double);
 	series->linearInterpolation = false;
-	series->pointType = L"dots";
+	series->pointType = L"dotlinetoxaxis";
 	series->pointTypeLength = wcslen(series->pointType);
+  series->lineThickness = 2;
 	series->color = CreateRGBColor(1, 0, 0);
 
 	ScatterPlotSeries *series2 = GetDefaultScatterPlotSeriesSettings();
