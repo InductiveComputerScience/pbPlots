@@ -194,14 +194,10 @@ struct RGBA{
   double a;
 };
 
-struct RGBABitmap{
-  RGBA **y;
-  size_t yLength;
-};
-
 struct RGBABitmapImage{
-  RGBABitmap **x;
+  uint32_t *pixels;
   size_t xLength;
+  size_t yLength;
 };
 
 struct BooleanArrayReference{
@@ -403,6 +399,7 @@ void DrawCubicBezierCurve(RGBABitmapImage *image, double x0, double y0, double c
 void CubicBezierPoint(double x0, double y0, double c0x, double c0y, double c1x, double c1y, double x1, double y1, double t, NumberReference *x, NumberReference *y);
 RGBABitmapImage *CopyImage(RGBABitmapImage *image);
 RGBA *GetImagePixel(RGBABitmapImage *image, double x, double y);
+RGBA GetImagePixelStruct(RGBABitmapImage *image, double x, double y);
 void HorizontalFlip(RGBABitmapImage *img);
 void DrawFilledRectangle(RGBABitmapImage *image, double x, double y, double w, double h, RGBA *color);
 RGBABitmapImage *RotateAntiClockwise90Degrees(RGBABitmapImage *image);
