@@ -6789,7 +6789,7 @@ ByteArray *NumberArrayToByteArray(double *src, size_t srcLength){
 
   len = (double)srcLength;
   dst = (ByteArray *)Allocate(sizeof(ByteArray), 1);
-  dst->bytes = (double*)Allocate(sizeof(double) * (len), 1);
+  dst->bytes = (uint8_t*)Allocate(sizeof(uint8_t) * (len), 1);
   dst->bytesLength = len;
   for(i = 0.0; i < len; i = i + 1.0){
     dst->bytes[(int)(i)] = src[(int)(i)];
@@ -6819,7 +6819,7 @@ ByteArray *CopyByteArray(ByteArray *a){
   ByteArray *n;
 
   n = (ByteArray *)Allocate(sizeof(ByteArray), 1);
-  n->bytes = (double*)Allocate(sizeof(double) * ((double)a->bytesLength), 1);
+  n->bytes = (uint8_t*)Allocate(sizeof(uint8_t) * ((double)a->bytesLength), 1);
   n->bytesLength = (double)a->bytesLength;
 
   for(i = 0.0; i < (double)a->bytesLength; i = i + 1.0){
@@ -6836,7 +6836,7 @@ ByteArray *CreateAndFillByteArray(double length, double value){
   double i;
 
   bytes = (ByteArray *)Allocate(sizeof(ByteArray), 1);
-  bytes->bytes = (double*)Allocate(sizeof(double) * (length), 1);
+  bytes->bytes = (uint8_t*)Allocate(sizeof(uint8_t) * (length), 1);
   bytes->bytesLength = length;
 
   for(i = 0.0; i < length; i = i + 1.0){
@@ -6849,7 +6849,7 @@ ByteArray *CreateByteArray(double length){
   ByteArray *bytes;
 
   bytes = (ByteArray *)Allocate(sizeof(ByteArray), 1);
-  bytes->bytes = (double*)Allocate(sizeof(double) * (length), 1);
+  bytes->bytes = (uint8_t*)Allocate(sizeof(uint8_t) * (length), 1);
   bytes->bytesLength = length;
 
   return bytes;
@@ -6879,13 +6879,13 @@ void FreeByteArray(ByteArray *byteArray){
 }
 _Bool CopyByteArrayRange(ByteArray *a, double from, double to, ByteArray *b){
   double i, length;
-  double *n;
+  uint8_t *n;
   size_t nLength;
   _Bool success;
 
   if(from >= 0.0 && from <= (double)a->bytesLength && to >= 0.0 && to <= (double)a->bytesLength && from <= to){
     length = to - from;
-    n = (double*)Allocate(sizeof(double) * (length), 1);
+    n = (uint8_t*)Allocate(sizeof(uint8_t) * (length), 1);
     nLength = length;
 
     for(i = 0.0; i < length; i = i + 1.0){

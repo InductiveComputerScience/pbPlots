@@ -316,7 +316,7 @@ struct DynamicArrayNumbers{
 };
 
 struct ByteArray{
-  double *bytes;
+  uint8_t *bytes;
   size_t bytesLength;
 };
 
