@@ -429,8 +429,9 @@ RGBABitmapImageReference *CreateRGBABitmapImageReference(){
 
   reference = (RGBABitmapImageReference *)Allocate(sizeof(RGBABitmapImageReference), 1);
   reference->image = (RGBABitmapImage *)Allocate(sizeof(RGBABitmapImage), 1);
-  reference->image->x = (RGBABitmap**)Allocate(sizeof(RGBABitmap) * (0.0), 1);
+  reference->image->pixels = (uint32_t*)Allocate(sizeof(uint32_t), 1);
   reference->image->xLength = 0.0;
+  reference->image->yLength = 0.0;
 
   return reference;
 }
@@ -2304,14 +2305,11 @@ RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
   double i, j;
 
   image = (RGBABitmapImage *)Allocate(sizeof(RGBABitmapImage), 1);
-  image->x = (RGBABitmap**)Allocate(sizeof(RGBABitmap) * (w), 1);
+  image->pixels = (uint32_t*)Allocate(sizeof(uint32_t) * w * h, 1);
   image->xLength = w;
+  image->yLength = h;
   for(i = 0.0; i < w; i = i + 1.0){
-    image->x[(int)(i)] = (RGBABitmap *)Allocate(sizeof(RGBABitmap), 1);
-    image->x[(int)(i)]->y = (RGBA**)Allocate(sizeof(RGBA) * (h), 1);
-    image->x[(int)(i)]->yLength = h;
     for(j = 0.0; j < h; j = j + 1.0){
-      image->x[(int)(i)]->y[(int)(j)] = (RGBA *)Allocate(sizeof(RGBA), 1);
       SetPixel(image, i, j, color);
     }
   }
@@ -2319,21 +2317,11 @@ RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
   return image;
 }
 void DeleteImage(RGBABitmapImage *image){
-  double i, j, w, h;
-
-  w = ImageWidth(image);
-  h = ImageHeight(image);
-
-  for(i = 0.0; i < w; i = i + 1.0){
-    for(j = 0.0; j < h; j = j + 1.0){
-      Free(image->x[(int)(i)]->y[(int)(j)]);
-    }
-    Free(image->x[(int)(i)]);
-  }
+  Free(image->pixels);
   Free(image);
 }
 double ImageWidth(RGBABitmapImage *image){
-  return (double)image->xLength;
+  return image->xLength;
 }
 double ImageHeight(RGBABitmapImage *image){
   double height;
@@ -2341,23 +2329,29 @@ double ImageHeight(RGBABitmapImage *image){
   if(ImageWidth(image) == 0.0){
     height = 0.0;
   }else{
-    height = (double)image->x[0]->yLength;
+    height = image->yLength;
   }
 
   return height;
 }
 void SetPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
   if(x >= 0.0 && x < ImageWidth(image) && y >= 0.0 && y < ImageHeight(image)){
-    image->x[(int)(x)]->y[(int)(y)]->a = color->a;
-    image->x[(int)(x)]->y[(int)(y)]->r = color->r;
-    image->x[(int)(x)]->y[(int)(y)]->g = color->g;
-    image->x[(int)(x)]->y[(int)(y)]->b = color->b;
+		int pixel = x + y * ImageWidth(image);
+		int r = Round(color->r * 255);
+		int g = Round(color->g * 255);
+		int b = Round(color->b * 255);
+		int a = Round(color->a * 255);
+
+		image->pixels[pixel] = (r << 24) | (g << 16) | (b << 8) | a;
   }
 }
 void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
   double ra, ga, ba, aa;
   double rb, gb, bb, ab;
   double ro, go, bo, ao;
+	RGBA newColor;
+	uint32_t oldColor;
+	int pixel;
 
   if(x >= 0.0 && x < ImageWidth(image) && y >= 0.0 && y < ImageHeight(image)){
     ra = color->r;
@@ -2365,21 +2359,25 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
     ba = color->b;
     aa = color->a;
 
-    rb = image->x[(int)(x)]->y[(int)(y)]->r;
-    gb = image->x[(int)(x)]->y[(int)(y)]->g;
-    bb = image->x[(int)(x)]->y[(int)(y)]->b;
-    ab = image->x[(int)(x)]->y[(int)(y)]->a;
+		pixel = x + y * ImageWidth(image);
+		oldColor	= image->pixels[pixel];
+		rb = ((oldColor >> 24) & 0xFF) / 255.0;
+		gb = ((oldColor >> 16) & 0xFF) / 255.0;
+		bb = ((oldColor >> 8) & 0xFF) / 255.0;
+		ab = ((oldColor >> 0) & 0xFF) / 255.0;
 
     ao = CombineAlpha(aa, ab);
 
     ro = AlphaBlend(ra, aa, rb, ab, ao);
     go = AlphaBlend(ga, aa, gb, ab, ao);
     bo = AlphaBlend(ba, aa, bb, ab, ao);
+		
+    newColor.r = ro;
+    newColor.g = go;
+    newColor.b = bo;
+    newColor.a = ao;
 
-    image->x[(int)(x)]->y[(int)(y)]->r = ro;
-    image->x[(int)(x)]->y[(int)(y)]->g = go;
-    image->x[(int)(x)]->y[(int)(y)]->b = bo;
-    image->x[(int)(x)]->y[(int)(y)]->a = ao;
+		SetPixel(image, x, y, &newColor);
   }
 }
 double CombineAlpha(double as, double ad){
@@ -2414,7 +2412,8 @@ void DrawImageOnImage(RGBABitmapImage *dst, RGBABitmapImage *src, double topx, d
   for(y = 0.0; y < ImageHeight(src); y = y + 1.0){
     for(x = 0.0; x < ImageWidth(src); x = x + 1.0){
       if(topx + x >= 0.0 && topx + x < ImageWidth(dst) && topy + y >= 0.0 && topy + y < ImageHeight(dst)){
-        DrawPixel(dst, topx + x, topy + y, src->x[(int)(x)]->y[(int)(y)]);
+				RGBA o = GetImagePixelStruct(src, x, y);
+        DrawPixel(dst, topx + x, topy + y, &o);
       }
     }
   }
@@ -2579,42 +2578,69 @@ RGBABitmapImage *CopyImage(RGBABitmapImage *image){
 
   copy = CreateImage(ImageWidth(image), ImageHeight(image), GetTransparent());
 
-  for(i = 0.0; i < ImageWidth(image); i = i + 1.0){
-    for(j = 0.0; j < ImageHeight(image); j = j + 1.0){
-      SetPixel(copy, i, j, image->x[(int)(i)]->y[(int)(j)]);
-    }
-  }
+  memcpy(copy->pixels, image->pixels, image->xLength * image->yLength);
 
   return copy;
 }
-RGBA *GetImagePixel(RGBABitmapImage *image, double x, double y){
-  return image->x[(int)(x)]->y[(int)(y)];
+RGBA* GetImagePixel(RGBABitmapImage *image, double x, double y){
+	RGBA *rgba;
+	int pixel;
+	uint32_t color;
+
+	rgba = (RGBA *)Allocate(sizeof(RGBA), 1);
+
+	pixel = x + y * ImageWidth(image);
+
+	color	= image->pixels[pixel];
+
+	rgba->r = ((color >> 24) & 0xFF) / 255.0;
+	rgba->g = ((color >> 16) & 0xFF) / 255.0;
+	rgba->b = ((color >> 8) & 0xFF) / 255.0;
+	rgba->a = ((color >> 0) & 0xFF) / 255.0;
+
+  return rgba;
+}
+RGBA GetImagePixelStruct(RGBABitmapImage *image, double x, double y){
+	RGBA rgba;
+	int pixel;
+	uint32_t color;
+
+	pixel = x + y * ImageWidth(image);
+
+	color	= image->pixels[pixel];
+
+	rgba.r = (color >> 24) & 0xFF;
+	rgba.g = (color >> 16) & 0xFF;
+	rgba.b = (color >> 8) & 0xFF;
+	rgba.a = (color >> 0) & 0xFF;
+
+  return rgba;
 }
 void HorizontalFlip(RGBABitmapImage *img){
   double y, x;
   double tmp;
-  RGBA *c1, *c2;
+  RGBA c1, c2;
 
   for(y = 0.0; y < ImageHeight(img); y = y + 1.0){
     for(x = 0.0; x < ImageWidth(img)/2.0; x = x + 1.0){
-      c1 = img->x[(int)(x)]->y[(int)(y)];
-      c2 = img->x[(int)(ImageWidth(img) - 1.0 - x)]->y[(int)(y)];
+      c1 = GetImagePixelStruct(img, x, y);
+      c2 = GetImagePixelStruct(img, ImageWidth(img) - 1.0 - x, y);
 
-      tmp = c1->a;
-      c1->a = c2->a;
-      c2->a = tmp;
+      tmp = c1.a;
+      c1.a = c2.a;
+      c2.a = tmp;
 
-      tmp = c1->r;
-      c1->r = c2->r;
-      c2->r = tmp;
+      tmp = c1.r;
+      c1.r = c2.r;
+      c2.r = tmp;
 
-      tmp = c1->g;
-      c1->g = c2->g;
-      c2->g = tmp;
+      tmp = c1.g;
+      c1.g = c2.g;
+      c2.g = tmp;
 
-      tmp = c1->b;
-      c1->b = c2->b;
-      c2->b = tmp;
+      tmp = c1.b;
+      c1.b = c2.b;
+      c2.b = tmp;
     }
   }
 }
@@ -3075,7 +3101,7 @@ _Bool *GetLinePattern1(size_t *returnArrayLength){
   *returnArrayLength = patternLength;
   return pattern;
 }
-RGBABitmapImage *Blur(RGBABitmapImage *src, double pixels){
+/*RGBABitmapImage *Blur(RGBABitmapImage *src, double pixels){
   RGBABitmapImage *dst;
   double x, y, w, h;
 
@@ -3152,7 +3178,7 @@ RGBA *CreateBlurForPoint(RGBABitmapImage *src, double x, double y, double pixels
   }
 
   return rgba;
-}
+}*/
 wchar_t *CreateStringScientificNotationDecimalFromNumber(size_t *returnArrayLength, double decimal){
   StringReference *mantissaReference, *exponentReference;
   double multiplier, inc;
@@ -4993,8 +5019,9 @@ double PNGHeaderLength(){
 }
 ByteArray *GetPNGColorData(RGBABitmapImage *image){
   ByteArray *colordata;
+  size_t pixel;
   double length, x, y, next;
-  RGBA *rgba;
+	uint32_t rgba;
 
   length = 4.0*ImageWidth(image)*ImageHeight(image) + ImageHeight(image);
 
@@ -5006,14 +5033,16 @@ ByteArray *GetPNGColorData(RGBABitmapImage *image){
     SetByte(colordata, next, 0.0);
     next = next + 1.0;
     for(x = 0.0; x < ImageWidth(image); x = x + 1.0){
-      rgba = image->x[(int)(x)]->y[(int)(y)];
-      SetByte(colordata, next, Round(rgba->r*255.0));
+			pixel = x + y * ImageWidth(image);
+			rgba = image->pixels[pixel];
+
+      SetByte(colordata, next, (rgba >> 24) & 0xFF);
       next = next + 1.0;
-      SetByte(colordata, next, Round(rgba->g*255.0));
+      SetByte(colordata, next, (rgba >> 16) & 0xFF);
       next = next + 1.0;
-      SetByte(colordata, next, Round(rgba->b*255.0));
+      SetByte(colordata, next, (rgba >> 8) & 0xFF);
       next = next + 1.0;
-      SetByte(colordata, next, Round(rgba->a*255.0));
+      SetByte(colordata, next, (rgba >> 0) & 0xFF);
       next = next + 1.0;
     }
   }
@@ -5023,7 +5052,8 @@ ByteArray *GetPNGColorData(RGBABitmapImage *image){
 ByteArray *GetPNGColorDataGreyscale(RGBABitmapImage *image){
   ByteArray *colordata;
   double length, x, y, next;
-  RGBA *rgba;
+	uint32_t rgba;
+	size_t pixel;
 
   length = ImageWidth(image)*ImageHeight(image) + ImageHeight(image);
 
@@ -5035,8 +5065,10 @@ ByteArray *GetPNGColorDataGreyscale(RGBABitmapImage *image){
     SetByte(colordata, next, 0.0);
     next = next + 1.0;
     for(x = 0.0; x < ImageWidth(image); x = x + 1.0){
-      rgba = image->x[(int)(x)]->y[(int)(y)];
-      SetByte(colordata, next, Round(rgba->r*255.0));
+			pixel = x + y * ImageWidth(image);
+			rgba = image->pixels[pixel];
+
+      SetByte(colordata, next, rgba & 0xFF);
       next = next + 1.0;
     }
   }
@@ -5134,8 +5166,9 @@ _Bool PNGReadHeader(RGBABitmapImage *image, Chunk **cs, size_t csLength, StringR
       ihdr->InterlaceMethod = ReadByte(c->data, position);
 
       n = CreateImage(ihdr->Width, ihdr->Height, GetTransparent());
-      image->x = n->x;
+      image->pixels = n->pixels;
       image->xLength = n->xLength;
+      image->yLength = n->yLength;
 
       if(ihdr->ColourType == 6.0){
         if(ihdr->BitDepth == 8.0){
