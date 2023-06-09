@@ -12,8 +12,8 @@ int main(){
 
 	if(success){
 		size_t length;
-		double *pngdata = ConvertToPNG(&length, canvasReference->image);
-		WriteToFile(pngdata, length, "example1.png");
+		ByteArray *pngdata = ConvertToPNG(canvasReference->image);
+		WriteToFile(pngdata, "example1.png");
 		DeleteImage(canvasReference->image);
 	}else{
 		fprintf(stderr, "Error: ");

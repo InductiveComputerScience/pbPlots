@@ -19,11 +19,10 @@ int main(){
 	success = DrawScatterPlot(imageRef, 800, 600, x, points, y, points, errorMessage);
 
 	if(success){
-		size_t length;
-		double *pngdata = ConvertToPNG(&length, imageRef->image);
+		ByteArray *pngdata = ConvertToPNG(imageRef->image);
 		DeleteImage(imageRef->image);
 
-		WriteToFile(pngdata, length, "example3.png");
+		WriteToFile(pngdata, "example3.png");
 	}else{
 		fprintf(stderr, "Error: ");
 		for(int i = 0; i < errorMessage->stringLength; i++){

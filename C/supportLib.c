@@ -1,3 +1,11 @@
+#include <stdlib.h>
+#include <stddef.h>
+
+typedef struct ByteArray{
+  double *bytes;
+  size_t bytesLength;
+}ByteArray;
+
 #include "supportLib.h"
 
 unsigned char *DoubleArrayToByteArray(double *data, size_t length){
@@ -13,13 +21,13 @@ unsigned char *DoubleArrayToByteArray(double *data, size_t length){
 	return out;
 }
 
-void WriteToFile(double *data, size_t dataLength, char *filename){
+void WriteToFile(ByteArray *data, char *filename){
 	unsigned char *bytes;
 
-	bytes = DoubleArrayToByteArray(data, dataLength);
+	bytes = DoubleArrayToByteArray(data->bytes, data->bytesLength);
 
 	FILE* file = fopen(filename, "wb");
-	fwrite(bytes, 1, dataLength, file);
+	fwrite(bytes, 1, data->bytesLength, file);
 	fclose(file);
 
 	free(bytes);

@@ -53,9 +53,8 @@ int main(){
 	success = DrawScatterPlotFromSettings(imageReference, settings, errorMessage);
 
 	if(success){
-		size_t length;
-		double *pngdata = ConvertToPNG(&length, imageReference->image);
-		WriteToFile(pngdata, length, "example4.png");
+		ByteArray *pngdata = ConvertToPNG(imageReference->image);
+		WriteToFile(pngdata, "example4.png");
 		DeleteImage(imageReference->image);
 	}else{
 		fprintf(stderr, "Error: ");
