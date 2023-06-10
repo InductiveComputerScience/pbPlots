@@ -6,6 +6,8 @@ int main(){
 	double ys [] = {2, -1, -2, -1, 2};
 	_Bool success;
 
+	StartArenaAllocator();
+
 	RGBABitmapImageReference *canvasReference = CreateRGBABitmapImageReference();
 	StringReference *errorMessage = CreateStringReference(L"", 0);
 	success = DrawScatterPlot(canvasReference, 600, 400, xs, 5, ys, 5, errorMessage);

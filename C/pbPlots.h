@@ -11,7 +11,12 @@
 #define M_PI 3.14159265358979323846
 #endif
 
-int FreeAllocations();
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdbool.h>
+
+void StartArenaAllocator();
+void FreeAllocations();
 void *Allocate(int64_t size, int64_t e);
 void Free(void *addr);
 

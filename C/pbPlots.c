@@ -8,54 +8,140 @@ typedef struct Memory{
 	void *mem;
 	int64_t size;
 	struct Memory *next;
+	_Bool freed;
 } Memory;
 
-Memory *memoryStart = NULL;
-Memory *memory = NULL;
+typedef struct AllocatorData{
+	Memory *memoryStart;
+	Memory *memory;
+	int64_t maximum;
+	int64_t current;
+} AllocatorData;
 
-int FreeAllocations(){
+#ifdef THREAD_SAFE_PTHREADS
+
+#include <pthread.h>
+static pthread_key_t key;
+static pthread_once_t key_once = PTHREAD_ONCE_INIT;
+
+static void make_key(){
+	(void) pthread_key_create(&key, NULL);
+}
+
+static AllocatorData *GetAllocatorData(){
+	AllocatorData *ad;
+	(void)pthread_once(&key_once, make_key);
+	ad = pthread_getspecific(key);
+  if (ad == NULL) {
+		ad = malloc(sizeof(AllocatorData));
+		ad->memoryStart = NULL;
+		ad->memory = NULL;
+		(void) pthread_setspecific(key, ad);
+  }
+	ad = (AllocatorData *)pthread_getspecific(key);
+	return ad;
+}
+
+#else
+
+static AllocatorData *GetAllocatorData(){
+	static AllocatorData ad;
+	static _Bool first = true;
+	if(first){
+		ad.memoryStart = NULL;
+		ad.memory = NULL;
+		first = false;
+	}
+	return &ad;
+}
+
+#endif
+
+void StartArenaAllocator(){
+	AllocatorData *ad = GetAllocatorData();
+	ad->memoryStart = NULL;
+	ad->memory = NULL;
+	ad->maximum = 0;
+	ad->current = 0;
+}
+
+void *Allocate(int64_t size, int64_t e){
+	uint8_t *addr;
+	Memory** base;
+
+	AllocatorData *ad = GetAllocatorData();
+
+	if(ad->memoryStart == NULL){
+		ad->memoryStart = malloc(sizeof(Memory));
+		ad->memory = ad->memoryStart;
+	}else{
+		ad->memory->next = malloc(sizeof(Memory));
+		ad->memory = ad->memory->next;
+	}
+
+	ad->memory->next = NULL;
+	addr = malloc(8+size);
+	base = (Memory**)addr;
+	*base = ad->memory;
+	addr = addr + 8;
+	ad->memory->size = size;
+	ad->memory->mem = addr;
+	ad->memory->freed = false;
+
+	ad->current += size;
+	ad->maximum = fmax(ad->maximum, ad->current);
+
+	return (void*)addr;
+}
+
+void FreeAllocations(){
 	Memory *cur, *prev;
 	int64_t total;
+	uint8_t *base;
+
+	AllocatorData *ad = GetAllocatorData();
 
 	total = 0;
-	cur = memoryStart;
+	cur = ad->memoryStart;
 
 	while(cur != NULL){
-		free(cur->mem);
-		total += cur->size;
+		base = cur->mem;
+		base = base - 8;
+		if(!cur->freed){
+			free(base);
+			total += cur->size;
+		}
 		prev = cur;
 		cur = cur->next;
 		free(prev);
 	}
 
-	memoryStart = NULL;
-	memory = NULL;
+	#ifdef THREAD_SAFE_PTHREADS
+	free(ad);
+	ad = NULL;
+	(void) pthread_setspecific(key, ad);
+	#endif
 
-	printf("Freed %ld\n", total/1024/1024);
-}
-
-void *Allocate(int64_t size, int64_t e){
-	void *addr;
-
-	if(memoryStart == NULL){
-		memoryStart = malloc(sizeof(Memory));
-		memory = memoryStart;
-	}else{
-		memory->next = malloc(sizeof(Memory));
-		memory = memory->next;
-	}
-
-	memory->next = NULL;
-	addr = malloc(size * e);
-	memory->size = size * e;
-	memory->mem = addr;
-
-	return addr;
+	//printf("Freed %ld kB\n", total/1024);
+	//printf("Maximum %ld kB\n", ad->maximum/1024);
+	//printf("Current %ld\n", ad->current/1024/1024);
 }
 
 void Free(void *addr){
-}
+	uint8_t *base;
+	Memory **mem;
 
+	base = addr;
+	base = base - 8;
+
+	mem = (Memory**)base;
+
+	AllocatorData *ad = GetAllocatorData();
+	ad->current -= (*mem)->size;
+
+	(*mem)->freed = true;
+	free(base);
+}
 // -----------------
 
 _Bool Loess(double *xs, size_t xsLength, double *ys, size_t ysLength, double bandwidth, double robustnessIters, double accuracy, NumberArrayReference *resultXs, StringReference *errorMessage){
@@ -8050,7 +8136,7 @@ ByteArray *DeflateDataStaticHuffman(ByteArray *data, double level){
   distanceAdditionLengthReference = CreateNumberReference(0.0);
   match = (BooleanReference *)Allocate(sizeof(BooleanReference), 1);
 
-  bytes = CreateAndFillByteArray(fmax(ByteArrayLength(data)*2.0, 100.0), 0.0);
+  bytes = CreateAndFillByteArray(fmax(ByteArrayLength(data)*1.0, 100.0), 0.0);
   currentBit = CreateNumberReference(0.0);
 
   bitReverseLookupTable = GenerateBitReverseLookupTable(&bitReverseLookupTableLength, 9.0);

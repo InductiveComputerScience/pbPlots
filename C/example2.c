@@ -8,6 +8,8 @@ int main(){
 	double xs [] = {-2, -1, 0, 1, 2};
 	double ys [] = {2, -1, -2, -1, 2};
 
+	StartArenaAllocator();
+
 	ScatterPlotSeries *series = GetDefaultScatterPlotSeriesSettings();
 	series->xs = xs;
 	series->xsLength = 5;

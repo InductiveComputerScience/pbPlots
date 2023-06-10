@@ -9,6 +9,8 @@ int main(){
 	double x [points];
 	double y [points];
 
+	StartArenaAllocator();
+
 	for(int i = 0; i < points; i++){
 		x[i] = i/10.0 - 2.5;
 		y[i] = sin(x[i]);
