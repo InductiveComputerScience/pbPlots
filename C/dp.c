@@ -1,5 +1,7 @@
 #include "pbPlots.h"
 
+void stosd(void *p, long long count, long long val);
+
 RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
   RGBABitmapImage *image;
   double i, j;
@@ -17,17 +19,13 @@ RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
 
   c = (r << 24) | (g << 16) | (b << 8) | a;
 
-	for(int i = 0; i < w*h; i++){
-		image->pixels[i] = c;
-	}
-
-	//__stosd(image->pixels, c, w*h);
+	stosd(image->pixels, w*h, c);
 
   return image;
 }
 void SetPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
-  if(x >= 0.0 && x < ImageWidth(image) && y >= 0.0 && y < ImageHeight(image)){
-    int pixel = x + y * ImageWidth(image);
+  if(x >= 0.0 && x < image->xLength && y >= 0.0 && y < ImageHeight(image)){
+    int pixel = x + y * image->xLength;
     int r = Round(color->r * 255);
     int g = Round(color->g * 255);
     int b = Round(color->b * 255);
@@ -49,13 +47,13 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 
   double f = 0.00392156862;
 
-  if(x >= 0.0 && x < ImageWidth(image) && y >= 0.0 && y < ImageHeight(image)){
+  if(x >= 0.0 && x < image->xLength && y >= 0.0 && y < ImageHeight(image)){
     ra = color->r;
     ga = color->g;
     ba = color->b;
     aa = color->a;
 
-    pixel = x + y * ImageWidth(image);
+    pixel = x + y * image->xLength;
     oldColor  = image->pixels[pixel];
     rb = ((oldColor >> 24) & 0xFF) * f;
     gb = ((oldColor >> 16) & 0xFF) * f;
