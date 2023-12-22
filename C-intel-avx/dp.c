@@ -1,9 +1,8 @@
 #include "pbPlots.h"
 
-#include <immintrin.h>
-#include <stdint.h>
-#include <stdalign.h>
-#include <stdio.h>
+// SSE4.2
+// https://stackoverflow.com/questions/11228855/header-files-for-x86-simd-intrinsics
+#include <nmmintrin.h>
 
 void stosd(void *p, long long count, long long val);
 
@@ -44,6 +43,10 @@ double Round(double x){
 }
 
 /*
+#include <stdint.h>
+#include <stdalign.h>
+#include <stdio.h>
+
 void p128_u8(__m128i in) {
     alignas(16) uint8_t v[16];
     _mm_store_si128((__m128i*)v, in);

@@ -1,6 +1,8 @@
 #include "pbPlots.h"
 #include "supportLib.h"
 
+void Repeat();
+
 int main(){
 	double xs [] = {-2, -1, 0, 1, 2};
 	double ys [] = {2, -1, -2, -1, 2};
@@ -29,3 +31,4 @@ int main(){
 
 	return success ? 0 : 1;
 }
+
