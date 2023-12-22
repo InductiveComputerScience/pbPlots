@@ -1,6 +1,6 @@
 gcc -c pbPlots.c -std=c99 -O3 -march=native
-gcc -c supportLib.c -std=c99 -O3 -march=native
-gcc -c example1.c -std=c99 -O3 -march=native
+gcc -c supportLib.c -std=c99 -O0 -march=native
+gcc -c example1.c -std=c99 -O0 -march=native
 gcc -c example2.c -std=c99 -O3 -march=native
 gcc -c example3.c -std=c99 -O3 -march=native
 gcc -c example4.c -std=c99 -O3 -march=native
