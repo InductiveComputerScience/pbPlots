@@ -43,6 +43,7 @@ double Round(double x){
   return floor(x + 0.5);
 }
 
+/*
 void p128_u8(__m128i in) {
     alignas(16) uint8_t v[16];
     _mm_store_si128((__m128i*)v, in);
@@ -74,6 +75,7 @@ void p128_f32(__m128 in) {
     _mm_store_ps((__m128*)v, in);
     printf("v4_f32: %f %f %f %f\n", v[0], v[1], v[2], v[3]);
 }
+*/
 
 void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
   double ra, ga, ba, aa;
@@ -89,41 +91,20 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 	__m128i X, Y, Z;
 	__m128 F, IF;
 
-	// Broadcast
   f = 0.00392156862f;
-	F = _mm_set_ps1(f); // F = {f, f, f, f}
-	IF = _mm_set_ps1(255); // F = {255, 255, 255, 255}
-	Z = _mm_setzero_si128();
-
-	//printf("F: "); p128_f32(F);
-	//printf("IF: "); p128_f32(IF);
-	//printf("Z: "); p128_u8(Z);
-
-	// Intel
-	// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
-	// https://stackoverflow.com/questions/11759791/is-it-possible-to-cast-floats-directly-to-m128-if-they-are-16-byte-aligned
-
-	// GCC
-	// https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html
-	// https://gcc.gnu.org/onlinedocs/gcc/x86-Built-in-Functions.html
+	F = _mm_set_ps1(f); // F = {f, f, f, f} -- F = f
+	IF = _mm_set_ps1(255); // IF = {255, 255, 255, 255} -- IF = 255
+	Z = _mm_setzero_si128(); // Z = 0
 
   if(x >= 0.0 && x < image->xLength && y >= 0.0 && y < image->yLength){
-		//color->r = 0.2;
-		//color->g = 0.3;
-		//color->b = 0.5;
-		//color->a = 0.8;
+    //ra = color->r;
+    //ga = color->g;
+    //ba = color->b;
+    //aa = color->a;
 
-    ra = color->r;
-    ga = color->g;
-    ba = color->b;
-    aa = color->a;
-
-		A = _mm_set_ps(color->r, color->g, color->b, color->a);
-
-		//printf("A: "); p128_f32(A);
+		A = _mm_set_ps(color->r, color->g, color->b, color->a); // Results in (A, B, G, R) -- A = (color->r, color->g, color->b, color->a);
 
     pixel = x + y * image->xLength;
-		//image->pixels[pixel] = 0xAABBCCDD;
     oldColor = image->pixels[pixel];
 
     //rb = ((oldColor >> 24) & 0xFF) * f;
@@ -131,59 +112,31 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
     //bb = ((oldColor >> 8) & 0xFF) * f;
     //ab = ((oldColor >> 0) & 0xFF) * f;
 
-		X = _mm_setzero_si128();                // X = All zeros
-		//printf("X: "); p128_u8(X);
-		X = _mm_insert_epi32(X, oldColor, 0);   // X[0] = oldColor 
-		//printf("X: "); p128_u8(X);
+		X = _mm_insert_epi32(Z, oldColor, 0);   // X[0] = oldColor 
 		X = _mm_cvtepu8_epi16(X);               // Cast B -> W
-		//printf("X: "); p128_u16(X);
 		X = _mm_cvtepu16_epi32(X);              // Cast W -> D
-		//printf("X: "); p128_u32(X);
 		B = _mm_cvtepi32_ps(X);                 // Cast D -> S -- (A, B, G, R)
-		//printf("B: "); p128_f32(B);
 		B = _mm_mul_ps(B, F);                   // B = B / 255
-		//printf("B: "); p128_f32(B);
 
 		AA = _mm_set_ps1(color->a);
-		//printf("aa: %f\n", aa);
-		//printf("AA: "); p128_f32(AA);
 		tf = _mm_extract_ps(B, 0);
 		AB = _mm_set_ps1(*(float*)&tf);
-		//printf("ab: %f\n", ab);
-		//printf("AB: "); p128_f32(AB);
 
-		//p128_f32(AA);
-		//p128_f32(AB);
-
-    t1 = ab*(1.0 - aa);
-		//printf("t1: %f\n", t1);
-		ao = aa + t1;
+    //t1 = ab*(1.0 - aa);
+		//ao = aa + t1;
 
 		T1 = _mm_set_ps1(1.0f);
-		//printf("T1: "); p128_f32(T1);
 		T1 = _mm_sub_ps(T1, AA);
-		//printf("T1: "); p128_f32(T1);
 		T1 = _mm_mul_ps(AB, T1);
-		//printf("T1: "); p128_f32(T1);
 		AO = _mm_add_ps(AA, T1);
 
-		//printf("T1: "); p128_f32(T1);
-
-		//printf("ao: %f\n", ao);
-		//printf("AO: "); p128_f32(AO);
-
-		//p128_f32(T1);
-
-    t2 = 1/ao;
+    //t2 = 1/ao;
 
 		T2 = _mm_rcp_ps(AO);
 
-		//printf("t2: %f\n", t2);
-		//printf("T2: "); p128_f32(T2);
-
-    ro = (ra*aa + rb*t1)*t2;
-    go = (ga*aa + gb*t1)*t2;
-    bo = (ba*aa + bb*t1)*t2;
+    //ro = (ra*aa + rb*t1)*t2;
+    //go = (ga*aa + gb*t1)*t2;
+    //bo = (ba*aa + bb*t1)*t2;
 
 		O1 = _mm_mul_ps(A, AA);
 		O2 = _mm_mul_ps(B, T1);
@@ -191,9 +144,6 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 		O = _mm_mul_ps(O, T2);
 
 		O = _mm_insert_ps(O, AO, 0); // X[0] = ao
-
-		//printf("ao, bo, go, ro: %f, %f, %f, %f\n", ao, bo, go, ro);
-		//printf("O: "); p128_f32(O);
    
     //r = Round(ro * 255);
     //g = Round(go * 255);
@@ -203,20 +153,10 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 		O = _mm_mul_ps(O, IF);
 		O = _mm_round_ps(O, _MM_FROUND_TO_NEAREST_INT);
 
-    //image->pixels[pixel] = (r << 24) | (g << 16) | (b << 8) | a;
-
-		X = _mm_cvtps_epi32(O); // Cast S -> D
-		X = _mm_packus_epi32(X, Z); // Cast D -> W
-		X = _mm_packus_epi16(X, Z); // Cast W -> B
+		X = _mm_cvtps_epi32(O);                            // Cast S -> D
+		X = _mm_packus_epi32(X, Z);                        // Cast D -> W
+		X = _mm_packus_epi16(X, Z);                        // Cast W -> B
 		image->pixels[pixel] = _mm_extract_epi32(X, 0);
-
-		//printf("ao, bo, go, ro: %d, %d, %d, %d\n", a, b, g, r);
-		//printf("O: "); p128_u8(X);
-
-		//printf("o: %x\n", (r << 24) | (g << 16) | (b << 8) | a);
-		//printf("o: %x\n", _mm_extract_epi32(X, 0));
-
-		//exit(1);
   }
 }
 double CombineAlpha(double as, double ad){

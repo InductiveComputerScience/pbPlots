@@ -1,6 +1,6 @@
-.globl stosd
-
 .intel_syntax noprefix
+
+.globl stosd
 stosd:
 	mov rdi, rdi
 	mov rcx, rsi
