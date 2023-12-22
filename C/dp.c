@@ -95,7 +95,9 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 	IF = _mm_set_ps1(255); // F = {255, 255, 255, 255}
 	Z = _mm_setzero_si128();
 
-	//p128_f32(F);
+	//printf("F: "); p128_f32(F);
+	//printf("IF: "); p128_f32(IF);
+	//printf("Z: "); p128_u8(Z);
 
 	// Intel
 	// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
@@ -106,71 +108,92 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 	// https://gcc.gnu.org/onlinedocs/gcc/x86-Built-in-Functions.html
 
   if(x >= 0.0 && x < image->xLength && y >= 0.0 && y < image->yLength){
-    //ra = color->r;
-    //ga = color->g;
-    //ba = color->b;
-    //aa = color->a;
+		//color->r = 0.2;
+		//color->g = 0.3;
+		//color->b = 0.5;
+		//color->a = 0.8;
+
+    ra = color->r;
+    ga = color->g;
+    ba = color->b;
+    aa = color->a;
 
 		A = _mm_set_ps(color->r, color->g, color->b, color->a);
 
+		//printf("A: "); p128_f32(A);
+
     pixel = x + y * image->xLength;
-    oldColor  = image->pixels[pixel];
+		//image->pixels[pixel] = 0xAABBCCDD;
+    oldColor = image->pixels[pixel];
 
     //rb = ((oldColor >> 24) & 0xFF) * f;
     //gb = ((oldColor >> 16) & 0xFF) * f;
     //bb = ((oldColor >> 8) & 0xFF) * f;
     //ab = ((oldColor >> 0) & 0xFF) * f;
 
-		// byte[4] -> float[4]
-		//B[0] = oldColor;
-		//B[1] = 0;
-		//_mm_unpacklo_epi8();
-		//__builtin_ia32_cvtdq2ps();
 		X = _mm_setzero_si128();                // X = All zeros
-		//p128_u8(X);
+		//printf("X: "); p128_u8(X);
 		X = _mm_insert_epi32(X, oldColor, 0);   // X[0] = oldColor 
-		//p128_u8(X);
+		//printf("X: "); p128_u8(X);
 		X = _mm_cvtepu8_epi16(X);               // Cast B -> W
-		//p128_u16(X);
+		//printf("X: "); p128_u16(X);
 		X = _mm_cvtepu16_epi32(X);              // Cast W -> D
-		//p128_u32(X);
-		B = _mm_cvtepi32_ps(X);                 // Cast D -> S
-		//p128_f32(B);
+		//printf("X: "); p128_u32(X);
+		B = _mm_cvtepi32_ps(X);                 // Cast D -> S -- (A, B, G, R)
+		//printf("B: "); p128_f32(B);
 		B = _mm_mul_ps(B, F);                   // B = B / 255
-		//p128_f32(B);
+		//printf("B: "); p128_f32(B);
 
 		AA = _mm_set_ps1(color->a);
-		tf = _mm_extract_ps(B, 3);
+		//printf("aa: %f\n", aa);
+		//printf("AA: "); p128_f32(AA);
+		tf = _mm_extract_ps(B, 0);
 		AB = _mm_set_ps1(*(float*)&tf);
+		//printf("ab: %f\n", ab);
+		//printf("AB: "); p128_f32(AB);
 
 		//p128_f32(AA);
 		//p128_f32(AB);
 
-    //t1 = ab*(1.0 - aa);
-		//ao = aa + t1;
+    t1 = ab*(1.0 - aa);
+		//printf("t1: %f\n", t1);
+		ao = aa + t1;
+
 		T1 = _mm_set_ps1(1.0f);
+		//printf("T1: "); p128_f32(T1);
 		T1 = _mm_sub_ps(T1, AA);
+		//printf("T1: "); p128_f32(T1);
 		T1 = _mm_mul_ps(AB, T1);
+		//printf("T1: "); p128_f32(T1);
 		AO = _mm_add_ps(AA, T1);
+
+		//printf("T1: "); p128_f32(T1);
+
+		//printf("ao: %f\n", ao);
+		//printf("AO: "); p128_f32(AO);
 
 		//p128_f32(T1);
 
-    //t2 = 1/ao;
-		T2 = _mm_rcp_ps(AO);
-		//p128_f32(T2);
+    t2 = 1/ao;
 
-    //ro = (ra*aa + rb*t1)*t2;
-    //go = (ga*aa + gb*t1)*t2;
-    //bo = (ba*aa + bb*t1)*t2;
+		T2 = _mm_rcp_ps(AO);
+
+		//printf("t2: %f\n", t2);
+		//printf("T2: "); p128_f32(T2);
+
+    ro = (ra*aa + rb*t1)*t2;
+    go = (ga*aa + gb*t1)*t2;
+    bo = (ba*aa + bb*t1)*t2;
 
 		O1 = _mm_mul_ps(A, AA);
 		O2 = _mm_mul_ps(B, T1);
 		O = _mm_add_ps(O1, O2);
 		O = _mm_mul_ps(O, T2);
 
-		//p128_f32(T2);
+		O = _mm_insert_ps(O, AO, 0); // X[0] = ao
 
-		O = _mm_insert_ps(O, AO, 3); // X[3] = ao
+		//printf("ao, bo, go, ro: %f, %f, %f, %f\n", ao, bo, go, ro);
+		//printf("O: "); p128_f32(O);
    
     //r = Round(ro * 255);
     //g = Round(go * 255);
@@ -186,6 +209,14 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 		X = _mm_packus_epi32(X, Z); // Cast D -> W
 		X = _mm_packus_epi16(X, Z); // Cast W -> B
 		image->pixels[pixel] = _mm_extract_epi32(X, 0);
+
+		//printf("ao, bo, go, ro: %d, %d, %d, %d\n", a, b, g, r);
+		//printf("O: "); p128_u8(X);
+
+		//printf("o: %x\n", (r << 24) | (g << 16) | (b << 8) | a);
+		//printf("o: %x\n", _mm_extract_epi32(X, 0));
+
+		//exit(1);
   }
 }
 double CombineAlpha(double as, double ad){
