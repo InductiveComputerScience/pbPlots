@@ -50,12 +50,32 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
   uint32_t oldColor;
   int pixel;
 	int r, g, b, a;
-	double t1, t2, f;
-	__m128d A, B, C;
+	double t1, t2;
+	float f;
+	__m128 A, B, O;
+	__m128i X, Y, Z;
+	__m128 F;
 
-  f = 0.00392156862;
+	// Broadcast
+  f = 0.00392156862f;
+	//F = __builtin_ia32_vbroadcastss(&f);
+	//F = _mm_insert_ps(F, f, 0);
+	//F = _mm_insert_ps(F, f, 1);
+	//F = _mm_insert_ps(F, f, 2);
+	//F = _mm_insert_ps(F, f, 3);
+	//F[0] = f;
+	//F[1] = f;
+	//F[2] = f;
+	//F[3] = f;
+	F = _mm_set_ps1(f);
 
+	// Intel
 	// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
+	// https://stackoverflow.com/questions/11759791/is-it-possible-to-cast-floats-directly-to-m128-if-they-are-16-byte-aligned
+
+	// GCC
+	// https://gcc.gnu.org/onlinedocs/gcc/Vector-Extensions.html
+	// https://gcc.gnu.org/onlinedocs/gcc/x86-Built-in-Functions.html
 
   if(x >= 0.0 && x < image->xLength && y >= 0.0 && y < image->yLength){
     ra = color->r;
@@ -65,10 +85,22 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
 
     pixel = x + y * image->xLength;
     oldColor  = image->pixels[pixel];
+
     rb = ((oldColor >> 24) & 0xFF) * f;
     gb = ((oldColor >> 16) & 0xFF) * f;
     bb = ((oldColor >> 8) & 0xFF) * f;
     ab = ((oldColor >> 0) & 0xFF) * f;
+
+		// byte[4] -> float[4]
+		//B[0] = oldColor;
+		//B[1] = 0;
+		//_mm_unpacklo_epi8();
+		//__builtin_ia32_cvtdq2ps();
+		X = _mm_setzero_si128();                // X = All zeros
+		X = _mm_insert_epi32(X, oldColor, 0);   // X[0] = oldColor 
+		X = _mm_cvtepu8_epi16(X);               // Cast B -> W
+		X = _mm_cvtepu16_epi32(X);              // Cast W -> D
+		A = _mm_cvt_pi2ps(X);
 
     t1 = ab*(1.0 - aa);
 
@@ -85,26 +117,10 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
     newColor.b = bo;
     newColor.a = ao;
 
-    //r = Round(newColor.r * 255);
-    //g = Round(newColor.g * 255);
-    //b = Round(newColor.b * 255);
-    //a = Round(newColor.a * 255);
-
-		A[0] = 0.0;
-		A[1] = 0.0;
-		B[0] = newColor.r * 255;
-		B[1] = 0.0;
-		C = _mm_round_sd(A, B, _MM_FROUND_TO_NEAREST_INT);
-		r = C[0];
-		B[0] = newColor.g * 255;
-		C = _mm_round_sd(A, B, _MM_FROUND_TO_NEAREST_INT);
-		g = C[0];
-		B[0] = newColor.b * 255;
-		C = _mm_round_sd(A, B, _MM_FROUND_TO_NEAREST_INT);
-		b = C[0];
-		B[0] = newColor.a * 255;
-		C = _mm_round_sd(A, B, _MM_FROUND_TO_NEAREST_INT);
-		a = C[0];
+    r = Round(newColor.r * 255);
+    g = Round(newColor.g * 255);
+    b = Round(newColor.b * 255);
+    a = Round(newColor.a * 255);
 
     image->pixels[pixel] = (r << 24) | (g << 16) | (b << 8) | a;
   }
