@@ -27,9 +27,8 @@ RGBABitmapImage *CreateImage(double w, double h, RGBA *color){
   return image;
 }
 void SetPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
-  __m128 C;
+  __m128 C, IF;
   __m128i X, Z;
-  __m128 IF;
 
   if(x >= 0.0 && x < image->xLength && y >= 0.0 && y < image->yLength){
     int pixel = x + y * image->xLength;
@@ -45,6 +44,27 @@ void SetPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
     image->pixels[pixel] = _mm_extract_epi32(X, 0);    // 4xu32 [RGBA, 0, 0, 0] [0]
   }
 }
+/*
+void SetPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
+	u64 pixel;
+	4xf32 C;
+	4xu32 A, E;
+	8xu16s B;
+	16xu8s D;
+
+  exp: if(x >= 0 & x < image->xLength & y >= 0 & y < image->yLength){
+    exp a u64: pixel = x + y * image->xLength
+
+    C = (color->r, color->g, color->b, color->a)
+    exp a 4xf32: C = round(C * 255)
+		A = (4xu32)C;
+    B = (8xu16s)A;
+    D = (16xu8s)B;
+    E = (alias 4xu32)D;
+    image->pixels[pixel] = E[0]
+  }
+}
+*/
 double Round(double x){
   return floor(x + 0.5);
 }
@@ -84,50 +104,50 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
     //ab = ((oldColor >> 0) & 0xFF) * f;
 
     X = _mm_insert_epi32(Z, oldColor, 0);   // X[0] = oldColor 
-    X = _mm_cvtepu8_epi16(X);               // Cast B -> W
-    X = _mm_cvtepu16_epi32(X);              // Cast W -> D
-    B = _mm_cvtepi32_ps(X);                 // Cast D -> S -- (A, B, G, R)
-    B = _mm_mul_ps(B, F);                   // B = B / 255
+    X = _mm_cvtepu8_epi16(X);               // Cast B -> W -- X = X
+    X = _mm_cvtepu16_epi32(X);              // Cast W -> D -- X = X
+    B = _mm_cvtepi32_ps(X);                 // Cast D -> S -- (A, B, G, R) -- B = X
+    B = _mm_mul_ps(B, F);                   // B = B * 0.00392156862 (1/255)
 
-    AA = _mm_set_ps1(color->a);
-    tf = _mm_extract_ps(B, 0);
-    AB = _mm_set_ps1(*(float*)&tf);
+    AA = _mm_set_ps1(color->a);             // AA = color->a;
+    tf = _mm_extract_ps(B, 0);              // AB = B[0]
+    AB = _mm_set_ps1(*(float*)&tf);         // same operation as over.
 
     //t1 = ab*(1.0 - aa);
     //ao = aa + t1;
 
-    T1 = _mm_set_ps1(1.0f);
-    T1 = _mm_sub_ps(T1, AA);
+    T1 = _mm_set_ps1(1.0f);                 // exp a 4xf32: t1 = ab*(1 - aa)
+    T1 = _mm_sub_ps(T1, AA);                
     T1 = _mm_mul_ps(AB, T1);
-    AO = _mm_add_ps(AA, T1);
+    AO = _mm_add_ps(AA, T1);                // exp a 4xf32: ao = aa + t1
 
     //t2 = 1/ao;
 
-    T2 = _mm_rcp_ps(AO);
+    T2 = _mm_rcp_ps(AO);                    // exp a 4xf32: t2 = 1/ao
 
     //ro = (ra*aa + rb*t1)*t2;
     //go = (ga*aa + gb*t1)*t2;
     //bo = (ba*aa + bb*t1)*t2;
 
-    O1 = _mm_mul_ps(A, AA);
+    O1 = _mm_mul_ps(A, AA);                 // exp a 4xf32: (a*aa + b*t1)*t2;
     O2 = _mm_mul_ps(B, T1);
     O = _mm_add_ps(O1, O2);
     O = _mm_mul_ps(O, T2);
 
-    O = _mm_insert_ps(O, AO, 0); // X[0] = ao
+    O = _mm_insert_ps(O, AO, 0);            // O[0] = ao
    
     //r = Round(ro * 255);
     //g = Round(go * 255);
     //b = Round(bo * 255);
     //a = Round(ao * 255);
 
-    O = _mm_mul_ps(O, IF);
+    O = _mm_mul_ps(O, IF);                             // exp a 4xf32: O = round(O * 255)
     O = _mm_round_ps(O, _MM_FROUND_TO_NEAREST_INT);
 
-    X = _mm_cvtps_epi32(O);                            // Cast S -> D
-    X = _mm_packus_epi32(X, Z);                        // Cast D -> W
-    X = _mm_packus_epi16(X, Z);                        // Cast W -> B
-    image->pixels[pixel] = _mm_extract_epi32(X, 0);
+    X = _mm_cvtps_epi32(O);                            // Cast S -> D -- X = O
+    X = _mm_packus_epi32(X, Z);                        // Cast D -> W -- X = X
+    X = _mm_packus_epi16(X, Z);                        // Cast W -> B -- X = X
+    image->pixels[pixel] = _mm_extract_epi32(X, 0);    // image->pixels[pixel] = X[0]
   }
 }
 double CombineAlpha(double as, double ad){
