@@ -515,7 +515,7 @@ RGBABitmapImageReference *CreateRGBABitmapImageReference(){
 
   reference = (RGBABitmapImageReference *)Allocate(sizeof(RGBABitmapImageReference), 1);
   reference->image = (RGBABitmapImage *)Allocate(sizeof(RGBABitmapImage), 1);
-  reference->image->pixels = (uint32_t*)Allocate(sizeof(uint32_t), 1);
+  reference->image->pixels = (uint32_t*)Allocate(0, 1);
   reference->image->xLength = 0.0;
   reference->image->yLength = 0.0;
 
@@ -2422,22 +2422,22 @@ double ImageHeight(RGBABitmapImage *image){
 }
 void SetPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
   if(x >= 0.0 && x < ImageWidth(image) && y >= 0.0 && y < ImageHeight(image)){
-		int pixel = x + y * ImageWidth(image);
-		int r = Round(color->r * 255);
-		int g = Round(color->g * 255);
-		int b = Round(color->b * 255);
-		int a = Round(color->a * 255);
+    int pixel = x + y * ImageWidth(image);
+    int r = Round(color->r * 255);
+    int g = Round(color->g * 255);
+    int b = Round(color->b * 255);
+    int a = Round(color->a * 255);
 
-		image->pixels[pixel] = (r << 24) | (g << 16) | (b << 8) | a;
+    image->pixels[pixel] = (r << 24) | (g << 16) | (b << 8) | a;
   }
 }
 void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
   double ra, ga, ba, aa;
   double rb, gb, bb, ab;
   double ro, go, bo, ao;
-	RGBA newColor;
-	uint32_t oldColor;
-	int pixel;
+  RGBA newColor;
+  uint32_t oldColor;
+  int pixel;
 
   if(x >= 0.0 && x < ImageWidth(image) && y >= 0.0 && y < ImageHeight(image)){
     ra = color->r;
@@ -2445,25 +2445,25 @@ void DrawPixel(RGBABitmapImage *image, double x, double y, RGBA *color){
     ba = color->b;
     aa = color->a;
 
-		pixel = x + y * ImageWidth(image);
-		oldColor	= image->pixels[pixel];
-		rb = ((oldColor >> 24) & 0xFF) / 255.0;
-		gb = ((oldColor >> 16) & 0xFF) / 255.0;
-		bb = ((oldColor >> 8) & 0xFF) / 255.0;
-		ab = ((oldColor >> 0) & 0xFF) / 255.0;
+    pixel = x + y * ImageWidth(image);
+    oldColor  = image->pixels[pixel];
+    rb = ((oldColor >> 24) & 0xFF) / 255.0;
+    gb = ((oldColor >> 16) & 0xFF) / 255.0;
+    bb = ((oldColor >> 8) & 0xFF) / 255.0;
+    ab = ((oldColor >> 0) & 0xFF) / 255.0;
 
     ao = CombineAlpha(aa, ab);
 
     ro = AlphaBlend(ra, aa, rb, ab, ao);
     go = AlphaBlend(ga, aa, gb, ab, ao);
     bo = AlphaBlend(ba, aa, bb, ab, ao);
-		
+    
     newColor.r = ro;
     newColor.g = go;
     newColor.b = bo;
     newColor.a = ao;
 
-		SetPixel(image, x, y, &newColor);
+    SetPixel(image, x, y, &newColor);
   }
 }
 double CombineAlpha(double as, double ad){
@@ -2695,10 +2695,10 @@ RGBA GetImagePixelStruct(RGBABitmapImage *image, double x, double y){
 
 	color	= image->pixels[pixel];
 
-	rgba.r = (color >> 24) & 0xFF;
-	rgba.g = (color >> 16) & 0xFF;
-	rgba.b = (color >> 8) & 0xFF;
-	rgba.a = (color >> 0) & 0xFF;
+	rgba.r = ((color >> 24) & 0xFF) / 255.0;
+	rgba.g = ((color >> 16) & 0xFF) / 255.0;
+	rgba.b = ((color >> 8) & 0xFF) / 255.0;
+	rgba.a = ((color >> 0) & 0xFF) / 255.0;
 
   return rgba;
 }
