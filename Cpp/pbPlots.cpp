@@ -9,10 +9,15 @@ using namespace std;
 #endif
 
 // -----------------
+#include <typeinfo>
+
+enum Type { type_boolean, type_character, type_number, type_reference };
+
 typedef struct Memory{
 	void *mem;
 	int64_t size;
 	bool isArray;
+	int type;
 	struct Memory *next;
 } Memory;
 
@@ -28,8 +33,19 @@ void FreeAllocations(){
 
 	while(cur != NULL){
 		if(cur->isArray){
-			vector<void*> *x = (vector<void*> *)cur->mem;
-			delete x;
+			if(cur->type == type_boolean){
+				vector<bool> *x = (vector<bool> *)cur->mem;
+				delete x;
+			}else if(cur->type == type_character){
+				vector<wchar_t> *x = (vector<wchar_t> *)cur->mem;
+				delete x;
+			}else if(cur->type == type_number){
+				vector<double> *x = (vector<double> *)cur->mem;
+				delete x;
+			}else{
+				vector<void*> *x = (vector<void*> *)cur->mem;
+				delete x;
+			}
 		}else{
 			free(cur->mem);
 		}
@@ -86,6 +102,16 @@ std::vector<T> *Allocate(size_t length){
 	memory->size = length * sizeof(T);
 	memory->mem = (void*)addr;
 	memory->isArray = true;
+
+	if(typeid(T) == typeid(bool)){
+		memory->type = type_boolean;
+	}else if(typeid(T) == typeid(wchar_t)){
+		memory->type = type_character;
+	}else if(typeid(T) == typeid(double)){
+		memory->type = type_number;
+	}else{
+		memory->type = type_reference;
+	}
 
 	return addr;
 }
